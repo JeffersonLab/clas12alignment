@@ -101,16 +101,28 @@ public class Data {
     public static DataGroup[] create1DDataGroup(int var, int ln, int r) {
         DataGroup[] dgFMT = new DataGroup[1];
 
-        dgFMT[0] = new DataGroup(3,1);
-        for (int li=1; li<=ln; ++li) {
-            H1F hi_cluster_var =
-                    new H1F("hi_cluster_var"+li, "", 200, 0, r);
-            if (var == 0) hi_cluster_var.setTitleX("Tmin (ns)");
-            if (var == 1) hi_cluster_var.setTitleX("energy");
-            hi_cluster_var.setTitleY("cluster count");
-            hi_cluster_var.setFillColor(4);
+        if (var == 0 || var == 1) {
+            for (int li=1; li<=ln; ++li) {
+                dgFMT[0] = new DataGroup(3,1);
+                H1F hi_cluster_var =
+                        new H1F("hi_cluster_var"+li, "", 400, 0, r);
+                if (var == 0) hi_cluster_var.setTitleX("Tmin (ns)");
+                if (var == 1) hi_cluster_var.setTitleX("energy");
+                hi_cluster_var.setTitleY("cluster count");
+                hi_cluster_var.setFillColor(4);
 
-            dgFMT[0].addDataSet(hi_cluster_var, li-1);
+                dgFMT[0].addDataSet(hi_cluster_var, li-1);
+            }
+        }
+
+        if (var == 2) {
+            dgFMT[0] = new DataGroup(1,1);
+            H1F hi_track_var = new H1F("hi_track_var", "", 400, 0, r);
+            hi_track_var.setTitleX("track z (cm)");
+            hi_track_var.setTitleY("track count");
+            hi_track_var.setFillColor(4);
+
+            dgFMT[0].addDataSet(hi_track_var, 0);
         }
 
         return dgFMT;
@@ -239,6 +251,20 @@ public class Data {
      * @return status int.
      */
     public static int drawPlots(DataGroup[] dgFMT, String title) {
+        drawZPlots(dgFMT, title, null);
+        return 0;
+    }
+
+    /**
+     * Render plots for tracks' z position.
+     * @param dgFMT : Array of data groups.
+     * @param title : Title to be given to the canvas.
+     * @param fmtZ
+     * @return status int.
+     */
+    public static int drawZPlots(DataGroup[] dgFMT, String title,
+            double[] fmtZ) {
+
         EmbeddedCanvasTabbed fmtCanvas = new EmbeddedCanvasTabbed(title);
 
         fmtCanvas.getCanvas(title).draw(dgFMT[0]);
@@ -252,6 +278,18 @@ public class Data {
         frame.add(fmtCanvas);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+
+        if (fmtZ != null) {
+            for (int pi=0; pi<3; ++pi) {
+                for (double lz : fmtZ) {
+                    DataLine vline =
+                            new DataLine(lz,lz, 0,Double.POSITIVE_INFINITY);
+                    vline.setLineColor(2);
+                    vline.setLineWidth(2);
+                    fmtCanvas.getCanvas(title).cd(pi).draw(vline);
+                }
+            }
+        }
 
         return 0;
     }

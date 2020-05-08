@@ -85,33 +85,33 @@ public class ResolutionAnalysis {
     }
 
     /** Execute the runAnalysis method below with less input. */
-    private int runAnalysis(int type, TrkSwim swim, FiducialCuts fcuts,
+    private int runAnalysis(int func, TrkSwim swim, FiducialCuts fcuts,
             DataGroup[] dgFMT) {
-        return runAnalysis(type, -1, swim, fcuts, dgFMT, -1);
+        return runAnalysis(func, -1, swim, fcuts, dgFMT, -1);
     }
 
     /**
      * Generic function for running analysis, called by all others.
-     * @param type   : Type of analysis to be ran:
+     * @param func   : Type of analysis to be ran:
      *                   * 0 : perturbatory shifts.
      *                   * 1 : dc sector vs strip.
      *                   * 2 : dc sector vs theta.
      *                   * 3 : fmt regions plot.
      * @param opt    : Variable used in different manners by different types:
-     *                   * type=0 : canvass index (ci).
-     *                   * type=1 : number of DC sectors (sn).
-     *                   * type=2 : number of DC sectors (sn).
-     *                   * type=3 : unused.
+     *                   * func=0 : canvass index (ci).
+     *                   * func=1 : number of DC sectors (sn).
+     *                   * func=2 : number of DC sectors (sn).
+     *                   * func=3 : unused.
      * @param swim   : TrkSwim class instance.
      * @param fcuts  : FiducialCuts class instance.
      * @param dgFMT  : Array of data groups where analysis data is stored.
      * @param g      : Range for the gaussian fit.
      * @return status int.
      */
-    private int runAnalysis(int type, int opt, TrkSwim swim, FiducialCuts fcuts,
+    private int runAnalysis(int func, int opt, TrkSwim swim, FiducialCuts fcuts,
             DataGroup[] dgFMT, int g) {
         // Sanitize input.
-        if (type < 0 || type > 3) return 1;
+        if (func < 0 || func > 3) return 1;
 
         // Print the shifts applied:
         if (debugInfo) {
@@ -221,9 +221,9 @@ public class ResolutionAnalysis {
 
                     // Update plots depending on type of analysis.
                     int plti = -1;
-                    if (type == 0) plti = opt;
-                    if (type == 1 || type == 2) plti = si;
-                    if (type == 3) {
+                    if (func == 0) plti = opt;
+                    if (func == 1 || func == 2) plti = si;
+                    if (func == 3) {
                         for (int ri=0; ri<=rn; ++ri) {
                             if (iStripArr[ri]+1 <= strip
                                     && strip <= iStripArr[ri+1]) {
@@ -237,10 +237,10 @@ public class ResolutionAnalysis {
 
                     dgFMT[plti].getH1F("hi_cluster_res_l"+li)
                             .fill(yLoc - yclus);
-                    if (type == 0 || type == 1)
+                    if (func == 0 || func == 1)
                         dgFMT[plti].getH2F("hi_cluster_res_strip_l"+li)
                                 .fill(yLoc - yclus, strip);
-                    if (type == 2)
+                    if (func == 2)
                         dgFMT[plti].getH2F("hi_cluster_res_theta_l"+li)
                                 .fill(yLoc - yclus, costh);
                 }
@@ -252,14 +252,13 @@ public class ResolutionAnalysis {
         if (debugInfo) fcuts.printCutsInfo();
 
         // Fit residual plots
-        if (type == 0) {
+        if (func == 0) {
             for (int li=1; li<=ln; ++li) {
                 Data.fitRes(dgFMT[opt].getH1F("hi_cluster_res_l"+li),
                         dgFMT[opt].getF1D("f1_res_l"+li), g);
             }
         }
-        else if (type == 1 || type == 2) {
-            // Fit residual plots
+        else if (func == 1 || func == 2) {
             for (int si=0; si<opt; ++si) {
                 for (int li=1; li<=ln; ++li) {
                     Data.fitRes(dgFMT[si].getH1F("hi_cluster_res_l"+li),
@@ -267,27 +266,6 @@ public class ResolutionAnalysis {
                 }
             }
         }
-
-        return 0;
-    }
-
-    /**
-     * Run analysis and draw a different plot for each FMT region.
-     * @param r     : Residuals range in plots.
-     * @param swim  : TrkSwim class instance.
-     * @param fcuts : FiducialCuts class instance.
-     * @return status int.
-     */
-    public int fmtRegionAnalysis(int r, TrkSwim swim, FiducialCuts fcuts) {
-        int type = 3;
-        // Set canvases' stuff.
-        String title = "FMT regions";
-        DataGroup[] dgFMT = Data.createFMTRegionsDataGroup(ln, rn, iStripArr, r);
-
-        // Run.
-        runAnalysis(type, swim, fcuts, dgFMT);
-        if (debugInfo) fcuts.printCutsInfo();
-        Data.drawPlots(dgFMT, title);
 
         return 0;
     }
@@ -311,14 +289,14 @@ public class ResolutionAnalysis {
     public int shiftAnalysis(int lyr, int var, double[] inShArr, int r, int g,
             TrkSwim swim, FiducialCuts fcuts) {
 
-        int type = 0;
+        int func = 0;
         // Setup.
         int cn = inShArr.length;
         String[] titleArr = new String[cn];
         for (int ci=0; ci < cn; ++ci)
             titleArr[ci] = "shift ["+lyr+","+var+"] : "+inShArr[ci];
 
-        DataGroup[] dgFMT = Data.createResDataGroups(type, ln, cn, r);
+        DataGroup[] dgFMT = Data.createResDataGroups(func, ln, cn, r);
 
         double[][] meanArr     = new double[ln][cn];
         double[][] meanErrArr  = new double[ln][cn];
@@ -329,15 +307,15 @@ public class ResolutionAnalysis {
         double origVal = shArr[lyr][var];
         for (int ci=0; ci<cn; ++ci) {
             shArr[lyr][var] = origVal + inShArr[ci];
-            runAnalysis(type, ci, swim, fcuts, dgFMT, g);
+            runAnalysis(func, ci, swim, fcuts, dgFMT, g);
 
             // Get mean and sigma from fit.
             for (int li=0; li<ln; ++li) {
-                F1D func = dgFMT[ci].getF1D("f1_res_l"+(li+1));
-                meanArr[li][ci]     = func.getParameter(1);
-                meanErrArr[li][ci]  = func.parameter(1).error();
-                sigmaArr[li][ci]    = func.getParameter(2);
-                sigmaErrArr[li][ci] = func.parameter(2).error();
+                F1D gss = dgFMT[ci].getF1D("f1_res_l"+(li+1));
+                meanArr[li][ci]     = gss.getParameter(1);
+                meanErrArr[li][ci]  = gss.parameter(1).error();
+                sigmaArr[li][ci]    = gss.getParameter(2);
+                sigmaErrArr[li][ci] = gss.parameter(2).error();
             }
         }
 
@@ -370,13 +348,13 @@ public class ResolutionAnalysis {
     public int dcSectorStripAnalysis(int r, int g, TrkSwim swim,
             FiducialCuts fcuts) {
 
-        int type = 1;
+        int func = 1;
         String[] titleArr = new String[sn];
         for (int si=0; si < sn; ++si) titleArr[si] = "DC sector "+(si+1);
 
         // Run.
-        DataGroup[] dgFMT = Data.createResDataGroups(type, ln, sn, r);
-        runAnalysis(type, sn, swim, fcuts, dgFMT, g);
+        DataGroup[] dgFMT = Data.createResDataGroups(func, ln, sn, r);
+        runAnalysis(func, sn, swim, fcuts, dgFMT, g);
         Data.drawResPlots(dgFMT, sn, titleArr, pltLArr);
 
         return 0;
@@ -393,14 +371,35 @@ public class ResolutionAnalysis {
     public int dcSectorThetaAnalysis(int r, int g, TrkSwim swim,
             FiducialCuts fcuts) {
 
-        int type = 2;
+        int func = 2;
         String[] titleArr = new String[sn];
         for (int si=0; si < sn; ++si) titleArr[si] = "DC sector " + (si+1);
 
         // Run.
-        DataGroup[] dgFMT = Data.createResDataGroups(type, ln, sn, r);
-        runAnalysis(type, sn, swim, fcuts, dgFMT, g);
+        DataGroup[] dgFMT = Data.createResDataGroups(func, ln, sn, r);
+        runAnalysis(func, sn, swim, fcuts, dgFMT, g);
         Data.drawResPlots(dgFMT, sn, titleArr, pltLArr);
+
+        return 0;
+    }
+
+    /**
+     * Run analysis and draw a different plot for each FMT region.
+     * @param r     : Residuals range in plots.
+     * @param swim  : TrkSwim class instance.
+     * @param fcuts : FiducialCuts class instance.
+     * @return status int.
+     */
+    public int fmtRegionAnalysis(int r, TrkSwim swim, FiducialCuts fcuts) {
+        int func = 3;
+        // Set canvases' stuff.
+        String title = "FMT regions";
+        DataGroup[] dgFMT = Data.createFMTRegionsDataGroup(ln, rn, iStripArr, r);
+
+        // Run.
+        runAnalysis(func, swim, fcuts, dgFMT);
+        if (debugInfo) fcuts.printCutsInfo();
+        Data.drawPlots(dgFMT, title);
 
         return 0;
     }
@@ -410,16 +409,18 @@ public class ResolutionAnalysis {
      * @param var : Variable to be counted:
      *                * 0 : clusters' Tmin.
      *                * 1 : clusters' energy.
+     *                * 2 : tracks' z.
      * @param r   : Range for the plot (min = 0, max = r).
      * @return status int.
      */
     public int plot1DCount(int var, int r) {
         // Sanitize input.
-        if (var < 0 || var > 1) return 0;
+        if (var < 0 || var > 2) return 0;
 
         String title = null;
         if (var == 0) title = "Tmin count";
         if (var == 1) title = "energy count";
+        if (var == 2) title = "track z";
 
         DataGroup[] dgFMT = Data.create1DDataGroup(var, ln, r);
 
@@ -439,21 +440,44 @@ public class ResolutionAnalysis {
             // Get relevant data banks.
             DataBank clusters = Data.getBank(event, "FMTRec::Clusters");
             DataBank traj     = Data.getBank(event, "REC::Traj");
-            if (clusters==null || traj==null) continue;
+            DataBank particle = Data.getBank(event, "REC::Particle");
+            if (clusters==null || traj==null || particle==null) continue;
 
-            for (int ri=0; ri<clusters.rows(); ++ri) {
-                int li        = clusters.getByte("layer", ri);
-                double energy = clusters.getFloat("ETot", ri);
-                double tmin   = clusters.getFloat("Tmin", ri);
+            if (var == 0 || var == 1) {
+                for (int ri=0; ri<clusters.rows(); ++ri) {
+                    int li        = clusters.getByte("layer", ri);
+                    double energy = clusters.getFloat("ETot", ri);
+                    double tmin   = clusters.getFloat("Tmin", ri);
 
-                if (var==0) dgFMT[0].getH1F("hi_cluster_var"+li).fill(tmin);
-                if (var==1) dgFMT[0].getH1F("hi_cluster_var"+li).fill(energy);
+                    if (var==0) dgFMT[0].getH1F("hi_cluster_var"+li).fill(tmin);
+                    if (var==1) dgFMT[0].getH1F("hi_cluster_var"+li).fill(energy);
+                }
+            }
+            if (var == 2) {
+                for (int tri=0; tri<traj.rows(); tri++) {
+                    int detector = traj.getByte("detector", tri);
+                    int li = traj.getByte("layer", tri);
+                    int pi = traj.getShort("pindex", tri);
+                    // Use only FMT layers 1, 2, and 3.
+                    if (detector!=DetectorType.FMT.getDetectorId() || li<1 || li>ln)
+                        continue;
+
+                    // Get particle data.
+                    double z  = (double) particle.getFloat("vz", pi);
+
+                    dgFMT[0].getH1F("hi_track_var").fill(z);
+                }
             }
         }
         System.out.format("Analyzed %8d events... Done!\n", ei);
         reader.close();
 
-        Data.drawPlots(dgFMT, title);
+        if (var == 0 || var == 1) Data.drawPlots(dgFMT, title);
+        if (var == 2) {
+            // Apply z shifts and draw plots.
+            for (int li=0; li<ln; ++li) fmtZ[li] += shArr[0][0] + shArr[li+1][0];
+            Data.drawZPlots(dgFMT, title, fmtZ);
+        }
 
         return 0;
     }
