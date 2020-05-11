@@ -133,17 +133,17 @@ public class ResolutionAnalysis {
 
         // Loop through events.
         while (reader.hasEvent()) {
-            if (testRun && ei == 10000) break;
+            if (testRun && ei == 20) break;
             if (ei%50000==0) System.out.format("Analyzed %8d events...\n", ei);
             DataEvent event = reader.getNextEvent();
             ei++;
 
             // Get relevant data banks.
-            DataBank clusters = Data.getBank(event, "FMTRec::Clusters");
+            DataBank cluster  = Data.getBank(event, "FMTRec::Clusters");
             DataBank traj     = Data.getBank(event, "REC::Traj");
             DataBank particle = Data.getBank(event, "REC::Particle");
             DataBank track    = Data.getBank(event, "REC::Track");
-            if (clusters==null || traj==null || particle==null || track==null)
+            if (cluster==null || traj==null || particle==null || track==null)
                 continue;
 
             // Loop through trajectory points.
@@ -205,15 +205,16 @@ public class ResolutionAnalysis {
 
                 // Loop over the clusters and calculate residuals for every
                 // track-cluster combination.
-                for (int cri=0; cri<clusters.rows(); cri++) {
+                System.out.printf("track %d - #clusters = %d\n", li, cluster.rows());
+                for (int cri=0; cri<cluster.rows(); cri++) {
                     // Check that the cluster and trajectory layers match.
-                    if (li!=clusters.getByte("layer", cri)) continue;
+                    if (li!=cluster.getByte("layer", cri)) continue;
                     fcuts.increaseClusterCount();
-                    int strip     = clusters.getInt("seedStrip", cri);
-                    int size      = clusters.getShort("size", cri);
-                    double energy = clusters.getFloat("ETot", cri);
-                    double tmin   = clusters.getFloat("Tmin", cri);
-                    double yclus  = clusters.getFloat("centroid", cri);
+                    int strip     = cluster.getInt("seedStrip", cri);
+                    int size      = cluster.getShort("size", cri);
+                    double energy = cluster.getFloat("ETot", cri);
+                    double tmin   = cluster.getFloat("Tmin", cri);
+                    double yclus  = cluster.getFloat("centroid", cri);
 
                     // Apply cluster fiducial cuts.
                     if (fcuts.checkClusterCuts(strip, size, energy, tmin))
