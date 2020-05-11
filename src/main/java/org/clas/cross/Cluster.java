@@ -23,11 +23,19 @@ public class Cluster {
     public double get_y() {return y;}
     public double get_tMin() {return tMin;}
 
+    /**
+     * Get clusters from event bank.
+     * @param event Event in question.
+     * @param fcuts FiducialCuts class instance.
+     * @return an arraylist of clusters for each FMT layer.
+     */
     public static ArrayList<Cluster>[] getClusters(DataEvent event, FiducialCuts fcuts) {
         // Get data bank.
         DataBank clBank  = Data.getBank(event, "FMTRec::Clusters");
         if (clBank==null) return null;
 
+        // NOTE: Here it's assumed that there are 3 FMT layers. Needs to be fixed if working with
+        //       the full detector.
         ArrayList[] clusters = new ArrayList[]{
                 new ArrayList<Cluster>(), new ArrayList<Cluster>(), new ArrayList<Cluster>()};
 
