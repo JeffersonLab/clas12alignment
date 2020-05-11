@@ -19,7 +19,7 @@ public class TrajPoint {
     private double y;   // y position in the layer's local coordinate system.
 
     /** Constructor. */
-    public TrajPoint(int _fmtLyr, int _dcSec, double _z, double _x, double _y) {
+    private TrajPoint(int _fmtLyr, int _dcSec, double _z, double _x, double _y) {
         this.fmtLyr = _fmtLyr;
         this.dcSec  = _dcSec;
         this.z      = _z;
@@ -122,7 +122,7 @@ public class TrajPoint {
             double yLoc = y * Math.cos(Math.toRadians(phiRef))
                     - x * Math.sin(Math.toRadians(phiRef));
 
-            trajPoints.get(trajPoints.size()-1)[li] = new TrajPoint(li+1, si+1, z, xLoc, yLoc);
+            trajPoints.get(trajPoints.size()-1)[li] = new TrajPoint(li, si, z, xLoc, yLoc);
         }
 
         // Clean trios.
