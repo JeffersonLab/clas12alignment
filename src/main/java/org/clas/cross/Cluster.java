@@ -10,16 +10,19 @@ import org.jlab.io.hipo.HipoDataSource;
 public class Cluster {
     // Cluster data:
     private int fmtLyr;  // FMT layer.
+    private int strip;   // FMT strip.
     private double y;    // y position in the layer's local coordinate system.
     private double tMin; // Minimum time information among the cluster's hits.
 
-    private Cluster(int _fmtLyr, double _y, double _tMin) {
-        this.fmtLyr = _fmtLyr;
-        this.y      = _y;
-        this.tMin   = _tMin;
+    private Cluster(int _fmtLyr, int _strip, double _y, double _tMin) {
+        this.fmtLyr   = _fmtLyr;
+        this.strip    = _strip;
+        this.y        = _y;
+        this.tMin     = _tMin;
     }
 
     public int get_fmtLyr() {return fmtLyr;}
+    public int get_strip() {return strip;}
     public double get_y() {return y;}
     public double get_tMin() {return tMin;}
 
@@ -51,7 +54,7 @@ public class Cluster {
             // Apply cluster fiducial cuts.
             if (fcuts.checkClusterCuts(strip, size, energy, tMin)) continue;
 
-            clusters[li].add(new Cluster(li, y, tMin));
+            clusters[li].add(new Cluster(li, strip, y, tMin));
         }
 
         return clusters;
@@ -59,7 +62,7 @@ public class Cluster {
 
     /** Class tester. */
     public static void main(String[] args) {
-        boolean debug = false;
+        boolean debug = true;
         FiducialCuts fCuts = new FiducialCuts();
 
         int ei = 0; // Event number.

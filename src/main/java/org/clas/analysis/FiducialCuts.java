@@ -1,22 +1,35 @@
 package org.clas.analysis;
 
 public class FiducialCuts {
-    int[] tsc; // cut tracks counter.
-    int[] csc; // cut clusters counter.
+    // track-cluster matching constants:
+    private static final double dx    = 3;  // Maximum x distance permitted.
+    private static final double dy    = 3;  // Maximum y distance permitted.
+    private static final double dtmin = 40; // Maximum Tmin permitted. TODO: Also try 60.
+
+    // class variables:
+    int[] trsc; // cut trajectory points counter.
+    int[] clsc; // cut clusters counter.
+    int[] crsc; // cut crosses counter.
 
     public FiducialCuts() {
-        tsc = new int[]{0, 0, 0, 0, 0, 0};
-        csc = new int[]{0, 0, 0, 0, 0};
+        trsc = new int[]{0, 0, 0, 0, 0};
+        clsc = new int[]{0, 0, 0, 0, 0};
+        crsc = new int[]{0, 0, 0, 0};
     }
 
-    /** Increase the total number of tracks processed by 1. */
-    public void increaseTrackCount() {
-        tsc[0]++;
+    /** Increase the total number of trajectory points processed by 1. */
+    public void increaseTrajCount() {
+        trsc[0]++;
     }
 
     /** Increase the total number of clusters processed by 1. */
     public void increaseClusterCount() {
-        csc[0]++;
+        clsc[0]++;
+    }
+
+    /** Increase the total number of crosses processed by 1. */
+    public void increaseCrossCount(int amnt) {
+        crsc[0] += amnt;
     }
 
     /**
@@ -27,7 +40,7 @@ public class FiducialCuts {
      */
     public boolean downstreamTrackCheck(double trkZ, double lyrZ) {
         if (trkZ > lyrZ) {
-            tsc[1]++;
+            trsc[1]++;
             return true;
         }
 
@@ -35,9 +48,8 @@ public class FiducialCuts {
     }
 
     /**
-     * Check if a track needs to be cut by z, x, y, or its theta angle. Tracks
-     * that need to be cut due to the delta Tmin between clusters are processed
-     * by another method due to its complexity.
+     * Check if a track needs to be cut by z, x, y, or its theta angle. Tracks that need to be cut
+     * due to the delta Tmin between clusters are processed by another method due to its complexity.
      * @param z     : track's z coordinate at FMT layer.
      * @param x     : track's x coordinate at FMT layer.
      * @param y     : track's y coordinate at FMT layer
@@ -46,19 +58,19 @@ public class FiducialCuts {
      * @param sc    : track error counter, used for debugging.
      * @return true if the track is to be cut, false otherwise.
      */
-    public boolean checkTrackCuts(double z, double x, double y, double zRef,
+    public boolean checkTrajCuts(double z, double x, double y, double zRef,
             double costh) {
 
         if (Math.abs(z-zRef)>0.05) {
-            tsc[2]++;
+            trsc[2]++;
             return true;
         }
         if (25.0 > x*x + y*y || x*x + y*y > 225.0) {
-            tsc[3]++;
+            trsc[3]++;
             return true;
         }
         if (costh>0.4) {
-            tsc[4]++;
+            trsc[4]++;
             return true;
         }
 
@@ -66,8 +78,7 @@ public class FiducialCuts {
     }
 
     /**
-     * Check if a cluster needs to be cut by its seed strip, size, energy, or
-     * Tmin.
+     * Check if a cluster needs to be cut by its seed strip, size, energy, or Tmin.
      * @param strip : seed strip of the cluster.
      * @param size  : cluster's size.
      * @param E     : cluster's total energy.
@@ -79,57 +90,119 @@ public class FiducialCuts {
             double Tmin) {
 
         if (strip<0 || strip>1023) {
-            csc[1]++;
+            clsc[1]++;
             return true;
         }
         if (Tmin < 50 || Tmin > 500) {
-            csc[2]++;
+            clsc[2]++;
             return true;
         }
         if (size == 1 && E < 100) {
-            csc[3]++;
+            clsc[3]++;
             return true;
         }
         if (size >= 5) {
-            csc[4]++;
+            clsc[4]++;
             return true;
         }
 
         return false;
     }
 
+    /**
+     * Check if a cross needs to be cut due to a cluster being too far from the trajectory points in
+     * its same FMT layer in the x coordinate. Hasn't been implemented yet.
+     * @param traj_x : trajectory point x position.
+     * @param strip  : cluster seed strip.
+     * @return true if the cross is to be cut, false otherwise.
+     */
+    public boolean checkCrossDeltaX(double traj_x, int strip) {
+        // Obtain cluster x coordinate from strip.
+        double clus_x = -1;
+
+        // Compare x coordinates.
+        if (Math.abs(traj_x-clus_x)>=dx) {
+            crsc[1]++;
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a cross needs to be cut due to a cluster being too far from the trajectory points in
+     * its same FMT layer in the y coordinate.
+     * @param traj_y : trajectory point y position.
+     * @param clus_y : cluster y position.
+     * @return true if the cross is to be cut, false otherwise.
+     */
+    public boolean checkCrossDeltaY(double traj_y, double clus_y) {
+        if (Math.abs(traj_y-clus_y)>=dy) {
+            crsc[2]++;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if a cross needs to be cut due to two clusters' Tmin being too far.
+     * @param c0tmin : cluster 0 Tmin.
+     * @param c1tmin : cluster 1 Tmin.
+     * @param c2tmin : cluster 2 Tmin.
+     * @return true if the cross is to be cut, false otherwise.
+     */
+    public boolean checkCrossDeltaTmin(double c0tmin, double c1tmin, double c2tmin) {
+        // TODO: Attempt switching these tmins around, looks odd to me.
+        if (c0tmin - c1tmin >= dtmin || c1tmin - c2tmin >= dtmin) {
+        // if (c1tmin - c0tmin >= dtmin || c2tmin - c1tmin >= dtmin) {
+            crsc[3]++;
+            return true;
+        }
+        return false;
+    }
+
     /** Print applied cuts information. */
     public void printCutsInfo() {
-        int tscsum = tsc[1] + tsc[2] + tsc[3] + tsc[4] + tsc[5];
-        int cscsum = csc[1] + csc[2] + csc[3] + csc[4];
+        int trscsum = trsc[1] + trsc[2] + trsc[3] + trsc[4];
+        int clscsum = clsc[1] + clsc[2] + clsc[3] + clsc[4];
+        int crscsum = crsc[1] + crsc[2] + crsc[3];
         System.out.printf("\n");
-        System.out.printf("           tracks too downstream │ %8d (%5.2f%%)   │\n",
-                tsc[1], 100*((double)tsc[1])/tsc[0]);
-        System.out.printf("             tracks too upstream │ %8d (%5.2f%%)   │\n",
-                tsc[2], 100*((double)tsc[2])/tsc[0]);
-        System.out.printf("     tracks in layer's bad areas │ %8d (%5.2f%%)   │\n",
-                tsc[3], 100*((double)tsc[3])/tsc[0]);
-        System.out.printf("     tracks with theta too large │ %8d (%5.2f%%)   │\n",
-                tsc[4], 100*((double)tsc[4])/tsc[0]);
-        System.out.printf(" tracks' with inconsistent Tmins │ %8d (%5.2f%%)   │\n",
-                tsc[5], 100*((double)tsc[5])/tsc[0]);
-        System.out.printf("            TOTAL TRACKS DROPPED │ %8d / %8d │\n",
-                tscsum, tsc[0]);
+        System.out.printf("            trajs too downstream │ %8d (%5.2f%%)   │\n",
+                trsc[1], 100*((double)trsc[1])/trsc[0]);
+        System.out.printf("              trajs too upstream │ %8d (%5.2f%%)   │\n",
+                trsc[2], 100*((double)trsc[2])/trsc[0]);
+        System.out.printf("      trajs in layer's bad areas │ %8d (%5.2f%%)   │\n",
+                trsc[3], 100*((double)trsc[3])/trsc[0]);
+        System.out.printf("      trajs with theta too large │ %8d (%5.2f%%)   │\n",
+                trsc[4], 100*((double)trsc[4])/trsc[0]);
+        System.out.printf("             TOTAL TRAJS DROPPED │ %8d / %8d │\n",
+                trscsum, trsc[0]);
         System.out.printf("                               %% │ %5.2f%%              │\n",
-                100*((double)tscsum)/tsc[0]);
+                100*((double)trscsum)/trsc[0]);
         System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
         System.out.printf("clusters with wrong strip number │ %8d (%5.2f%%)   │\n",
-                csc[1], 100*((double)csc[1])/csc[0]);
+                clsc[1], 100*((double)clsc[1])/clsc[0]);
         System.out.printf(" clusters with inappropiate Tmin │ %8d (%5.2f%%)   │\n",
-                csc[2], 100*((double)csc[2])/csc[0]);
+                clsc[2], 100*((double)clsc[2])/clsc[0]);
         System.out.printf("  small clusters with low energy │ %8d (%5.2f%%)   │\n",
-                csc[3], 100*((double)csc[3])/csc[0]);
+                clsc[3], 100*((double)clsc[3])/clsc[0]);
         System.out.printf("                clusters too big │ %8d (%5.2f%%)   │\n",
-                csc[4], 100*((double)csc[4])/csc[0]);
+                clsc[4], 100*((double)clsc[4])/clsc[0]);
         System.out.printf("          TOTAL CLUSTERS DROPPED │ %8d / %8d │\n",
-                cscsum, csc[0]);
+                clscsum, clsc[0]);
         System.out.printf("                               %% │ %5.2f%%              │\n",
-                100*((double)cscsum)/csc[0]);
+                100*((double)clscsum)/clsc[0]);
+        System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
+        System.out.printf(" cluster x too distant to traj x | %8d (%5.2f%%)   |\n",
+                crsc[1], 100*((double)crsc[1])/crsc[0]);
+        System.out.printf(" cluster y too distant to traj y | %8d (%5.2f%%)   |\n",
+                crsc[2], 100*((double)crsc[2])/crsc[0]);
+        System.out.printf("   clusters with large tmin diff | %8d (%5.2f%%)   |\n",
+                crsc[3], 100*((double)crsc[3])/crsc[0]);
+        System.out.printf("           TOTAL CROSSES DROPPED | %8d / %8d |\n",
+                crscsum, crsc[0]);
+        System.out.printf("                               %% | %5.2f%%              │\n",
+                100*((double)crscsum)/crsc[0]);
         System.out.printf("─────────────────────────────────┴─────────────────────┘\n");
     }
 }

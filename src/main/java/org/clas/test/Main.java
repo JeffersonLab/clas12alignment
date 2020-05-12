@@ -30,10 +30,10 @@ public class Main {
         boolean[] pltLArr = new boolean[]{true, true, false, false};
         double[] swmSetup = new double[]{-0.75, -1.0, -3.0};
 
-        int pltRan        = 10;    // Plotting range.
-        int gssRan        = 8;     // Fitting range.
+        int pltRan        = 5;    // Plotting range.
+        int gssRan        = 3;     // Fitting range.
         boolean dbgInfo   = true;  // Debugging info.
-        boolean testRun   = true; // Shorten run for testing.
+        boolean testRun   = false; // Shorten run for testing.
 
         // Shifts to be applied (best guess so far).
         double[][] shArr = new double[][]{

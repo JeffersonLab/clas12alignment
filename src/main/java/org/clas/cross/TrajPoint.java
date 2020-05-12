@@ -12,19 +12,21 @@ import org.jlab.io.hipo.HipoDataSource;
 
 public class TrajPoint {
     // Trajectory point data:
-    private int fmtLyr; // FMT layer.
-    private int dcSec;  // DC sector.
-    private double z;   // z position.
-    private double x;   // x position in the layer's local coordinate system.
-    private double y;   // y position in the layer's local coordinate system.
+    private int fmtLyr;   // FMT layer.
+    private int dcSec;    // DC sector.
+    private double z;     // z position.
+    private double x;     // x position in the layer's local coordinate system.
+    private double y;     // y position in the layer's local coordinate system.
+    private double cosTh; // cos theta of the trajectory's angle.
 
     /** Constructor. */
-    private TrajPoint(int _fmtLyr, int _dcSec, double _z, double _x, double _y) {
+    private TrajPoint(int _fmtLyr, int _dcSec, double _z, double _x, double _y, double _cosTh) {
         this.fmtLyr = _fmtLyr;
         this.dcSec  = _dcSec;
         this.z      = _z;
         this.x      = _x;
         this.y      = _y;
+        this.cosTh  = _cosTh;
     }
 
     public int get_fmtLyr() {return fmtLyr;}
@@ -32,6 +34,7 @@ public class TrajPoint {
     public double get_z() {return z;}
     public double get_x() {return x;}
     public double get_y() {return y;}
+    public double get_cosTh() {return cosTh;}
 
     /**
      * Get trajectory points from event bank.
@@ -80,7 +83,7 @@ public class TrajPoint {
             // Bank integrity is being assumed in this line.
             if (li == 0) trajPoints.add(new TrajPoint[]{null, null, null});
 
-            fcuts.increaseTrackCount();
+            fcuts.increaseTrajCount();
 
             // Get DC sector of the track.
             for (int trki = 0; trki<trkBank.rows(); ++trki) {
@@ -114,7 +117,7 @@ public class TrajPoint {
             costh = Math.acos(pz/Math.sqrt(px*px+py*py+pz*pz));
 
             // Apply track fiducial cuts.
-            if (fcuts.checkTrackCuts(z, x, y, zRef, costh)) continue;
+            if (fcuts.checkTrajCuts(z, x, y, zRef, costh)) continue;
 
             // Rotate (x,y) to FMT's local coordinate system.
             double xLoc = x * Math.cos(Math.toRadians(phiRef))
@@ -122,7 +125,7 @@ public class TrajPoint {
             double yLoc = y * Math.cos(Math.toRadians(phiRef))
                     - x * Math.sin(Math.toRadians(phiRef));
 
-            trajPoints.get(trajPoints.size()-1)[li] = new TrajPoint(li, si, z, xLoc, yLoc);
+            trajPoints.get(trajPoints.size()-1)[li] = new TrajPoint(li, si, z, xLoc, yLoc, costh);
         }
 
         // Clean trios.
