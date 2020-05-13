@@ -9,30 +9,35 @@ import org.jlab.io.hipo.HipoDataSource;
 
 public class Cluster {
     // Cluster data:
-    private int fmtLyr;  // FMT layer.
-    private int strip;   // FMT strip.
-    private double y;    // y position in the layer's local coordinate system.
-    private double tMin; // Minimum time information among the cluster's hits.
+    private int fmtLyr;    // FMT layer.
+    private int strip;     // FMT strip.
+    private double y;      // y position in the layer's local coordinate system.
+    private double tMin;   // Minimum time information among the cluster's hits.
+    private double energy; // Total energy of the strips in the cluster.
 
-    private Cluster(int _fmtLyr, int _strip, double _y, double _tMin) {
+    private Cluster(int _fmtLyr, int _strip, double _y, double _tMin, double _energy) {
         this.fmtLyr   = _fmtLyr;
         this.strip    = _strip;
         this.y        = _y;
         this.tMin     = _tMin;
+        this.energy   = _energy;
     }
 
     public int get_fmtLyr() {return fmtLyr;}
     public int get_strip() {return strip;}
     public double get_y() {return y;}
     public double get_tMin() {return tMin;}
+    public double get_energy() {return energy;}
 
     /**
      * Get clusters from event bank.
-     * @param event Event in question.
-     * @param fcuts FiducialCuts class instance.
+     * @param event     Event in question.
+     * @param fcuts     FiducialCuts class instance.
+     * @param applyCuts Boolean to decide if fiducial cuts should be applied or not.
      * @return an arraylist of clusters for each FMT layer.
      */
-    public static ArrayList<Cluster>[] getClusters(DataEvent event, FiducialCuts fcuts) {
+    public static ArrayList<Cluster>[] getClusters(DataEvent event, FiducialCuts fcuts,
+            boolean applyCuts) {
         // Get data bank.
         DataBank clBank  = Data.getBank(event, "FMTRec::Clusters");
         if (clBank==null) return null;
@@ -52,13 +57,24 @@ public class Cluster {
             double y      = clBank.getFloat("centroid", cri);
 
             // Apply cluster fiducial cuts.
-            if (fcuts.checkClusterCuts(strip, size, energy, tMin)) continue;
+            if (applyCuts && fcuts.checkClusterCuts(strip, size, energy, tMin)) continue;
 
-            clusters[li].add(new Cluster(li, strip, y, tMin));
+            clusters[li].add(new Cluster(li, strip, y, tMin, energy));
         }
 
         return clusters;
     }
+
+    /** Print cluster's info for debugging. */
+    public void printInfo() {
+        System.out.printf("Cluster info:\n");
+        System.out.printf("  FMT layer    : %d\n", get_fmtLyr());
+        System.out.printf("  seed strip   : %d\n", get_strip());
+        System.out.printf("  y            : %.2f\n", get_y());
+        System.out.printf("  t_min        : %.2f\n", get_tMin());
+        System.out.printf("  total energy : %.2f\n", get_energy());
+    }
+
 
     /** Class tester. */
     public static void main(String[] args) {
@@ -79,7 +95,7 @@ public class Cluster {
             DataEvent event = reader.getNextEvent();
             clusCnt[3]++;
 
-            ArrayList<Cluster>[] clusters = getClusters(event, fCuts);
+            ArrayList<Cluster>[] clusters = getClusters(event, fCuts, true);
 
             if (clusters == null) continue;
             clusCnt[0] += clusters[0].size();

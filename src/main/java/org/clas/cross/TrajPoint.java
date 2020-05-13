@@ -51,7 +51,7 @@ public class TrajPoint {
      */
     public static ArrayList<TrajPoint[]> getTrajPoints(DataEvent event, Constants constants,
             TrkSwim swim, FiducialCuts fcuts, double[] fmtZ, double[] fmtAngle, double[][] shArr,
-            int minTrjPoints) {
+            int minTrjPoints, boolean applyCuts) {
         // Sanitize input.
         if (minTrjPoints < 1 || minTrjPoints > 3) {
             System.err.printf("minTrjPoints should be at least 1 and at most 3!\n");
@@ -103,7 +103,7 @@ public class TrajPoint {
             double pz = (double) ptcBank.getFloat("pz", pi);
             int q     = (int)    ptcBank.getByte("charge", pi);
 
-            if (fcuts.downstreamTrackCheck(z, zRef)) continue;
+            if (applyCuts && fcuts.downstreamTrackCheck(z, zRef)) continue;
             double[] V = swim.swimToPlane(x,y,z,px,py,pz,q,zRef);
 
             x  = V[0];
@@ -117,7 +117,7 @@ public class TrajPoint {
             costh = Math.acos(pz/Math.sqrt(px*px+py*py+pz*pz));
 
             // Apply track fiducial cuts.
-            if (fcuts.checkTrajCuts(z, x, y, zRef, costh)) continue;
+            if (applyCuts && fcuts.checkTrajCuts(z, x, y, zRef, costh)) continue;
 
             // Rotate (x,y) to FMT's local coordinate system.
             double xLoc = x * Math.cos(Math.toRadians(phiRef))
@@ -193,7 +193,7 @@ public class TrajPoint {
             trjCnt[1]++;
 
             ArrayList<TrajPoint[]> trajPoints = getTrajPoints(event, constants, trkSwim, fCuts,
-                    fmtZ, fmtAngle, shArr, 3);
+                    fmtZ, fmtAngle, shArr, 3, true);
 
             if (trajPoints == null) continue;
             trjCnt[0] += trajPoints.size();

@@ -136,8 +136,8 @@ public class Cross {
             crossCnt[1]++;
 
             ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(event, constants, trkSwim,
-                    fcuts, fmtZ, fmtAngle, shArr, 3);
-            ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts);
+                    fcuts, fmtZ, fmtAngle, shArr, 3, true);
+            ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, true);
 
             if (trajPoints==null || clusters==null) continue;
 

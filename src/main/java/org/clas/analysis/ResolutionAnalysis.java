@@ -134,8 +134,8 @@ public class ResolutionAnalysis {
             ei++;
 
             ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(event, constants, swim,
-                    fcuts, fmtZ, fmtAngle, shArr, 3);
-            ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts);
+                    fcuts, fmtZ, fmtAngle, shArr, 3, true);
+            ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, true);
 
             if (trajPoints==null || clusters==null) continue;
 
@@ -146,9 +146,9 @@ public class ResolutionAnalysis {
                 // Loop through trajectory points, clusters, and residuals in the cross.
                 for (int ci=0; ci<cross.size(); ++ci) {
                     // Get necessary data
-                    int li    = cross.getc(ci).get_fmtLyr();
-                    int si    = cross.gett(ci).get_dcSec();
-                    int strip = cross.getc(ci).get_strip();
+                    int li       = cross.getc(ci).get_fmtLyr();
+                    int si       = cross.gett(ci).get_dcSec();
+                    int strip    = cross.getc(ci).get_strip();
                     double costh = cross.gett(ci).get_cosTh();
 
                     // Setup plots
@@ -349,6 +349,8 @@ public class ResolutionAnalysis {
         // Sanitize input.
         if (var < 0 || var > 2) return 0;
 
+        FiducialCuts fcuts = new FiducialCuts();
+
         String title = null;
         if (var == 0) title = "Tmin count";
         if (var == 1) title = "energy count";
@@ -364,28 +366,27 @@ public class ResolutionAnalysis {
 
         // Loop through events.
         while (reader.hasEvent()) {
-            if (ei == 10000 && testRun) break;
+            if (ei == 5 && testRun) break;
             if (ei%50000==0) System.out.format("Analyzed %8d events...\n", ei);
             DataEvent event = reader.getNextEvent();
             ei++;
 
-            // Get relevant data banks.
-            DataBank clusters = Data.getBank(event, "FMTRec::Clusters");
-            DataBank traj     = Data.getBank(event, "REC::Traj");
-            DataBank particle = Data.getBank(event, "REC::Particle");
-            if (clusters==null || traj==null || particle==null) continue;
-
             if (var == 0 || var == 1) {
-                for (int ri=0; ri<clusters.rows(); ++ri) {
-                    int li        = clusters.getByte("layer", ri);
-                    double energy = clusters.getFloat("ETot", ri);
-                    double tmin   = clusters.getFloat("Tmin", ri);
-
-                    if (var==0) dgFMT[0].getH1F("hi_cluster_var"+li).fill(tmin);
-                    if (var==1) dgFMT[0].getH1F("hi_cluster_var"+li).fill(energy);
+                ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, false);
+                if (clusters==null) continue;
+                for (ArrayList<Cluster> clist : clusters) {
+                    if (clist==null) continue;
+                    for (Cluster c : clist) {
+                        if (c==null) continue;
+                        if (var==0) dgFMT[0].getH1F("clusters"+(c.get_fmtLyr())).fill(c.get_tMin());
+                        if (var==1) dgFMT[0].getH1F("clusters"+(c.get_fmtLyr())).fill(c.get_energy());
+                    }
                 }
             }
             if (var == 2) {
+                DataBank traj = Data.getBank(event, "REC::Traj");
+                DataBank part = Data.getBank(event, "REC::Particle");
+                if (traj==null || part==null) continue;
                 for (int tri=0; tri<traj.rows(); tri++) {
                     int detector = traj.getByte("detector", tri);
                     int li = traj.getByte("layer", tri);
@@ -395,10 +396,11 @@ public class ResolutionAnalysis {
                         continue;
 
                     // Get particle data.
-                    double z  = (double) particle.getFloat("vz", pi);
+                    double z  = (double) part.getFloat("vz", pi);
 
-                    dgFMT[0].getH1F("hi_track_var").fill(z);
+                    dgFMT[0].getH1F("tracks").fill(z);
                 }
+
             }
         }
         System.out.format("Analyzed %8d events... Done!\n", ei);
@@ -413,6 +415,75 @@ public class ResolutionAnalysis {
 
         return 0;
     }
+
+//    public int plot1DCount(int var, int r) {
+//        // Sanitize input.
+//        if (var < 0 || var > 2) return 0;
+//
+//        String title = null;
+//        if (var == 0) title = "Tmin count";
+//        if (var == 1) title = "energy count";
+//        if (var == 2) title = "track z";
+//
+//        DataGroup[] dgFMT = Data.create1DDataGroup(var, Constants.ln, r);
+//
+//        // Run.
+//        int ei = 0; // Event number.
+//        HipoDataSource reader = new HipoDataSource();
+//        reader.open(infile);
+//        System.out.printf("\nRunning analysis...\n");
+//
+//        // Loop through events.
+//        while (reader.hasEvent()) {
+//            if (ei == 10000 && testRun) break;
+//            if (ei%50000==0) System.out.format("Analyzed %8d events...\n", ei);
+//            DataEvent event = reader.getNextEvent();
+//            ei++;
+//
+//            // Get relevant data banks.
+//            DataBank clusters = Data.getBank(event, "FMTRec::Clusters");
+//            DataBank traj     = Data.getBank(event, "REC::Traj");
+//            DataBank particle = Data.getBank(event, "REC::Particle");
+//            if (clusters==null || traj==null || particle==null) continue;
+//
+//            if (var == 0 || var == 1) {
+//                for (int ri=0; ri<clusters.rows(); ++ri) {
+//                    int li        = clusters.getByte("layer", ri);
+//                    double energy = clusters.getFloat("ETot", ri);
+//                    double tmin   = clusters.getFloat("Tmin", ri);
+//
+//                    if (var==0) dgFMT[0].getH1F("hi_cluster_var"+li).fill(tmin);
+//                    if (var==1) dgFMT[0].getH1F("hi_cluster_var"+li).fill(energy);
+//                }
+//            }
+//            if (var == 2) {
+//                for (int tri=0; tri<traj.rows(); tri++) {
+//                    int detector = traj.getByte("detector", tri);
+//                    int li = traj.getByte("layer", tri);
+//                    int pi = traj.getShort("pindex", tri);
+//                    // Use only FMT layers 1, 2, and 3.
+//                    if (detector!=DetectorType.FMT.getDetectorId() || li<1 || li>Constants.ln)
+//                        continue;
+//
+//                    // Get particle data.
+//                    double z  = (double) particle.getFloat("vz", pi);
+//
+//                    dgFMT[0].getH1F("hi_track_var").fill(z);
+//                }
+//            }
+//        }
+//        System.out.format("Analyzed %8d events... Done!\n", ei);
+//        reader.close();
+//
+//        if (var == 0 || var == 1) Data.drawPlots(dgFMT, title);
+//        if (var == 2) {
+//            // Apply z shifts and draw plots.
+//            for (int li=0; li<Constants.ln; ++li) fmtZ[li] += shArr[0][0] + shArr[li+1][0];
+//            Data.drawZPlots(dgFMT, title, fmtZ);
+//        }
+//
+//        return 0;
+//    }
 
     /**
      * Draw a 2D plot by counting a pre-defined variable against another.
