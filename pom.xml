@@ -5,28 +5,8 @@
     <artifactId>fmt_analysis</artifactId>
     <version>2.0</version>
     <packaging>jar</packaging>
-    
-    <pluginRepositories>
-        <pluginRepository>
-            <id>central</id>
-            <name>Central Repository</name>
-            <url>https://repo.maven.apache.org/maven2</url>
-            <layout>default</layout>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-        </pluginRepository>
-    </pluginRepositories>
-
+        
     <dependencies>
-        <dependency>
-            <groupId>org.jlab.jnp</groupId>
-            <artifactId>jnp-physics</artifactId>
-            <version>1.1-SNAPSHOT</version>
-        </dependency>
         <dependency>
             <groupId>org.jlab.coat</groupId>
             <artifactId>coat-libs</artifactId>
@@ -34,32 +14,12 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>org.jlab.clas12.detector</groupId>
-            <artifactId>clas12detector-dc</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <groupId>org.jlab.coda</groupId>
+            <artifactId>jclara</artifactId>
+            <version>4.3-SNAPSHOT</version>
         </dependency>
-    </dependencies> 
-    
-    <repositories>
-        <repository>
-            <id>jhep-maven</id>
-            <url>https://clasweb.jlab.org/jhep/maven</url>
-        </repository>
-        <repository>
-            <id>clas12-maven</id>
-            <url>https://clasweb.jlab.org/clas12maven</url>
-        </repository>
-        <repository>
-            <id>central</id>
-            <name>Central Repository</name>
-            <url>https://repo.maven.apache.org/maven2</url>
-            <layout>default</layout>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-   
+</dependencies> 
+
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -73,18 +33,15 @@
                 <version>2.8</version>
             </extension>
         </extensions>
-        
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.6</version>
-
                 <configuration>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
-
                 <executions>
                     <execution>
                         <id>make-assembly</id> <!-- this is used for inheritance merges -->
@@ -97,4 +54,10 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+            <id>clas12maven</id>
+            <url>https://clasweb.jlab.org/clas12maven</url>
+        </repository>
+    </repositories>
 </project>
