@@ -45,7 +45,7 @@ public class Cross {
     public Cross(Cluster c0, Cluster c1, Cluster c2, TrajPoint t0, TrajPoint t1, TrajPoint t2) {
         clusters = new Cluster[]{c0, c1, c2};
         trajPoints = new TrajPoint[]{t0, t1, t2};
-        residuals = new double[]{c0.get_y()-t0.get_y(),c1.get_y()-t1.get_y(),c2.get_y()-t2.get_y()};
+        residuals = new double[]{t0.get_y()-c0.get_y(),t1.get_y()-c1.get_y(),t2.get_y()-c2.get_y()};
     }
 
     public static ArrayList<Cross> makeCrosses(ArrayList<TrajPoint[]> trajPoints,

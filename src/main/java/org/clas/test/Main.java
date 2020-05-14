@@ -30,8 +30,8 @@ public class Main {
         boolean[] pltLArr = new boolean[]{true, true, false, false};
         double[] swmSetup = new double[]{-0.75, -1.0, -3.0};
 
-        int pltRan        = 5;    // Plotting range.
-        int gssRan        = 3;     // Fitting range.
+        int pltRan        = 10;    // Plotting range.
+        int gssRan        = 8;     // Fitting range.
         boolean dbgInfo   = true;  // Debugging info.
         boolean testRun   = false; // Shorten run for testing.
 
@@ -52,13 +52,14 @@ public class Main {
 
         // Run
         double[] inShArr = new double[]{0}; // Shifts to be tested.
-        // resAnls.shiftAnalysis(0, 0, inShArr, pltRan, gssRan, trkSwim, fCuts);
+        resAnls.shiftAnalysis(0, 0, inShArr, pltRan, gssRan, trkSwim, fCuts);
         // resAnls.dcSectorStripAnalysis(pltRan, gssRan, trkSwim, fCuts);
         // resAnls.dcSectorThetaAnalysis(pltRan, gssRan, trkSwim, fCuts);
         // resAnls.fmtRegionAnalysis(pltRan, trkSwim, fCuts);
-        // resAnls.plot1DCount(0, 1000);
-        // resAnls.plot1DCount(1, 2000);
-        resAnls.plot1DCount(2, 100);
+        // resAnls.plot1DCount(0, trkSwim, fCuts, 1000);
+        // resAnls.plot1DCount(1, trkSwim, fCuts, 2000);
+        // resAnls.plot1DCount(2, trkSwim, fCuts, 100);
+        // resAnls.plot1DCount(3, trkSwim, fCuts, 300);
         // resAnls.plot2DCount(0, -1);
 
         return;

@@ -124,6 +124,16 @@ public class Data {
             dgFMT[0].addDataSet(hi_track_var, 0);
         }
 
+        if (var == 3) {
+            dgFMT[0] = new DataGroup(1,1);
+            H1F hi_dtmin_var = new H1F("delta_tmin", r, 0, r);
+            hi_dtmin_var.setTitleX("dTmin (ns)");
+            hi_dtmin_var.setTitleY("count");
+            hi_dtmin_var.setFillColor(4);
+
+            dgFMT[0].addDataSet(hi_dtmin_var, 0);
+        }
+
         return dgFMT;
     }
 
@@ -191,7 +201,7 @@ public class Data {
                 if (type == 0 || type == 1) {
                     H2F hi_cluster_res_strip = new H2F(
                         "hi_cluster_res_strip_l"+li,
-                        200, -r, r, 200, 0, 1024
+                        200, -r, r, 100, 0, 1024
                     );
                     hi_cluster_res_strip.setTitleX("Residual (cm) - Layer "+li);
                     hi_cluster_res_strip.setTitleY("Strip - Layer "+li);
