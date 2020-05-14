@@ -75,7 +75,6 @@ public class Cluster {
         System.out.printf("  total energy : %.2f\n", get_energy());
     }
 
-
     /** Class tester. */
     public static void main(String[] args) {
         boolean debug = true;

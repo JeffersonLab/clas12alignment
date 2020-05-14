@@ -7,6 +7,5 @@ public class Constants {
     // FMT region separators:
     public static final int[] iStripArr = new int[]{-1, 319, 511, 831, 1023};
 
-
     public Constants() {};
 }

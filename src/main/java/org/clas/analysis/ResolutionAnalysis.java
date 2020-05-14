@@ -412,21 +412,27 @@ public class ResolutionAnalysis {
                 if (crosses==null) continue;
 
                 for (Cross c : crosses) {
-                    dgFMT[0].getH1F("delta_tmin")
-                            .fill(Math.abs(c.get_c0().get_tMin()-c.get_c1().get_tMin()));
-                    dgFMT[0].getH1F("delta_tmin")
-                            .fill(Math.abs(c.get_c1().get_tMin()-c.get_c2().get_tMin()));
+                    dgFMT[0].getH1F("delta_tmin0")
+                            .fill(c.get_c1().get_tMin()-c.get_c0().get_tMin());
+                    dgFMT[0].getH1F("delta_tmin1")
+                            .fill(c.get_c2().get_tMin()-c.get_c1().get_tMin());
                 }
             }
         }
         System.out.format("Analyzed %8d events... Done!\n", ei);
         reader.close();
 
-        if (var==0 || var==1 || var==3) Data.drawPlots(dgFMT, title);
+        if (var==0 || var==1 ) Data.drawPlots(dgFMT, title);
         if (var==2) {
             // Apply z shifts and draw plots.
             for (int li=0; li<Constants.ln; ++li) fmtZ[li] += shArr[0][0] + shArr[li+1][0];
             Data.drawZPlots(dgFMT, title, fmtZ);
+        }
+        if (var==3) {
+            // Fit gaussian and draw plots.
+            for (int i=0; i<2; ++i)
+                Data.fitRes(dgFMT[0].getH1F("delta_tmin"+i), dgFMT[0].getF1D("f"+i), 40);
+            Data.drawPlots(dgFMT, title);
         }
 
         return 0;

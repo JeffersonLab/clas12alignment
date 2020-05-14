@@ -125,13 +125,25 @@ public class Data {
         }
 
         if (var == 3) {
-            dgFMT[0] = new DataGroup(1,1);
-            H1F hi_dtmin_var = new H1F("delta_tmin", r, 0, r);
-            hi_dtmin_var.setTitleX("dTmin (ns)");
-            hi_dtmin_var.setTitleY("count");
-            hi_dtmin_var.setFillColor(4);
+            dgFMT[0] = new DataGroup(2,1);
+            for (int i=0; i<2; ++i) {
+                H1F hi_dtmin_var = new H1F("delta_tmin"+i, 2*r, -r, r);
+                hi_dtmin_var.setTitleX("dTmin (ns)");
+                hi_dtmin_var.setTitleY("count");
+                hi_dtmin_var.setFillColor(4);
 
-            dgFMT[0].addDataSet(hi_dtmin_var, 0);
+                dgFMT[0].addDataSet(hi_dtmin_var, i);
+
+                F1D f1_res = new F1D("f"+i,"[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x",-r,r);
+
+                f1_res.setParameter(0, 0);
+                f1_res.setParameter(1, 0);
+                f1_res.setParameter(2, 1.0);
+                f1_res.setLineWidth(2);
+                f1_res.setLineColor(2);
+                f1_res.setOptStat("1111");
+                dgFMT[0].addDataSet(f1_res, i);
+            }
         }
 
         return dgFMT;
@@ -201,7 +213,7 @@ public class Data {
                 if (type == 0 || type == 1) {
                     H2F hi_cluster_res_strip = new H2F(
                         "hi_cluster_res_strip_l"+li,
-                        200, -r, r, 100, 0, 1024
+                        200, -r, r, 200, 0, 1024
                     );
                     hi_cluster_res_strip.setTitleX("Residual (cm) - Layer "+li);
                     hi_cluster_res_strip.setTitleY("Strip - Layer "+li);
@@ -210,7 +222,7 @@ public class Data {
                 if (type == 2) {
                     H2F hi_cluster_res_theta = new H2F(
                         "hi_cluster_res_theta_l"+li,
-                        200, -r, r, 100, 0, 1
+                        200, -r, r, 200, 0, 1
                     );
                     hi_cluster_res_theta.setTitleX("Residual - Layer "+li);
                     hi_cluster_res_theta.setTitleY("Theta - Layer "+li);

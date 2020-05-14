@@ -137,10 +137,10 @@ public class FiducialCuts {
      * @return true if the cross is to be cut, false otherwise.
      */
     public boolean checkCrossDeltaY(double traj_y, double clus_y) {
-        // if (Math.abs(traj_y-clus_y)>=dy) {
-        //     crsc[2]++;
-        //     return true;
-        // }
+        if (Math.abs(traj_y-clus_y)>=dy) {
+            crsc[2]++;
+            return true;
+        }
         return false;
     }
 
@@ -152,10 +152,10 @@ public class FiducialCuts {
      * @return true if the cross is to be cut, false otherwise.
      */
     public boolean checkCrossDeltaTmin(double c0tmin, double c1tmin, double c2tmin) {
-        if (Math.abs(c0tmin - c1tmin) >= dtmin || Math.abs(c1tmin - c2tmin) >= dtmin) {
-            crsc[3]++;
-            return true;
-        }
+        // if (Math.abs(c0tmin - c1tmin) >= dtmin || Math.abs(c1tmin - c2tmin) >= dtmin) {
+        //     crsc[3]++;
+        //     return true;
+        // }
         return false;
     }
 
