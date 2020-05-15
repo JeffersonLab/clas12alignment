@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.clas.test;
 
 import org.clas.analysis.TrkSwim;
@@ -10,6 +5,7 @@ import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.ResolutionAnalysis;
 
 public class Main {
+    /** Print usage. */
     private static int usage() {
         System.out.printf("Usage: program infile\n");
         System.out.printf("  * infile: String with the hipo input file.\n");
@@ -17,6 +13,7 @@ public class Main {
         return 0;
     }
 
+    /** Main. */
     public static void main(String[] args) {
         // Process input
         if (args.length != 1) {
@@ -33,7 +30,7 @@ public class Main {
         int pltRan        = 10;    // Plotting range.
         int gssRan        = 8;     // Fitting range.
         boolean dbgInfo   = true;  // Debugging info.
-        boolean testRun   = true; // Shorten run for testing.
+        boolean testRun   = false; // Shorten run for testing.
 
         // Shifts to be applied (best guess so far).
         double[][] shArr = new double[][]{
@@ -42,8 +39,6 @@ public class Main {
                 { 0.00, 0, 0, 0},
                 { 0.05, 0, 0, 0}
         };
-
-
 
         TrkSwim trkSwim = new TrkSwim(swmSetup);
         FiducialCuts fCuts = new FiducialCuts();
