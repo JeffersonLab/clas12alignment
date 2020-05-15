@@ -13,7 +13,7 @@ public class FiducialCuts {
     public FiducialCuts() {
         trsc = new int[]{0, 0, 0, 0, 0};
         clsc = new int[]{0, 0, 0, 0, 0};
-        crsc = new int[]{0, 0, 0, 0};
+        crsc = new int[]{0, 0, 0};
     }
 
     /** Increase the total number of trajectory points processed by 1. */
@@ -113,7 +113,7 @@ public class FiducialCuts {
      */
     public boolean checkCrossDeltaY(double traj_y, double clus_y) {
         // if (Math.abs(traj_y-clus_y)>=dy) {
-        //     crsc[2]++;
+        //     crsc[1]++;
         //     return true;
         // }
         return false;
@@ -128,7 +128,7 @@ public class FiducialCuts {
      */
     public boolean checkCrossDeltaTmin(double c0tmin, double c1tmin, double c2tmin) {
         if (Math.abs(c0tmin - c1tmin) >= dtmin || Math.abs(c1tmin - c2tmin) >= dtmin) {
-            crsc[3]++;
+            crsc[2]++;
             return true;
         }
         return false;
@@ -138,7 +138,7 @@ public class FiducialCuts {
     public void printCutsInfo() {
         int trscsum = trsc[1] + trsc[2] + trsc[3] + trsc[4];
         int clscsum = clsc[1] + clsc[2] + clsc[3] + clsc[4];
-        int crscsum = crsc[1] + crsc[2] + crsc[3];
+        int crscsum = crsc[1] + crsc[2];
         System.out.printf("\n");
         System.out.printf("            trajs too downstream │ %8d (%5.2f%%)   │\n",
                 trsc[1], 100*((double)trsc[1])/trsc[0]);
@@ -166,12 +166,10 @@ public class FiducialCuts {
         System.out.printf("                               %% │ %5.2f%%              │\n",
                 100*((double)clscsum)/clsc[0]);
         System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
-        System.out.printf(" cluster x too distant to traj x | %8d (%5.2f%%)   |\n",
-                crsc[1], 100*((double)crsc[1])/crsc[0]);
         System.out.printf(" cluster y too distant to traj y | %8d (%5.2f%%)   |\n",
-                crsc[2], 100*((double)crsc[2])/crsc[0]);
+                crsc[2], 100*((double)crsc[1])/crsc[0]);
         System.out.printf("   clusters with large tmin diff | %8d (%5.2f%%)   |\n",
-                crsc[3], 100*((double)crsc[3])/crsc[0]);
+                crsc[2], 100*((double)crsc[2])/crsc[0]);
         System.out.printf("           TOTAL CROSSES DROPPED | %8d / %8d |\n",
                 crscsum, crsc[0]);
         System.out.printf("                               %% | %5.2f%%              │\n",
