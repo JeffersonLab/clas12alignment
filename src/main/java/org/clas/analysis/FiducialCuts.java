@@ -33,8 +33,8 @@ public class FiducialCuts {
 
     /**
      * Check if a track is too far downstream before swimming it.
-     * @param trkZ : track's z coordinate.
-     * @param lyrZ : layer's z coordinate.
+     * @param trkZ track's z coordinate.
+     * @param lyrZ layer's z coordinate.
      * @return
      */
     public boolean downstreamTrackCheck(double trkZ, double lyrZ) {
@@ -49,12 +49,12 @@ public class FiducialCuts {
     /**
      * Check if a track needs to be cut by z, x, y, or its theta angle. Tracks that need to be cut
      * due to the delta Tmin between clusters are processed by another method due to its complexity.
-     * @param z     : track's z coordinate at FMT layer.
-     * @param x     : track's x coordinate at FMT layer.
-     * @param y     : track's y coordinate at FMT layer
-     * @param zRef  : FMT layer's z coordinate.
-     * @param costh : cosine of track's theta angle (pz/p).
-     * @param sc    : track error counter, used for debugging.
+     * @param z     track's z coordinate at FMT layer.
+     * @param x     track's x coordinate at FMT layer.
+     * @param y     track's y coordinate at FMT layer
+     * @param zRef  FMT layer's z coordinate.
+     * @param costh cosine of track's theta angle (pz/p).
+     * @param sc    track error counter, used for debugging.
      * @return true if the track is to be cut, false otherwise.
      */
     public boolean checkTrajCuts(double z, double x, double y, double zRef, double costh) {
@@ -76,16 +76,14 @@ public class FiducialCuts {
 
     /**
      * Check if a cluster needs to be cut by its seed strip, size, energy, or Tmin.
-     * @param strip : seed strip of the cluster.
-     * @param size  : cluster's size.
-     * @param E     : cluster's total energy.
-     * @param Tmin  : cluster's Tmin.
-     * @param sc    : cluster error counter, used for debugging.
+     * @param strip seed strip of the cluster.
+     * @param size  cluster's size.
+     * @param E     cluster's total energy.
+     * @param Tmin  cluster's Tmin.
+     * @param sc    cluster error counter, used for debugging.
      * @return true if the cluster is to be cut, false otherwise.
      */
-    public boolean checkClusterCuts(int strip, int size, double E,
-            double Tmin) {
-
+    public boolean checkClusterCuts(int strip, int size, double E, double Tmin) {
         if (strip<0 || strip>1023) {
             clsc[1]++;
             return true;
@@ -108,9 +106,9 @@ public class FiducialCuts {
 
     /**
      * Check if a cross needs to be cut due to a cluster being too far from the trajectory points in
-     * its same FMT layer in the y coordinate.
-     * @param traj_y : trajectory point y position.
-     * @param clus_y : cluster y position.
+     * its same FMT layer in the y coordinate. Currently unused.
+     * @param traj_y trajectory point y position.
+     * @param clus_y cluster y position.
      * @return true if the cross is to be cut, false otherwise.
      */
     public boolean checkCrossDeltaY(double traj_y, double clus_y) {
@@ -123,9 +121,9 @@ public class FiducialCuts {
 
     /**
      * Check if a cross needs to be cut due to two clusters' Tmin being too far.
-     * @param c0tmin : cluster 0 Tmin.
-     * @param c1tmin : cluster 1 Tmin.
-     * @param c2tmin : cluster 2 Tmin.
+     * @param c0tmin cluster 0 Tmin.
+     * @param c1tmin cluster 1 Tmin.
+     * @param c2tmin cluster 2 Tmin.
      * @return true if the cross is to be cut, false otherwise.
      */
     public boolean checkCrossDeltaTmin(double c0tmin, double c1tmin, double c2tmin) {

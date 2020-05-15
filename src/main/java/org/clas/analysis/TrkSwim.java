@@ -10,16 +10,16 @@ public class TrkSwim {
 
     /**
      * Setup the Swim class.
-     * @param swmSetup  : Swimm setup array:
-     *                    - [0] : solenoid magnet scale.
-     *                    - [1] : torus magnet scale.
-     *                    - [2] : torus magnet shift.
+     * @param swmSetup Swim setup array:
+     *                   * [0] : solenoid magnet scale.
+     *                   * [1] : torus magnet scale.
+     *                   * [2] : torus magnet shift.
      * @return Swim instance.
      */
     public TrkSwim(double[] swmSetup) {
         if (swmSetup.length != 3) {
-            System.out.printf("swmSetup should have a size of 3. Read the ");
-            System.out.printf("method's description.\n");
+            System.out.printf("swmSetup should have a size of 3. Read the method's description.\n");
+            return;
         }
 
         MagFieldsEngine mf = new MagFieldsEngine();
@@ -31,18 +31,15 @@ public class TrkSwim {
 
     /**
      * Translate trajectory using swimmer.
-     * @param swimmer        : Swim instance.
-     * @param x,y,z,px,py,pz : Kinematics to setup swimmer.
-     * @param q              : Particle's charge.
-     * @param zTarget        : z plane where to swim.
+     * @param swimmer        Swim instance.
+     * @param x,y,z,px,py,pz Kinematics to setup swimmer.
+     * @param q              Particle's charge.
+     * @param zTarget        z plane where to swim.
      * @return Array with data after swimming to z.
      */
-    public double[] swimToPlane(double x, double y, double z,
-            double px, double py, double pz, int q, double zTarget) {
+    public double[] swimToPlane(double x, double y, double z, double px, double py, double pz,
+            int q, double zTarget) {
         swim.SetSwimParameters(x,y,z,px,py,pz,q);
         return swim.SwimToPlaneBoundary(zTarget, new Vector3D(0,0,1), 1);
     }
 }
-
-
-

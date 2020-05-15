@@ -25,15 +25,15 @@ public class ResolutionAnalysis {
 
     /**
      * Class constructor.
-     * @param infile   : Input hipo file.
-     * @param pltLArr  : Boolean array describing what lines should be drawn in each plot:
+     * @param infile   Input hipo file.
+     * @param pltLArr  Boolean array describing what lines should be drawn in each plot:
      *                   * [0] : Top plots, vertical line at 0.
      *                   * [1] : Bottom plots, vertical line at 0.
      *                   * [2] : Bottom plots, horizontal lines at each cable's endpoint.
      *                   * [3] : Bottom plots, horizonal lines separating each "region" of the FMT.
-     * @param dbgInfo  : Boolean describing if debugging info should be printed.
-     * @param testRun  : Boolean describing if the run should be cut short for expedient testing.
-     * @param shiftArr : Array of arrays describing all the shifts applied:
+     * @param dbgInfo  Boolean describing if debugging info should be printed.
+     * @param testRun  Boolean describing if the run should be cut short for expedient testing.
+     * @param shiftArr Array of arrays describing all the shifts applied:
      *                   [0]:  global [z,x,y,phi] shift.
      *                   [1]: layer 1 [z,x,y,phi] shift.
      *                   [2]: layer 2 [z,x,y,phi] shift.
@@ -84,31 +84,31 @@ public class ResolutionAnalysis {
 
     /**
      * Generic function for running analysis, called by all others.
-     * @param func   : Type of analysis to be ran:
-     *                   * 0 : perturbatory shifts.
-     *                   * 1 : dc sector vs strip.
-     *                   * 2 : dc sector vs theta.
-     *                   * 3 : fmt regions plot.
-     * @param opt    : Variable used in different manners by different types:
-     *                   * func=0 : canvass index (ci).
-     *                   * func=1 : number of DC sectors (sn).
-     *                   * func=2 : number of DC sectors (sn).
-     *                   * func=3 : unused.
-     * @param swim   : TrkSwim class instance.
-     * @param fcuts  : FiducialCuts class instance.
-     * @param dgFMT  : Array of data groups where analysis data is stored.
-     * @param g      : Range for the gaussian fit.
+     * @param func   Type of analysis to be ran:
+     *                 * 0 : perturbatory shifts.
+     *                 * 1 : dc sector vs strip.
+     *                 * 2 : dc sector vs theta.
+     *                 * 3 : fmt regions plot.
+     * @param opt    Variable used in different manners by different types:
+     *                 * func=0 : canvass index (ci).
+     *                 * func=1 : number of DC sectors (sn).
+     *                 * func=2 : number of DC sectors (sn).
+     *                 * func=3 : unused.
+     * @param swim   TrkSwim class instance.
+     * @param fcuts  FiducialCuts class instance.
+     * @param dgFMT  Array of data groups where analysis data is stored.
+     * @param g      Range for the gaussian fit.
      * @return status int.
      */
-    private int runAnalysis(int func, int opt, TrkSwim swim, FiducialCuts fcuts,
-            DataGroup[] dgFMT, int g) {
+    private int runAnalysis(int func, int opt, TrkSwim swim, FiducialCuts fcuts, DataGroup[] dgFMT,
+            int g) {
         // Sanitize input.
-        if (func < 0 || func > 3) return 1;
+        if (func<0 || func>3) return 1;
 
         // Get constants.
         Constants constants = new Constants();
 
-        // Print the shifts applied:
+        // Print the shifts applied.
         if (debugInfo) {
             System.out.printf("SHIFTS APPLIED:\n");
             for (int li=1; li<=Constants.ln; ++li) {
@@ -136,7 +136,6 @@ public class ResolutionAnalysis {
             ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(event, constants, swim,
                     fcuts, fmtZ, fmtAngle, shArr, 3, true);
             ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, true);
-
             if (trajPoints==null || clusters==null) continue;
 
             ArrayList<Cross> crosses = Cross.makeCrosses(trajPoints, clusters, fcuts);
@@ -205,17 +204,17 @@ public class ResolutionAnalysis {
 
     /**
      * Run perturbatory shifts analysis. Currently, only z shifts are implemented.
-     * @param lyr     : Layer to which shifts are applied (0 for global shift).
-     * @param var     : Variable in layer to which shifts are applied:
-     *                    * var=0 : z
-     *                    * var=1 : x
-     *                    * var=2 : y
-     *                    * var=3 : phi
-     * @param inShArr : Array of shifts to try.
-     * @param r       : Plot range.
-     * @param g       : Gaussian range.
-     * @param swim    : TrkSwim class instance.
-     * @param fcuts   : FiducialCuts class instance.
+     * @param lyr     Layer to which shifts are applied (0 for global shift).
+     * @param var     Variable in layer to which shifts are applied:
+     *                  * var=0 : z
+     *                  * var=1 : x
+     *                  * var=2 : y
+     *                  * var=3 : phi
+     * @param inShArr Array of shifts to try.
+     * @param r       Plot range.
+     * @param g       Gaussian range.
+     * @param swim    TrkSwim class instance.
+     * @param fcuts   FiducialCuts class instance.
      * @return status int.
      */
     public int shiftAnalysis(int lyr, int var, double[] inShArr, int r, int g, TrkSwim swim,
@@ -260,7 +259,6 @@ public class ResolutionAnalysis {
                         meanArr[li][ci], meanErrArr[li][ci]);
                 System.out.printf("  * sigma : %9.6f +- %9.6f\n",
                         sigmaArr[li][ci], sigmaErrArr[li][ci]);
-
             }
         }
 
@@ -271,15 +269,13 @@ public class ResolutionAnalysis {
 
     /**
      * Run DC sector strip analysis.
-     * @param r    : Plot range.
-     * @param g    : Gaussian range.
-     * @param swim : TrkSwim class instance.
-     * @param fcuts : FiducialCuts class instance.
+     * @param r     Plot range.
+     * @param g     Gaussian range.
+     * @param swim  TrkSwim class instance.
+     * @param fcuts FiducialCuts class instance.
      * @return status int.
      */
-    public int dcSectorStripAnalysis(int r, int g, TrkSwim swim,
-            FiducialCuts fcuts) {
-
+    public int dcSectorStripAnalysis(int r, int g, TrkSwim swim, FiducialCuts fcuts) {
         int func = 1;
         String[] titleArr = new String[Constants.sn];
         for (int si=0; si < Constants.sn; ++si) titleArr[si] = "DC sector "+(si+1);
@@ -294,14 +290,13 @@ public class ResolutionAnalysis {
 
     /**
      * Run DC sector theta analysis.
-     * @param r    : Plot range.
-     * @param g    : Gaussian range.
-     * @param swim : TrkSwim class instance.
-     * @param fcuts : FiducialCuts class instance.
+     * @param r     Plot range.
+     * @param g     Gaussian range.
+     * @param swim  TrkSwim class instance.
+     * @param fcuts FiducialCuts class instance.
      * @return status int.
      */
-    public int dcSectorThetaAnalysis(int r, int g, TrkSwim swim,
-            FiducialCuts fcuts) {
+    public int dcSectorThetaAnalysis(int r, int g, TrkSwim swim, FiducialCuts fcuts) {
 
         int func = 2;
         String[] titleArr = new String[Constants.sn];
@@ -317,16 +312,17 @@ public class ResolutionAnalysis {
 
     /**
      * Run analysis and draw a different plot for each FMT region.
-     * @param r     : Residuals range in plots.
-     * @param swim  : TrkSwim class instance.
-     * @param fcuts : FiducialCuts class instance.
+     * @param r     Residuals range in plots.
+     * @param swim  TrkSwim class instance.
+     * @param fcuts FiducialCuts class instance.
      * @return status int.
      */
     public int fmtRegionAnalysis(int r, TrkSwim swim, FiducialCuts fcuts) {
         int func = 3;
         // Set canvases' stuff.
         String title = "FMT regions";
-        DataGroup[] dgFMT = Data.createFMTRegionsDataGroup(Constants.ln, Constants.rn, Constants.iStripArr, r);
+        DataGroup[] dgFMT = Data.createFMTRegionsDataGroup(Constants.ln, Constants.rn,
+                Constants.iStripArr, r);
 
         // Run.
         runAnalysis(func, swim, fcuts, dgFMT);
@@ -338,11 +334,12 @@ public class ResolutionAnalysis {
 
     /**
      * Draw a 1D plot by counting a pre-defined variable.
-     * @param var : Variable to be counted:
-     *                * 0 : clusters' Tmin.
-     *                * 1 : clusters' energy.
-     *                * 2 : tracks' z.
-     * @param r   : Range for the plot (min = 0, max = r).
+     * @param var Variable to be counted:
+     *              * 0 : clusters' Tmin.
+     *              * 1 : clusters' energy.
+     *              * 2 : tracks' z.
+     *              * 3 : tmin between clusters.
+     * @param r   Range for the plot.
      * @return status int.
      */
     public int plot1DCount(int var, TrkSwim swim, FiducialCuts fcuts, int r) {
@@ -413,9 +410,9 @@ public class ResolutionAnalysis {
 
                 for (Cross c : crosses) {
                     dgFMT[0].getH1F("delta_tmin0")
-                            .fill(c.get_c1().get_tMin()-c.get_c0().get_tMin());
+                            .fill(c.getc(1).get_tMin()-c.getc(0).get_tMin());
                     dgFMT[0].getH1F("delta_tmin1")
-                            .fill(c.get_c2().get_tMin()-c.get_c1().get_tMin());
+                            .fill(c.getc(2).get_tMin()-c.getc(1).get_tMin());
                 }
             }
         }
@@ -440,9 +437,9 @@ public class ResolutionAnalysis {
 
     /**
      * Draw a 2D plot by counting a pre-defined variable against another.
-     * @param var : Variable pair to be counted:
-     *                * 0 : energy / cluster size vs cluster size.
-     * @param r   : Currently unused, kept for consistency.
+     * @param var Variable pair to be counted:
+     *              * 0 : energy / cluster size vs cluster size.
+     * @param r   Currently unused, kept for consistency.
      * @return status int.
      */
     public int plot2DCount(int var, int r) {
