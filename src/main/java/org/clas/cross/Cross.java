@@ -1,53 +1,51 @@
 package org.clas.cross;
 
 import java.util.ArrayList;
-import org.jlab.detector.base.DetectorType;
-import org.jlab.detector.calib.utils.DatabaseConstantProvider;
-import org.jlab.io.base.DataBank;
-import org.jlab.io.base.DataEvent;
-import org.clas.analysis.Data;
 import org.clas.analysis.FiducialCuts;
-import org.clas.analysis.TrkSwim;
-import org.jlab.io.hipo.HipoDataSource;
 
 public class Cross {
+    // Cross' data. trajPoints is a set of 3 trajectory points, and clusters is a set of 3 clusters.
     private TrajPoint[] trajPoints;
     private Cluster[] clusters;
-    private double[] residuals;
 
-    public TrajPoint get_t0() {return trajPoints[0];}
-    public TrajPoint get_t1() {return trajPoints[1];}
-    public TrajPoint get_t2() {return trajPoints[2];}
+    /** Get trajectory point by index. */
     public TrajPoint gett(int ti) {
         if (ti<0 || ti>size()) return null;
         return trajPoints[ti];
     }
-    public Cluster get_c0() {return clusters[0];}
-    public Cluster get_c1() {return clusters[1];}
-    public Cluster get_c2() {return clusters[2];}
+
+    /** Get cluster by index. */
     public Cluster getc(int ci) {
         if (ci<0 || ci>size()) return null;
         return clusters[ci];
     }
-    public double get_r0() {return residuals[0];}
-    public double get_r1() {return residuals[0];}
-    public double get_r2() {return residuals[0];}
+
+    /** Get residual between trajectory point and cluster by index.*/
     public double getr(int ri) {
-        if (ri<0 || ri>size()) return -1;
-        return residuals[ri];
+        if (ri<0 || ri>size()) return Double.POSITIVE_INFINITY;
+        return (gett(ri).get_y() - getc(ri).get_y());
     }
+
+    /** Return the size of the cross. Currently can only be 3. */
     public int size() {
         int clusCnt = 3;
         for (int ci=0; ci<3; ++ci) if (clusters[ci]==null) clusCnt--;
         return clusCnt;
     }
 
+    /** Class constructor. */
     public Cross(Cluster c0, Cluster c1, Cluster c2, TrajPoint t0, TrajPoint t1, TrajPoint t2) {
         clusters = new Cluster[]{c0, c1, c2};
         trajPoints = new TrajPoint[]{t0, t1, t2};
-        residuals = new double[]{t0.get_y()-c0.get_y(),t1.get_y()-c1.get_y(),t2.get_y()-c2.get_y()};
     }
 
+    /**
+     * Make crosses with three clusters and trajectory points.
+     * @param trajPoints ArrayList of arrays of 3 trajectory points, one per FMT layer.
+     * @param clusters   Array of size 3 of ArrayLists of clusters.
+     * @param fcuts      FiducialCuts class instance.
+     * @return ArrayList of crosses.
+     */
     public static ArrayList<Cross> makeCrosses(ArrayList<TrajPoint[]> trajPoints,
             ArrayList<Cluster>[] clusters, FiducialCuts fcuts) {
 
@@ -66,8 +64,7 @@ public class Cross {
             fcuts.increaseCrossCount(cclusters[0].size()*cclusters[1].size()*cclusters[2].size());
 
             // Filter out clusters too far from their respective trajectory points.
-            // NOTE: Currently only cutting clusters farther than 3cm in the y coordinate.
-            //       Ideally we wanna do this for the x coordinate too but it's not straightforward.
+            // NOTE: Currently not being applied.
             for (TrajPoint trjP : trjPArr) {
                 int li = trjP.get_fmtLyr();
                 for (int ci = cclusters[li].size()-1; ci >= 0; --ci) {
@@ -91,71 +88,5 @@ public class Cross {
         }
 
         return crosses;
-    }
-
-    /** Class tester. */
-    public static void main(String[] args) {
-        boolean debug = false;
-
-        Constants    constants = new Constants();
-        TrkSwim      trkSwim   = new TrkSwim(new double[]{-0.75, -1.0, -3.0});
-        FiducialCuts fcuts     = new FiducialCuts();
-
-        // Set geometry parameters by reading from database.
-        DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, "rgf_spring2020");
-        String fmtTable = "/geometry/fmt/fmt_layer_noshim";
-        dbProvider.loadTable(fmtTable);
-
-        double[] fmtZ     = new double[constants.ln]; // z position of the layers in cm.
-        double[] fmtAngle = new double[constants.ln]; // strip angle in deg.
-
-        for (int li=0; li<constants.ln; li++) {
-            fmtZ[li]     = dbProvider.getDouble(fmtTable+"/Z",li)/10;
-            fmtAngle[li] = dbProvider.getDouble(fmtTable+"/Angle",li);
-        }
-
-        double[][] shArr = new double[][]{
-                {-3.65, 0, 0, 0},
-                { 0.20, 0, 0, 0},
-                { 0.00, 0, 0, 0},
-                { 0.05, 0, 0, 0}
-        };
-
-        int ei = 0; // Event number.
-        HipoDataSource reader = new HipoDataSource();
-        reader.open(args[0]);
-        System.out.printf("\nRunning...\n");
-
-        // Loop through events.
-        int[] crossCnt = new int[]{0, 0};
-        while (reader.hasEvent()) {
-            if (debug && ei==25) break;
-            if (ei%50000==0) System.out.printf("Ran %8d events...\n", ei);
-            ei++;
-            DataEvent event = reader.getNextEvent();
-            crossCnt[1]++;
-
-            ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(event, constants, trkSwim,
-                    fcuts, fmtZ, fmtAngle, shArr, 3, true);
-            ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, true);
-
-            if (trajPoints==null || clusters==null) continue;
-
-            ArrayList<Cross> crosses = makeCrosses(trajPoints, clusters, fcuts);
-            crossCnt[0] += crosses.size();
-
-            if (!debug) continue;
-            if (crosses.size()!=0) System.out.printf("event #%d Crosses:\n", ei);
-            for (Cross cross : crosses) {
-                for (int ci=0; ci<cross.size(); ++ci) {
-                    System.out.printf("cluster %d: %8.2f, residual: %8.2f\n",
-                            cross.getc(ci).get_fmtLyr(), cross.getc(ci).get_y(), cross.getr(ci));
-                }
-            }
-        }
-        System.out.printf("Ran %8d events... Done!\n", ei);
-        System.out.printf("%d crosses found in %d events.\n", crossCnt[0], crossCnt[1]);
-
-        return;
     }
 }

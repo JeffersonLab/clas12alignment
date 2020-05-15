@@ -283,8 +283,7 @@ public class Data {
      * @param fmtZ
      * @return status int.
      */
-    public static int drawZPlots(DataGroup[] dgFMT, String title,
-            double[] fmtZ) {
+    public static int drawZPlots(DataGroup[] dgFMT, String title, double[] fmtZ) {
 
         EmbeddedCanvasTabbed fmtCanvas = new EmbeddedCanvasTabbed(title);
 
@@ -294,23 +293,28 @@ public class Data {
         fmtCanvas.getCanvas(title).setAxisFontSize(18);
         fmtCanvas.getCanvas(title).setAxisTitleSize(24);
 
+        DataLine vline = new DataLine(0,0, 0,Double.POSITIVE_INFINITY);
+        vline.setLineColor(2);
+        vline.setLineWidth(2);
+        fmtCanvas.getCanvas(title).cd(0).draw(vline);
+        fmtCanvas.getCanvas(title).cd(1).draw(vline);
+
         JFrame frame = new JFrame("FMT");
         frame.setSize(1600, 1000);
         frame.add(fmtCanvas);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        if (fmtZ != null) {
-            for (int pi=0; pi<3; ++pi) {
-                for (double lz : fmtZ) {
-                    DataLine vline =
-                            new DataLine(lz,lz, 0,Double.POSITIVE_INFINITY);
-                    vline.setLineColor(2);
-                    vline.setLineWidth(2);
-                    fmtCanvas.getCanvas(title).cd(pi).draw(vline);
-                }
-            }
-        }
+//        if (fmtZ != null) {
+//            for (int pi=0; pi<3; ++pi) {
+//                for (double lz : fmtZ) {
+//                    DataLine vline = new DataLine(lz,lz, 0,Double.POSITIVE_INFINITY);
+//                    vline.setLineColor(2);
+//                    vline.setLineWidth(2);
+//                    fmtCanvas.getCanvas(title).cd(pi).draw(vline);
+//                }
+//            }
+//        }
 
         return 0;
     }

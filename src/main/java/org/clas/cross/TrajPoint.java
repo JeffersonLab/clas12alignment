@@ -2,13 +2,11 @@ package org.clas.cross;
 
 import java.util.ArrayList;
 import org.jlab.detector.base.DetectorType;
-import org.jlab.detector.calib.utils.DatabaseConstantProvider;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.clas.analysis.Data;
 import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.TrkSwim;
-import org.jlab.io.hipo.HipoDataSource;
 
 public class TrajPoint {
     // Trajectory point data:
@@ -17,7 +15,7 @@ public class TrajPoint {
     private double z;     // z position.
     private double x;     // x position in the layer's local coordinate system.
     private double y;     // y position in the layer's local coordinate system.
-    private double cosTh; // cos theta of the trajectory's angle.
+    private double cosTh; // cosine of the trajectory's theta angle.
 
     /** Constructor. */
     private TrajPoint(int _fmtLyr, int _dcSec, double _z, double _x, double _y, double _cosTh) {
@@ -129,18 +127,18 @@ public class TrajPoint {
         }
 
         // Clean trios.
-        for (int arri=trajPoints.size()-1; arri >= 0; --arri) {
-            if (minTrjPoints == 1) {
+        for (int arri=trajPoints.size()-1; arri>=0; --arri) {
+            if (minTrjPoints==1) {
                 if (trajPoints.get(arri)[0]!=null) continue;
                 if (trajPoints.get(arri)[1]!=null) continue;
                 if (trajPoints.get(arri)[2]!=null) continue;
             }
-            else if (minTrjPoints == 2) {
+            else if (minTrjPoints==2) {
                 if (trajPoints.get(arri)[0]!=null && trajPoints.get(arri)[1]!=null) continue;
                 if (trajPoints.get(arri)[1]!=null && trajPoints.get(arri)[2]!=null) continue;
                 if (trajPoints.get(arri)[2]!=null && trajPoints.get(arri)[0]!=null) continue;
             }
-            else if (minTrjPoints == 3) {
+            else if (minTrjPoints==3) {
                 if (trajPoints.get(arri)[0]!=null
                         && trajPoints.get(arri)[1]!=null
                         && trajPoints.get(arri)[2]!=null)
@@ -151,56 +149,5 @@ public class TrajPoint {
         }
 
         return trajPoints;
-    }
-
-    /** Class tester. */
-    public static void main(String[] args) {
-        Constants    constants = new Constants();
-        TrkSwim      trkSwim = new TrkSwim(new double[]{-0.75, -1.0, -3.0});
-        FiducialCuts fCuts = new FiducialCuts();
-
-        // Set geometry parameters by reading from database.
-        DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, "rgf_spring2020");
-        String fmtTable = "/geometry/fmt/fmt_layer_noshim";
-        dbProvider.loadTable(fmtTable);
-
-        double[] fmtZ     = new double[constants.ln]; // z position of the layers in cm.
-        double[] fmtAngle = new double[constants.ln]; // strip angle in deg.
-
-        for (int li=0; li<constants.ln; li++) {
-            fmtZ[li]     = dbProvider.getDouble(fmtTable+"/Z",li)/10;
-            fmtAngle[li] = dbProvider.getDouble(fmtTable+"/Angle",li);
-        }
-
-        double[][] shArr = new double[][]{
-                {-3.65, 0, 0, 0},
-                { 0.20, 0, 0, 0},
-                { 0.00, 0, 0, 0},
-                { 0.05, 0, 0, 0}
-        };
-
-        int ei = 0; // Event number.
-        HipoDataSource reader = new HipoDataSource();
-        reader.open(args[0]);
-        System.out.printf("\nReading trajectory points...\n");
-
-        // Loop through events.
-        int[] trjCnt = new int[]{0, 0};
-        while (reader.hasEvent()) {
-            if (ei%50000==0) System.out.printf("Ran %8d events...\n", ei);
-            ei++;
-            DataEvent event = reader.getNextEvent();
-            trjCnt[1]++;
-
-            ArrayList<TrajPoint[]> trajPoints = getTrajPoints(event, constants, trkSwim, fCuts,
-                    fmtZ, fmtAngle, shArr, 3, true);
-
-            if (trajPoints == null) continue;
-            trjCnt[0] += trajPoints.size();
-        }
-        System.out.printf("Ran %8d events... Done!\n", ei);
-        System.out.printf("%d trajectory point arrays found in %d events.\n", trjCnt[0], trjCnt[1]);
-
-        return;
     }
 }

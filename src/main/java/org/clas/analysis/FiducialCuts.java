@@ -2,7 +2,6 @@ package org.clas.analysis;
 
 public class FiducialCuts {
     // track-cluster matching constants:
-    private static final double dx    = 3;  // Maximum x distance permitted.
     private static final double dy    = 1;  // Maximum y distance permitted.
     private static final double dtmin = 60; // Maximum Tmin permitted.
 
@@ -58,9 +57,7 @@ public class FiducialCuts {
      * @param sc    : track error counter, used for debugging.
      * @return true if the track is to be cut, false otherwise.
      */
-    public boolean checkTrajCuts(double z, double x, double y, double zRef,
-            double costh) {
-
+    public boolean checkTrajCuts(double z, double x, double y, double zRef, double costh) {
         if (Math.abs(z-zRef)>0.05) {
             trsc[2]++;
             return true;
@@ -111,36 +108,16 @@ public class FiducialCuts {
 
     /**
      * Check if a cross needs to be cut due to a cluster being too far from the trajectory points in
-     * its same FMT layer in the x coordinate. Hasn't been implemented yet.
-     * @param traj_x : trajectory point x position.
-     * @param strip  : cluster seed strip.
-     * @return true if the cross is to be cut, false otherwise.
-     */
-    public boolean checkCrossDeltaX(double traj_x, int strip) {
-        // Obtain cluster x coordinate from strip.
-        double clus_x = -1;
-
-        // Compare x coordinates.
-        if (Math.abs(traj_x-clus_x)>=dx) {
-            crsc[1]++;
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if a cross needs to be cut due to a cluster being too far from the trajectory points in
      * its same FMT layer in the y coordinate.
      * @param traj_y : trajectory point y position.
      * @param clus_y : cluster y position.
      * @return true if the cross is to be cut, false otherwise.
      */
     public boolean checkCrossDeltaY(double traj_y, double clus_y) {
-        if (Math.abs(traj_y-clus_y)>=dy) {
-            crsc[2]++;
-            return true;
-        }
+        // if (Math.abs(traj_y-clus_y)>=dy) {
+        //     crsc[2]++;
+        //     return true;
+        // }
         return false;
     }
 
@@ -152,10 +129,10 @@ public class FiducialCuts {
      * @return true if the cross is to be cut, false otherwise.
      */
     public boolean checkCrossDeltaTmin(double c0tmin, double c1tmin, double c2tmin) {
-        // if (Math.abs(c0tmin - c1tmin) >= dtmin || Math.abs(c1tmin - c2tmin) >= dtmin) {
-        //     crsc[3]++;
-        //     return true;
-        // }
+        if (Math.abs(c0tmin - c1tmin) >= dtmin || Math.abs(c1tmin - c2tmin) >= dtmin) {
+            crsc[3]++;
+            return true;
+        }
         return false;
     }
 
