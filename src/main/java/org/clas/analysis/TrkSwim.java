@@ -7,6 +7,7 @@ import org.jlab.clas.swimtools.Swimmer;
 
 public class TrkSwim {
     Swim swim;
+    Vector3D dir;
 
     /**
      * Setup the Swim class.
@@ -16,7 +17,7 @@ public class TrkSwim {
      *                   * [2] : torus magnet shift.
      * @return Swim instance.
      */
-    public TrkSwim(double[] swmSetup) {
+    public TrkSwim(double[] swmSetup, double yaw, double pitch) {
         if (swmSetup.length != 3) {
             System.out.printf("swmSetup should have a size of 3. Read the method's description.\n");
             return;
@@ -25,6 +26,13 @@ public class TrkSwim {
         MagFieldsEngine mf = new MagFieldsEngine();
         mf.initializeMagneticFields();
         Swimmer.setMagneticFieldsScales(swmSetup[0], swmSetup[1], swmSetup[2]);
+
+        // Obtain the plane angle from the yaw and the pitch.
+        double x = -Math.sin(Math.toRadians(yaw));
+        double y = Math.sin(Math.toRadians(pitch));
+        double z = Math.cos(Math.toRadians(yaw))*Math.cos(Math.toRadians(pitch));
+        dir = new Vector3D(x,y,z);
+        // NOTE: I'm not sure if z is calculated correctly here, it might be the negative of that.
 
         swim = new Swim();
     }
@@ -40,6 +48,6 @@ public class TrkSwim {
     public double[] swimToPlane(double x, double y, double z, double px, double py, double pz,
             int q, double zTarget) {
         swim.SetSwimParameters(x,y,z,px,py,pz,q);
-        return swim.SwimToPlaneBoundary(zTarget, new Vector3D(0,0,1), 1);
+        return swim.SwimToPlaneBoundary(zTarget, dir, 1);
     }
 }

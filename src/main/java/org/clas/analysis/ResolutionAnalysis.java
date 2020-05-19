@@ -121,6 +121,7 @@ public class ResolutionAnalysis {
             }
         }
 
+
         int ei = 0; // Event number.
         HipoDataSource reader = new HipoDataSource();
         reader.open(infile);
@@ -128,7 +129,7 @@ public class ResolutionAnalysis {
 
         // Loop through events.
         while (reader.hasEvent()) {
-            if (testRun && ei == 20) break;
+            if (testRun && ei == 20000) break;
             if (ei%50000==0) System.out.format("Analyzed %8d events...\n", ei);
             DataEvent event = reader.getNextEvent();
             ei++;
@@ -233,11 +234,13 @@ public class ResolutionAnalysis {
         double[][] meanErrArr  = new double[Constants.ln][cn];
         double[][] sigmaArr    = new double[Constants.ln][cn];
         double[][] sigmaErrArr = new double[Constants.ln][cn];
+        double[][] chiSqArr    = new double[Constants.ln][cn];
 
         // Run.
         double origVal = shArr[lyr][var];
         for (int ci=0; ci<cn; ++ci) {
             shArr[lyr][var] = origVal + inShArr[ci];
+            fcuts.resetCounters();
             runAnalysis(func, ci, swim, fcuts, dgFMT, g);
 
             // Get mean and sigma from fit.
@@ -247,19 +250,29 @@ public class ResolutionAnalysis {
                 meanErrArr[li][ci]  = gss.parameter(1).error();
                 sigmaArr[li][ci]    = gss.getParameter(2);
                 sigmaErrArr[li][ci] = gss.parameter(2).error();
+                chiSqArr[li][ci]    = gss.getParameter(3);
             }
         }
 
         // Print alignment data and draw plots.
+        if (var==0) System.out.printf("\nz ");
+        if (var==1) System.out.printf("\nx ");
+        if (var==2) System.out.printf("\ny ");
+        if (var==3) System.out.printf("\nroll (phi) ");
+        if (var==4) System.out.printf("\nyaw ");
+        if (var==5) System.out.printf("\npitch ");
+        System.out.printf("shift = [");
+        for (int ci=0; ci<cn; ++ci) System.out.printf("%12.5f, ", inShArr[ci]);
+        System.out.printf("\b\b]\n");
         for (int li=0; li<Constants.ln; ++li) {
-            System.out.printf("\nLayer %1d:\n", li+1);
-            for (int ci=0; ci<cn; ++ci) {
-                System.out.printf("shift [%1d,%1d] : %5.2f\n", lyr, var, inShArr[ci]);
-                System.out.printf("  * mean  : %9.6f +- %9.6f\n",
-                        meanArr[li][ci], meanErrArr[li][ci]);
-                System.out.printf("  * sigma : %9.6f +- %9.6f\n",
-                        sigmaArr[li][ci], sigmaErrArr[li][ci]);
-            }
+            System.out.printf("layer %1d:\n", li+1);
+            System.out.printf("  sigma    = [");
+            for (int ci=0; ci<cn; ++ci) System.out.printf("%12.5f, ", sigmaArr[li][ci]);
+            System.out.printf("\b\b]\n  sigmaErr = [");
+            for (int ci=0; ci<cn; ++ci) System.out.printf("%12.5f, ", sigmaErrArr[li][ci]);
+            System.out.printf("\b\b]\n  chiSq    = [");
+            for (int ci=0; ci<cn; ++ci) System.out.printf("%12.5f, ", chiSqArr[li][ci]);
+            System.out.printf("\b\b]\n");
         }
 
         Data.drawResPlots(dgFMT, cn, titleArr, pltLArr);

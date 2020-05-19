@@ -30,24 +30,27 @@ public class Main {
         int pltRan        = 10;    // Plotting range.
         int gssRan        = 8;     // Fitting range.
         boolean dbgInfo   = true;  // Debugging info.
-        boolean testRun   = false; // Shorten run for testing.
+        boolean testRun   = true; // Shorten run for testing.
 
         // Shifts to be applied (best guess so far).
         double[][] shArr = new double[][]{
-                {-3.65, 0, 0, 0},
-                { 0.20, 0, 0, 0},
-                { 0.00, 0, 0, 0},
-                { 0.05, 0, 0, 0}
+                //   z     x     y   phi   yaw pitch
+                {-3.65, 0.00, 0.00, 0.00, 0.00, 0.00},
+                { 0.20, 0.00, 0.00, 0.00, 0.00, 0.00},
+                { 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
+                { 0.05, 0.00, 0.00, 0.00, 0.00, 0.00}
         };
+        // NOTE: Due to the fact that the y axis is pointing up, the yaw is inverted!
 
-        TrkSwim trkSwim = new TrkSwim(swmSetup);
+        // Apply pitch and yaw shifts.
+        TrkSwim trkSwim = new TrkSwim(swmSetup, shArr[0][4], shArr[0][5]);
         FiducialCuts fCuts = new FiducialCuts();
         ResolutionAnalysis resAnls =
                 new ResolutionAnalysis(infile, pltLArr, dbgInfo, testRun, shArr);
 
         // Run
         double[] inShArr = new double[]{0}; // Shifts to be tested.
-        resAnls.shiftAnalysis(0, 0, inShArr, pltRan, gssRan, trkSwim, fCuts);
+        resAnls.shiftAnalysis(1, 3, inShArr, pltRan, gssRan, trkSwim, fCuts);
         // resAnls.dcSectorStripAnalysis(pltRan, gssRan, trkSwim, fCuts);
         // resAnls.dcSectorThetaAnalysis(pltRan, gssRan, trkSwim, fCuts);
         // resAnls.fmtRegionAnalysis(pltRan, trkSwim, fCuts);

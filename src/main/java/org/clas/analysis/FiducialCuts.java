@@ -31,6 +31,12 @@ public class FiducialCuts {
         crsc[0] += amnt;
     }
 
+    public void resetCounters() {
+        for (int tri=0; tri<trsc.length; ++tri) trsc[tri]=0;
+        for (int cli=0; cli<clsc.length; ++cli) clsc[cli]=0;
+        for (int cri=0; cri<crsc.length; ++cri) crsc[cri]=0;
+    }
+
     /**
      * Check if a track is too far downstream before swimming it.
      * @param trkZ track's z coordinate.

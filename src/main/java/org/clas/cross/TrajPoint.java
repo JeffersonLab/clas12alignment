@@ -90,7 +90,7 @@ public class TrajPoint {
 
             // Get FMT layer's z coordinate and strips angle.
             double zRef = fmtZ[li] + shArr[0][0] + shArr[li+1][0];
-            double phiRef = fmtAngle[li];
+            double phiRef = fmtAngle[li] - (shArr[0][3]+shArr[li+1][3]); // Apply phi shift.
 
             // Get particle's kinematics.
             double x  = (double) ptcBank.getFloat("vx", pi);
@@ -104,8 +104,8 @@ public class TrajPoint {
             if (applyCuts && fcuts.downstreamTrackCheck(z, zRef)) continue;
             double[] V = swim.swimToPlane(x,y,z,px,py,pz,q,zRef);
 
-            x  = V[0];
-            y  = V[1];
+            x  = V[0] - (shArr[0][1]+shArr[li+1][1]); // Apply x shift.
+            y  = V[1] - (shArr[0][2]+shArr[li+1][2]); // Apply y shift.
             z  = V[2];
             px = V[3];
             py = V[4];
