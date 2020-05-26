@@ -160,7 +160,7 @@ public class Data {
                 f1_res.setParameter(2, 1.0);
                 f1_res.setParameter(3, 0);
                 f1_res.setParameter(4, 0);
-                f1_res.setParameter(6, 0);
+                f1_res.setParameter(5, 0);
                 f1_res.setLineWidth(2);
                 f1_res.setLineColor(2);
                 f1_res.setOptStat("1111");
