@@ -8,6 +8,7 @@ import org.clas.analysis.FiducialCuts;
 
 public class Cluster {
     // Cluster data:
+    private int id;        // Cluster ID.
     private int fmtLyr;    // FMT layer.
     private int strip;     // FMT strip.
     private double y;      // y position in the layer's local coordinate system.
@@ -15,7 +16,8 @@ public class Cluster {
     private double energy; // Total energy of the strips in the cluster.
 
     /** Class constructor. */
-    private Cluster(int _fmtLyr, int _strip, double _y, double _tMin, double _energy) {
+    private Cluster(int _id, int _fmtLyr, int _strip, double _y, double _tMin, double _energy) {
+        this.id       = _id;
         this.fmtLyr   = _fmtLyr;
         this.strip    = _strip;
         this.y        = _y;
@@ -23,6 +25,7 @@ public class Cluster {
         this.energy   = _energy;
     }
 
+    public int get_id() {return id;}
     public int get_fmtLyr() {return fmtLyr;}
     public int get_strip() {return strip;}
     public double get_y() {return y;}
@@ -49,6 +52,7 @@ public class Cluster {
 
         for (int cri=0; cri<clBank.rows(); cri++) {
             fcuts.increaseClusterCount();
+            int id        = clBank.getShort("ID", cri);
             int li        = clBank.getByte("layer", cri)-1;
             int strip     = clBank.getInt("seedStrip", cri);
             int size      = clBank.getShort("size", cri);
@@ -59,7 +63,7 @@ public class Cluster {
             // Apply cluster fiducial cuts.
             if (applyCuts && fcuts.checkClusterCuts(strip, size, energy, tMin)) continue;
 
-            clusters[li].add(new Cluster(li, strip, y, tMin, energy));
+            clusters[li].add(new Cluster(id, li, strip, y, tMin, energy));
         }
 
         return clusters;

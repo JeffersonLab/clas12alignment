@@ -75,17 +75,36 @@ public class Cross {
 
             // Create crosses where the Tmin difference makes sense.
             // NOTE: Hardcoded for 3 FMT layers.
+            double bar = Double.POSITIVE_INFINITY;         // Best average residual.
+            Cluster[] bc = new Cluster[] {null,null,null}; // Best clusters.
             for (Cluster c0 : cclusters[0]) {
                 for (Cluster c1 : cclusters[1]) {
                     for (Cluster c2 : cclusters[2]) {
                         if (fcuts.checkCrossDeltaTmin(c0.get_tMin(), c1.get_tMin(), c2.get_tMin()))
                             continue;
-
-                        crosses.add(new Cross(c0, c1, c2, trjPArr[0], trjPArr[1], trjPArr[2]));
+                        if (bar > Math.abs(c0.get_y() - trjPArr[0].get_y())
+                                + Math.abs(c1.get_y() - trjPArr[1].get_y())
+                                + Math.abs(c2.get_y() - trjPArr[2].get_y())) {
+                            bc[0] = c0;
+                            bc[1] = c1;
+                            bc[2] = c2;
+                        }
                     }
                 }
             }
+            if (bc[0]!=null && bc[1]!=null && bc[2]!=null)
+                crosses.add(new Cross(bc[0], bc[1], bc[2], trjPArr[0], trjPArr[1], trjPArr[2]));
         }
+
+//        System.out.printf(" pid  tid  cid  tmin  residual\n");
+//        for (Cross cross : crosses) {
+//            System.out.printf("________________________\n");
+//            for (int li=0; li<3; ++li) {
+//                System.out.printf("%4d %4d %4d %9.5f %9.5f\n", cross.gett(li).get_pi(),
+//                        cross.gett(li).get_id(), cross.getc(li).get_id(), cross.getc(li).get_tMin(),
+//                        cross.getr(li));
+//            }
+//        }
 
         return crosses;
     }

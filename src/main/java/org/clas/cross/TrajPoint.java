@@ -10,6 +10,8 @@ import org.clas.analysis.TrkSwim;
 
 public class TrajPoint {
     // Trajectory point data:
+    private int pi;       // Particle index.
+    private int id;       // Track index.
     private int fmtLyr;   // FMT layer.
     private int dcSec;    // DC sector.
     private double z;     // z position.
@@ -18,7 +20,10 @@ public class TrajPoint {
     private double cosTh; // cosine of the trajectory's theta angle.
 
     /** Constructor. */
-    private TrajPoint(int _fmtLyr, int _dcSec, double _z, double _x, double _y, double _cosTh) {
+    private TrajPoint(int _pi, int _id, int _fmtLyr, int _dcSec, double _z, double _x, double _y,
+            double _cosTh) {
+        this.pi     = _pi;
+        this.id     = _id;
         this.fmtLyr = _fmtLyr;
         this.dcSec  = _dcSec;
         this.z      = _z;
@@ -27,6 +32,8 @@ public class TrajPoint {
         this.cosTh  = _cosTh;
     }
 
+    public int get_pi() {return pi;}
+    public int get_id() {return id;}
     public int get_fmtLyr() {return fmtLyr;}
     public int get_dcSec() {return dcSec;}
     public double get_z() {return z;}
@@ -69,6 +76,7 @@ public class TrajPoint {
         for (int trji=0; trji<trjBank.rows(); trji++) {
             // Load trajectory variables.
             int detector = trjBank.getByte("detector", trji);
+            int id = trjBank.getShort("index", trji);
             int li = trjBank.getByte("layer", trji)-1;
             int pi = trjBank.getShort("pindex", trji);
             int si = -1; // DC sector.
@@ -104,8 +112,8 @@ public class TrajPoint {
             if (applyCuts && fcuts.downstreamTrackCheck(z, zRef)) continue;
             double[] V = swim.swimToPlane(x,y,z,px,py,pz,q,zRef);
 
-            x  = V[0] - (shArr[0][1]+shArr[li+1][1]); // Apply x shift.
-            y  = V[1] - (shArr[0][2]+shArr[li+1][2]); // Apply y shift.
+            x  = V[0] - (shArr[0][1]+shArr[li+1][1]); // Apply global x shift.
+            y  = V[1] - (shArr[0][2]+shArr[li+1][2]); // Apply global y shift.
             z  = V[2];
             px = V[3];
             py = V[4];
@@ -123,7 +131,8 @@ public class TrajPoint {
             double yLoc = y * Math.cos(Math.toRadians(phiRef))
                     - x * Math.sin(Math.toRadians(phiRef));
 
-            trajPoints.get(trajPoints.size()-1)[li] = new TrajPoint(li, si, z, xLoc, yLoc, costh);
+            trajPoints.get(trajPoints.size()-1)[li] =
+                    new TrajPoint(pi, id, li, si, z, xLoc, yLoc, costh);
         }
 
         // Clean trios.
