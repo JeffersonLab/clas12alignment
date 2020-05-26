@@ -2,8 +2,8 @@ package org.clas.analysis;
 
 public class FiducialCuts {
     // track-cluster matching constants:
-    private static final double dy    = 1;  // Maximum y distance permitted.
-    private static final double dtmin = 60; // Maximum Tmin permitted.
+    private static final double dely    = 1;  // Maximum y distance permitted.
+    private static final double deltmin = 60; // Maximum Tmin permitted.
 
     // class variables:
     int[] trsc; // cut trajectory points counter.
@@ -118,10 +118,10 @@ public class FiducialCuts {
      * @return true if the cross is to be cut, false otherwise.
      */
     public boolean checkCrossDeltaY(double traj_y, double clus_y) {
-        // if (Math.abs(traj_y-clus_y)>=dy) {
-        //     crsc[1]++;
-        //     return true;
-        // }
+        if (Math.abs(traj_y-clus_y)>=dely) {
+            crsc[1]++;
+            return true;
+        }
         return false;
     }
 
@@ -133,7 +133,7 @@ public class FiducialCuts {
      * @return true if the cross is to be cut, false otherwise.
      */
     public boolean checkCrossDeltaTmin(double c0tmin, double c1tmin, double c2tmin) {
-        if (Math.abs(c0tmin - c1tmin) >= dtmin || Math.abs(c1tmin - c2tmin) >= dtmin) {
+        if (Math.abs(c0tmin - c1tmin) >= deltmin || Math.abs(c1tmin - c2tmin) >= deltmin) {
             crsc[2]++;
             return true;
         }

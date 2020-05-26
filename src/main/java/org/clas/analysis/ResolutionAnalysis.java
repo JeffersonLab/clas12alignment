@@ -22,6 +22,7 @@ public class ResolutionAnalysis {
     double[] fmtZ;     // z position of the layers in cm (before shifting).
     double[] fmtAngle; // strip angle in deg.
     double[][] shArr;  // 2D array of shifts to be applied.
+    boolean makeCrosses = false; // Boolean describing if we should do crossmaking.
 
     /**
      * Class constructor.
@@ -40,28 +41,32 @@ public class ResolutionAnalysis {
      *                   [3]: layer 3 [z,x,y,phi] shift.
      */
     public ResolutionAnalysis(String infile, boolean[] pltLArr,
-            boolean dbgInfo, boolean testRun, double[][] shiftArr) {
+            boolean dbgInfo, boolean testRun, double[][] shArr) {
 
         // Sanitize input.
         if (pltLArr.length != 4) {
-            System.out.printf("pltLArr should have a size of 4. Read the ");
-            System.out.printf("method's description.\n");
+            System.out.printf("pltLArr should have a size of 4. Read the method's description.\n");
             System.exit(1);
         }
-        if (shiftArr.length != 4) {
-            System.out.printf("shiftArr should have a size of 4!\n");
+        if (shArr.length != 4) {
+            System.out.printf("shArr should have a size of 4!\n");
             System.exit(1);
         }
-        if (shiftArr[0].length != 4) {
-            System.out.printf("each array inside shiftArr should have a size ");
-            System.out.printf("of 4!\n");
+        if (shArr[0].length != 6) {
+            System.out.printf("Each array inside shArr should have a size of 6!\n");
+            System.exit(1);
         }
 
         this.infile    = infile;
         this.pltLArr   = pltLArr;
         this.debugInfo = dbgInfo;
         this.testRun   = testRun;
-        this.shArr     = shiftArr;
+        this.shArr     = new double[][]{
+            {shArr[0][0], shArr[0][1], shArr[0][2], shArr[0][3], shArr[0][4], shArr[0][5]},
+            {shArr[1][0], shArr[1][1], shArr[1][2], shArr[1][3], shArr[1][4], shArr[1][5]},
+            {shArr[2][0], shArr[2][1], shArr[2][2], shArr[2][3], shArr[2][4], shArr[2][5]},
+            {shArr[3][0], shArr[3][1], shArr[3][2], shArr[3][3], shArr[3][4], shArr[3][5]}
+        };
 
         // Set geometry parameters by reading from database.
         DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, "rgf_spring2020");
@@ -103,7 +108,7 @@ public class ResolutionAnalysis {
     private int runAnalysis(int func, int opt, TrkSwim swim, FiducialCuts fcuts, DataGroup[] dgFMT,
             int g) {
         // Sanitize input.
-        if (func<0 || func>3) return 1;
+        if (func<0 || func>4) return 1;
 
         // Get constants.
         Constants constants = new Constants();
@@ -121,7 +126,6 @@ public class ResolutionAnalysis {
             }
         }
 
-
         int ei = 0; // Event number.
         HipoDataSource reader = new HipoDataSource();
         reader.open(infile);
@@ -129,7 +133,7 @@ public class ResolutionAnalysis {
 
         // Loop through events.
         while (reader.hasEvent()) {
-            if (testRun && ei == 20000) break;
+            if (testRun && ei == 5) break;
             if (ei%50000==0) System.out.format("Analyzed %8d events...\n", ei);
             DataEvent event = reader.getNextEvent();
             ei++;
@@ -139,43 +143,94 @@ public class ResolutionAnalysis {
             ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, true);
             if (trajPoints==null || clusters==null) continue;
 
-            ArrayList<Cross> crosses = Cross.makeCrosses(trajPoints, clusters, fcuts);
+            if (makeCrosses) {
+                ArrayList<Cross> crosses = Cross.makeCrosses(trajPoints, clusters, fcuts);
 
-            // Loop through crosses.
-            for (Cross cross : crosses) {
-                // Loop through trajectory points, clusters, and residuals in the cross.
-                for (int ci=0; ci<cross.size(); ++ci) {
-                    // Get necessary data
-                    int li       = cross.getc(ci).get_fmtLyr();
-                    int si       = cross.gett(ci).get_dcSec();
-                    int strip    = cross.getc(ci).get_strip();
-                    double costh = cross.gett(ci).get_cosTh();
+                // Loop through crosses.
+                for (Cross cross : crosses) {
+                    // Loop through trajectory points, clusters, and residuals in the cross.
+                    for (int ci=0; ci<cross.size(); ++ci) {
+                        // Get necessary data
+                        int li       = cross.getc(ci).get_fmtLyr();
+                        int si       = cross.gett(ci).get_dcSec();
+                        int strip    = cross.getc(ci).get_strip();
+                        double costh = cross.gett(ci).get_cosTh();
 
-                    // Setup plots
-                    int plti = -1;
-                    if (func == 0) plti = opt;
-                    if (func == 1 || func == 2) plti = si;
+                        // Setup plots
+                        int plti = -1;
+                        if (func == 0) plti = opt;
+                        if (func == 1 || func == 2) plti = si;
+                        if (func == 4) plti = 0;
 
-                    // Plot per FMT-region residuals.
-                    if (func==3) {
-                        for (int ri=0; ri<=Constants.rn; ++ri) {
-                            if (Constants.iStripArr[ri]+1<=strip
-                                    && strip<=Constants.iStripArr[ri+1]) {
-                                dgFMT[0].getH2F("hi_cluster_res_strip_l"+(Constants.rn*li+ri))
-                                        .fill(cross.getr(ci), strip);
+                        // Plot per FMT-region residuals.
+                        if (func==3) {
+                            for (int ri=0; ri<=Constants.rn; ++ri) {
+                                if (Constants.iStripArr[ri]+1<=strip
+                                        && strip<=Constants.iStripArr[ri+1]) {
+                                    dgFMT[0].getH2F("hi_cluster_res_strip_l"+(Constants.rn*li+ri))
+                                            .fill(cross.getr(ci), strip);
+                                }
+                            }
+                            continue;
+                        }
+
+                        // Plot other types of analysis.
+                        dgFMT[plti].getH1F("hi_cluster_res_l"+(li+1)).fill(cross.getr(ci));
+                        if (func==0 || func==1)
+                            dgFMT[plti].getH2F("hi_cluster_res_strip_l"+(li+1))
+                                    .fill(cross.getr(ci), strip);
+                        if (func==2)
+                            dgFMT[plti].getH2F("hi_cluster_res_theta_l"+(li+1))
+                                    .fill(cross.getr(ci), costh);
+                        if (func==4) {
+                            dgFMT[plti].getH2F("hi_cluster_res_dtmin_l"+(li+1)).fill(cross.getr(ci),
+                                    Math.abs(cross.getc(li).get_tMin() - cross.getc((li+1)%3).get_tMin()));
+                        }
+                    }
+                }
+            }
+            else {
+                // Loop through trajectory points
+                for (TrajPoint[] tpArr : trajPoints) {
+                    for (int li=0; li<tpArr.length; ++li) {
+                        for (Cluster c : clusters[li]) {
+                            int si       = tpArr[li].get_dcSec();
+                            int strip    = c.get_strip();
+                            double costh = tpArr[li].get_cosTh();
+                            double res   = tpArr[li].get_y() - c.get_y();
+
+                            // Setup plots
+                            int plti = -1;
+                            if (func == 0) plti = opt;
+                            if (func == 1 || func == 2) plti = si;
+                            if (func == 4) plti = 0;
+
+                            // Plot per FMT-region residuals
+                            if (func == 3) {
+                                for (int ri=0; ri<=Constants.rn; ++ri) {
+                                    if (Constants.iStripArr[ri]+1<=strip
+                                            && strip<=Constants.iStripArr[ri+1]) {
+                                        dgFMT[0].getH2F("hi_cluster_res_strip_l"+(Constants.rn*li+ri))
+                                                .fill(res, strip);
+                                    }
+                                }
+                                continue;
+                            }
+
+                            // Plot other types of analysis
+                            dgFMT[plti].getH1F("hi_cluster_res_l"+(li+1)).fill(res);
+                            if (func==0 || func==1)
+                                dgFMT[plti].getH2F("hi_cluster_res_strip_l"+(li+1))
+                                        .fill(res, strip);
+                            if (func==2)
+                                dgFMT[plti].getH2F("hi_cluster_res_theta_l"+(li+1))
+                                        .fill(res, costh);
+                            if (func==4) {
+                                System.out.printf("Set makeCrosses to true to get this plot!\n");
+                                System.exit(1);
                             }
                         }
-                        continue;
                     }
-
-                    // Plot other types of analysis.
-                    dgFMT[plti].getH1F("hi_cluster_res_l"+(li+1)).fill(cross.getr(ci));
-                    if (func==0 || func==1)
-                        dgFMT[plti].getH2F("hi_cluster_res_strip_l"+(li+1))
-                                .fill(cross.getr(ci), strip);
-                    if (func==2)
-                        dgFMT[plti].getH2F("hi_cluster_res_theta_l"+(li+1))
-                                .fill(cross.getr(ci), costh);
                 }
             }
         }
@@ -205,20 +260,20 @@ public class ResolutionAnalysis {
 
     /**
      * Run perturbatory shifts analysis. Currently, only z shifts are implemented.
-     * @param lyr     Layer to which shifts are applied (0 for global shift).
-     * @param var     Variable in layer to which shifts are applied:
-     *                  * var=0 : z
-     *                  * var=1 : x
-     *                  * var=2 : y
-     *                  * var=3 : phi
-     * @param inShArr Array of shifts to try.
-     * @param r       Plot range.
-     * @param g       Gaussian range.
-     * @param swim    TrkSwim class instance.
-     * @param fcuts   FiducialCuts class instance.
+     * @param lyr      Layer to which shifts are applied (0 for global shift).
+     * @param var      Variable in layer to which shifts are applied:
+     *                   * var=0 : z
+     *                   * var=1 : x
+     *                   * var=2 : y
+     *                   * var=3 : phi
+     * @param inShArr  Array of shifts to try.
+     * @param r        Plot range.
+     * @param g        Gaussian range.
+     * @param swmSetup Setup for initializing the TrkSwim class.
+     * @param fcuts    FiducialCuts class instance.
      * @return status int.
      */
-    public int shiftAnalysis(int lyr, int var, double[] inShArr, int r, int g, TrkSwim swim,
+    public int shiftAnalysis(int lyr, int var, double[] inShArr, int r, int g, double[] swmSetup,
             FiducialCuts fcuts) {
 
         int func = 0;
@@ -231,7 +286,6 @@ public class ResolutionAnalysis {
         DataGroup[] dgFMT = Data.createResDataGroups(func, Constants.ln, cn, r);
 
         double[][] meanArr     = new double[Constants.ln][cn];
-        double[][] meanErrArr  = new double[Constants.ln][cn];
         double[][] sigmaArr    = new double[Constants.ln][cn];
         double[][] sigmaErrArr = new double[Constants.ln][cn];
         double[][] chiSqArr    = new double[Constants.ln][cn];
@@ -241,13 +295,13 @@ public class ResolutionAnalysis {
         for (int ci=0; ci<cn; ++ci) {
             shArr[lyr][var] = origVal + inShArr[ci];
             fcuts.resetCounters();
+            TrkSwim swim = new TrkSwim(swmSetup, shArr[0][4], shArr[0][5]);
             runAnalysis(func, ci, swim, fcuts, dgFMT, g);
 
             // Get mean and sigma from fit.
             for (int li=0; li<Constants.ln; ++li) {
                 F1D gss = dgFMT[ci].getF1D("f1_res_l"+(li+1));
                 meanArr[li][ci]     = gss.getParameter(1);
-                meanErrArr[li][ci]  = gss.parameter(1).error();
                 sigmaArr[li][ci]    = gss.getParameter(2);
                 sigmaErrArr[li][ci] = gss.parameter(2).error();
                 chiSqArr[li][ci]    = gss.getParameter(3);
@@ -255,27 +309,29 @@ public class ResolutionAnalysis {
         }
 
         // Print alignment data and draw plots.
-        if (var==0) System.out.printf("\nz ");
-        if (var==1) System.out.printf("\nx ");
-        if (var==2) System.out.printf("\ny ");
-        if (var==3) System.out.printf("\nroll (phi) ");
-        if (var==4) System.out.printf("\nyaw ");
-        if (var==5) System.out.printf("\npitch ");
+        if (var==0) System.out.printf("\nz_");
+        if (var==1) System.out.printf("\nx_");
+        if (var==2) System.out.printf("\ny_");
+        if (var==3) System.out.printf("\nphi_");
+        if (var==4) System.out.printf("\nyaw_");
+        if (var==5) System.out.printf("\npitch_");
         System.out.printf("shift = [");
-        for (int ci=0; ci<cn; ++ci) System.out.printf("%12.5f, ", inShArr[ci]);
+        for (int ci=0; ci<cn; ++ci) System.out.printf("%9.5f, ", inShArr[ci]);
         System.out.printf("\b\b]\n");
         for (int li=0; li<Constants.ln; ++li) {
-            System.out.printf("layer %1d:\n", li+1);
-            System.out.printf("  sigma    = [");
-            for (int ci=0; ci<cn; ++ci) System.out.printf("%12.5f, ", sigmaArr[li][ci]);
-            System.out.printf("\b\b]\n  sigmaErr = [");
-            for (int ci=0; ci<cn; ++ci) System.out.printf("%12.5f, ", sigmaErrArr[li][ci]);
-            System.out.printf("\b\b]\n  chiSq    = [");
-            for (int ci=0; ci<cn; ++ci) System.out.printf("%12.5f, ", chiSqArr[li][ci]);
+            System.out.printf("# layer %1d:\n", li+1);
+            System.out.printf("mean      = [");
+            for (int ci=0; ci<cn; ++ci) System.out.printf("%9.5f, ", meanArr[li][ci]);
+            System.out.printf("\b\b]\nsigma     = [");
+            for (int ci=0; ci<cn; ++ci) System.out.printf("%9.5f, ", sigmaArr[li][ci]);
+            System.out.printf("\b\b]\nsigma_err = [");
+            for (int ci=0; ci<cn; ++ci) System.out.printf("%9.5f, ", sigmaErrArr[li][ci]);
+            System.out.printf("\b\b]\nchi_sq    = [");
+            for (int ci=0; ci<cn; ++ci) System.out.printf("%9.2f, ", chiSqArr[li][ci]);
             System.out.printf("\b\b]\n");
         }
 
-        Data.drawResPlots(dgFMT, cn, titleArr, pltLArr);
+        // Data.drawResPlots(dgFMT, cn, titleArr, pltLArr);
 
         return 0;
     }
@@ -310,7 +366,6 @@ public class ResolutionAnalysis {
      * @return status int.
      */
     public int dcSectorThetaAnalysis(int r, int g, TrkSwim swim, FiducialCuts fcuts) {
-
         int func = 2;
         String[] titleArr = new String[Constants.sn];
         for (int si=0; si < Constants.sn; ++si) titleArr[si] = "DC sector " + (si+1);
@@ -345,6 +400,18 @@ public class ResolutionAnalysis {
         return 0;
     }
 
+    public int deltaTminAnalysis(int r, TrkSwim swim, FiducialCuts fcuts) {
+        int func = 4;
+        String title = "delta Tmin";
+        DataGroup[] dgFMT = Data.createResDataGroups(func, Constants.ln, 1, r);
+
+        // Run.
+        runAnalysis(func, swim, fcuts, dgFMT);
+        Data.drawPlots(dgFMT, title);
+
+        return 0;
+    }
+
     /**
      * Draw a 1D plot by counting a pre-defined variable.
      * @param var Variable to be counted:
@@ -357,7 +424,7 @@ public class ResolutionAnalysis {
      */
     public int plot1DCount(int var, TrkSwim swim, FiducialCuts fcuts, int r) {
         // Sanitize input.
-        if (var < 0 || var > 3) return 0;
+        if (var < 0 || var > 4) return 0;
 
         Constants constants = new Constants();
 
@@ -457,10 +524,11 @@ public class ResolutionAnalysis {
      */
     public int plot2DCount(int var, int r) {
         // Sanitize input.
-        if (var != 0) return 0;
+        if (var < 0 || var > 1) return 0;
 
         String title = null;
         if (var == 0) title = "energy / cluster size count";
+        if (var == 1) title = "residual vs delta tmin";
 
         DataGroup[] dgFMT = Data.create2DDataGroup(var, Constants.ln, r);
 

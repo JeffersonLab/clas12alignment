@@ -63,7 +63,7 @@ public class Data {
             for (int li=0; li<ln; ++li) {
                 H1F h1f = new H1F("clusters"+li, 200, 0, r);
                 if (var == 0) h1f.setTitleX("Tmin (ns)");
-                if (var == 1) h1f.setTitleX("energy");
+                if (var == 1) h1f.setTitleX("Energy (MeV)");
                 h1f.setTitleY("cluster count");
                 h1f.setFillColor(4);
 
@@ -86,7 +86,7 @@ public class Data {
             for (int i=0; i<2; ++i) {
                 H1F hi_dtmin_var = new H1F("delta_tmin"+i, 2*r, -r, r);
                 hi_dtmin_var.setTitleX("dTmin (ns)");
-                hi_dtmin_var.setTitleY("count");
+                hi_dtmin_var.setTitleY("Counts");
                 hi_dtmin_var.setFillColor(4);
                 dgFMT[0].addDataSet(hi_dtmin_var, i);
 
@@ -94,6 +94,9 @@ public class Data {
                 f1_res.setParameter(0, 0);
                 f1_res.setParameter(1, 0);
                 f1_res.setParameter(2, 1.0);
+                f1_res.setParameter(3, 0);
+                f1_res.setParameter(4, 0);
+                f1_res.setParameter(6, 0);
                 f1_res.setLineWidth(2);
                 f1_res.setLineColor(2);
                 f1_res.setOptStat("1111");
@@ -116,14 +119,16 @@ public class Data {
         DataGroup[] dgFMT = new DataGroup[1];
 
         dgFMT[0] = new DataGroup(3,1);
-        for (int li=1; li<=ln; ++li) {
-            H2F hi_cluster_var = new H2F(
-                    "hi_cluster_var"+li, "",
-                    40, 0, 40, 100, 0, 5000
-            );
-            hi_cluster_var.setTitleX("cluster size");
-            hi_cluster_var.setTitleY("energy / cluster size");
-            dgFMT[0].addDataSet(hi_cluster_var, li-1);
+        if (var==0) {
+            for (int li=1; li<=ln; ++li) {
+                H2F hi_cluster_var = new H2F(
+                        "hi_cluster_var"+li, "",
+                        40, 0, 40, 100, 0, 5000
+                );
+                hi_cluster_var.setTitleX("cluster size");
+                hi_cluster_var.setTitleY("Energy / cluster size (MeV)");
+                dgFMT[0].addDataSet(hi_cluster_var, li-1);
+            }
         }
 
         return dgFMT;
@@ -153,6 +158,9 @@ public class Data {
                 f1_res.setParameter(0, 0);
                 f1_res.setParameter(1, 0);
                 f1_res.setParameter(2, 1.0);
+                f1_res.setParameter(3, 0);
+                f1_res.setParameter(4, 0);
+                f1_res.setParameter(6, 0);
                 f1_res.setLineWidth(2);
                 f1_res.setLineColor(2);
                 f1_res.setOptStat("1111");
@@ -167,10 +175,17 @@ public class Data {
                 }
                 if (type == 2) {
                     H2F hi_cluster_res_theta = new H2F("hi_cluster_res_theta_l"+li,
-                        200, -r, r, 200, 0, 1);
+                            200, -r, r, 200, 0, 1);
                     hi_cluster_res_theta.setTitleX("Residual - Layer "+li);
                     hi_cluster_res_theta.setTitleY("Theta - Layer "+li);
                     dgFMT[zi].addDataSet(hi_cluster_res_theta, li-1+ln);
+                }
+                if (type == 4) {
+                    H2F hi_cluster_res_dtmin = new H2F("hi_cluster_res_dtmin_l"+li,
+                            200, -r, r, 200, 0, 200);
+                    hi_cluster_res_dtmin.setTitleX("Residual - Layer "+li);
+                    hi_cluster_res_dtmin.setTitleY("dTmin - Layer "+li);
+                    dgFMT[zi].addDataSet(hi_cluster_res_dtmin, li-1+ln);
                 }
             }
         }
