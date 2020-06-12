@@ -71,10 +71,11 @@ public class Data {
             }
         }
 
-        if (var == 2) {
+        if (var == 2 || var == 4) {
             dgFMT[0] = new DataGroup(1,1);
             H1F hi_track_var = new H1F("tracks", 800, 0, r);
-            hi_track_var.setTitleX("track z (cm)");
+            if (var == 2) hi_track_var.setTitleX("track z (cm)");
+            if (var == 4) hi_track_var.setTitleX("track theta (deg)");
             hi_track_var.setTitleY("track count");
             hi_track_var.setFillColor(4);
 

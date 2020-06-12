@@ -2,8 +2,8 @@ package org.clas.analysis;
 
 public class FiducialCuts {
     // track-cluster matching constants:
-    private static final double dely    = 1;  // Maximum y distance permitted.
-    private static final double deltmin = 60; // Maximum Tmin permitted.
+    private static final double dely    = 20; // Maximum y distance permitted.
+    private static final double deltmin = 60; // Maximum delta Tmin permitted.
 
     // class variables:
     int[] trsc; // cut trajectory points counter.

@@ -110,9 +110,6 @@ public class ResolutionAnalysis {
         // Sanitize input.
         if (func<0 || func>4) return 1;
 
-        // Get constants.
-        Constants constants = new Constants();
-
         // Print the shifts applied.
         if (debugInfo) {
             System.out.printf("SHIFTS APPLIED:\n");
@@ -133,12 +130,12 @@ public class ResolutionAnalysis {
 
         // Loop through events.
         while (reader.hasEvent()) {
-            if (testRun && ei == 5) break;
+            if (testRun && ei == 50) break;
             if (ei%50000==0) System.out.format("Analyzed %8d events...\n", ei);
             DataEvent event = reader.getNextEvent();
             ei++;
 
-            ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(event, constants, swim,
+            ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(event, swim,
                     fcuts, fmtZ, fmtAngle, shArr, 3, true);
             ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, true);
             if (trajPoints==null || clusters==null) continue;
@@ -218,6 +215,7 @@ public class ResolutionAnalysis {
                             }
 
                             // Plot other types of analysis
+                            // dgFMT[plti].getH1F("hi_cluster_res_l"+(li+1)).fill(res*(10*costh));
                             dgFMT[plti].getH1F("hi_cluster_res_l"+(li+1)).fill(res);
                             if (func==0 || func==1)
                                 dgFMT[plti].getH2F("hi_cluster_res_strip_l"+(li+1))
@@ -331,7 +329,7 @@ public class ResolutionAnalysis {
             System.out.printf("\b\b]\n");
         }
 
-        // Data.drawResPlots(dgFMT, cn, titleArr, pltLArr);
+        Data.drawResPlots(dgFMT, cn, titleArr, pltLArr);
 
         return 0;
     }
@@ -424,15 +422,14 @@ public class ResolutionAnalysis {
      */
     public int plot1DCount(int var, TrkSwim swim, FiducialCuts fcuts, int r) {
         // Sanitize input.
-        if (var < 0 || var > 4) return 0;
-
-        Constants constants = new Constants();
+        if (var < 0 || var > 5) return 0;
 
         String title = null;
         if (var == 0) title = "Tmin count";
         if (var == 1) title = "energy count";
         if (var == 2) title = "track z";
         if (var == 3) title = "delta Tmin";
+        if (var == 4) title = "track theta";
 
         DataGroup[] dgFMT = Data.create1DDataGroup(var, Constants.ln, r);
 
@@ -474,13 +471,24 @@ public class ResolutionAnalysis {
                         continue;
 
                     // Get particle data.
-                    double z  = (double) part.getFloat("vz", pi);
-
-                    dgFMT[0].getH1F("tracks").fill(z);
+                    if (var==2) {
+                        double z  = (double) part.getFloat("vz", pi);
+                        dgFMT[0].getH1F("tracks").fill(z);
+                    }
+                }
+            }
+            if (var==4) {
+                ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(event,
+                        swim, fcuts, fmtZ, fmtAngle, shArr, 3, false);
+                if (trajPoints==null) continue;
+                for (TrajPoint[] trjparr : trajPoints) {
+                    for (TrajPoint trjp : trjparr) {
+                        dgFMT[0].getH1F("tracks").fill(Math.toDegrees(trjp.get_cosTh()));
+                    }
                 }
             }
             if (var==3) {
-                ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(event, constants, swim,
+                ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(event, swim,
                         fcuts, fmtZ, fmtAngle, shArr, 3, true);
                 ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, true);
                 if (trajPoints==null || clusters==null) continue;
@@ -499,7 +507,7 @@ public class ResolutionAnalysis {
         System.out.format("Analyzed %8d events... Done!\n", ei);
         reader.close();
 
-        if (var==0 || var==1 ) Data.drawPlots(dgFMT, title);
+        if (var==0 || var==1 || var==4) Data.drawPlots(dgFMT, title);
         if (var==2) {
             // Apply z shifts and draw plots.
             for (int li=0; li<Constants.ln; ++li) fmtZ[li] += shArr[0][0] + shArr[li+1][0];

@@ -10,7 +10,7 @@
             <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
         </goals>
         <properties>
-            <exec.args>-DCLAS12DIR=/home/twig/code/jlab_sw/coatjava_6.5.3 -classpath %classpath org.clas.test.Main /home/twig/shared/data/clas12/rg-f/filter_clas_011983.evio.00000-00004_current.hipo</exec.args>
+            <exec.args>-DCLAS12DIR=/home/twig/code/jlab_sw/c12offlinesw_fvt/coatjava -classpath %classpath org.clas.test.Main /home/twig/shared/data/clas12/rg-f/fmt_data_rgf.hipo</exec.args>
             <exec.executable>java</exec.executable>
             <Env.COAT_MAGFIELD_TORUSMAP>Symm_torus_r2501_phi16_z251_24Apr2018.dat</Env.COAT_MAGFIELD_TORUSMAP>
             <Env.COAT_MAGFIELD_SOLENOIDMAP>Symm_solenoid_r601_phi1_z1201_13June2018.dat</Env.COAT_MAGFIELD_SOLENOIDMAP>     
@@ -27,7 +27,7 @@
             <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
         </goals>
         <properties>
-            <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -DCLAS12DIR=/home/twig/code/jlab_sw/coatjava_6.5.3 -classpath %classpath org.clas.test.Main /home/twig/shared/data/clas12/rg-f/filter_clas_011983.evio.00000-00004_current.hipo</exec.args>
+            <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -DCLAS12DIR=/home/twig/code/jlab_sw/c12offlinesw_fvt/coatjava -classpath %classpath org.clas.test.Main /home/twig/shared/data/clas12/rg-f/fmt_data_rgf.hipo</exec.args>
             <exec.executable>java</exec.executable>
             <jpda.listen>true</jpda.listen>
         </properties>
@@ -43,7 +43,7 @@
             <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
         </goals>
         <properties>
-            <exec.args>-DCLAS12DIR=/home/twig/code/jlab_sw/coatjava_6.5.3 -classpath %classpath org.clas.test.Main /home/twig/shared/data/clas12/rg-f/filter_clas_011983.evio.00000-00004_current.hipo</exec.args>
+            <exec.args>-DCLAS12DIR=/home/twig/code/jlab_sw/c12offlinesw_fvt/coatjava -classpath %classpath org.clas.test.Main /home/twig/shared/data/clas12/rg-f/fmt_data_rgf.hipo</exec.args>
             <exec.executable>java</exec.executable>
         </properties>
     </action>

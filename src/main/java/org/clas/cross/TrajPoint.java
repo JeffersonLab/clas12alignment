@@ -44,7 +44,6 @@ public class TrajPoint {
     /**
      * Get trajectory points from event bank.
      * @param event        Source data event.
-     * @param constants    Instance of the Constants class.
      * @param swim         Instance of the TrkSwim class.
      * @param fcuts        Instance of the FiducialCuts class.
      * @param fmtZ         Array of each FMT layer's z position.
@@ -54,8 +53,8 @@ public class TrajPoint {
      *                     group. Can be 1, 2, or 3.
      * @return ArrayList of a trio of trajectory points, each on a different layer.
      */
-    public static ArrayList<TrajPoint[]> getTrajPoints(DataEvent event, Constants constants,
-            TrkSwim swim, FiducialCuts fcuts, double[] fmtZ, double[] fmtAngle, double[][] shArr,
+    public static ArrayList<TrajPoint[]> getTrajPoints(DataEvent event, TrkSwim swim,
+            FiducialCuts fcuts, double[] fmtZ, double[] fmtAngle, double[][] shArr,
             int minTrjPoints, boolean applyCuts) {
         // Sanitize input.
         if (minTrjPoints < 1 || minTrjPoints > 3) {
@@ -83,7 +82,7 @@ public class TrajPoint {
             double costh = -1; // track theta.
 
             // Use only FMT layers 1, 2, and 3.
-            if (detector!=DetectorType.FMT.getDetectorId() || li<0 || li>constants.ln-1)
+            if (detector!=DetectorType.FMT.getDetectorId() || li<0 || li>Constants.ln-1)
                 continue;
 
             // Bank integrity is being assumed in this line.
