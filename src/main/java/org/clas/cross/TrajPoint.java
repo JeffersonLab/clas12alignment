@@ -82,7 +82,7 @@ public class TrajPoint {
             double costh = -1; // track theta.
 
             // Use only FMT layers 1, 2, and 3.
-            if (detector!=DetectorType.FMT.getDetectorId() || li<0 || li>Constants.ln-1)
+            if (detector!=DetectorType.FMT.getDetectorId() || li<0 || li> Constants.getNumberOfFMTLayers() -1)
                 continue;
 
             // Bank integrity is being assumed in this line.

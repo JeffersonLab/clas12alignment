@@ -4,24 +4,23 @@ import org.clas.analysis.TrkSwim;
 import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.ResolutionAnalysis;
 
+import java.io.PrintStream;
+
 public class Main {
     /** Print usage. */
-    private static int usage() {
-        System.out.printf("Usage: program infile\n");
-        System.out.printf("  * infile: String with the hipo input file.\n");
-
-        return 0;
+    private static void printUsageAndExit() {
+        System.out.println("Usage: program infile");
+        System.out.println("  * infile: String with the hipo input file.");
+        System.exit(1);
     }
 
     /** Main. */
     public static void main(String[] args) {
         // Process input
-        if (args.length != 1) {
-            usage();
-            System.exit(1);
-        }
-
         String infile = args[0];
+        if (args.length != 1 || !infile.endsWith(".hipo")) {
+            printUsageAndExit();
+        }
 
         // Setup
         boolean[] pltLArr = new boolean[]{true, true, false, false};
@@ -30,7 +29,7 @@ public class Main {
         int pltRan        = 10;    // Plotting range.
         int gssRan        = 8;     // Fitting range.
         boolean dbgInfo   = true;  // Debugging info.
-        boolean testRun   = false; // Shorten run for testing.
+        boolean testRun   = true; // Shorten run for testing.
 
         // Shifts to be applied (best guess so far).
         double[][] shArr = new double[][]{
@@ -66,8 +65,7 @@ public class Main {
         double[] pitchShArr = new double[]{-2.0, -1.0, 0.0, 1.0, 2.0};
 
         // Z ALIGNMENT:
-        ResolutionAnalysis resAnls =
-                new ResolutionAnalysis(infile, pltLArr, dbgInfo, testRun, shArr);
+        ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo, testRun, shArr);
         resAnls.shiftAnalysis(0, 0, zShArr, pltRan, gssRan, swmSetup, fCuts);
 
         // XY ALIGNMENT:
@@ -102,7 +100,5 @@ public class Main {
         // resAnls.plot1DCount(3, swim, fCuts, 150);
         // resAnls.plot1DCount(4, swim, fCuts, 90);
         // resAnls.plot2DCount(0, -1);
-
-        return;
     }
 }
