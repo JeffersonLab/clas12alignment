@@ -69,7 +69,7 @@ public class Data {
                 H1F h1f = new H1F("clusters" + li, 200, 0, r);
                 if (var == 0) h1f.setTitleX("Tmin (ns)");
                 if (var == 1) h1f.setTitleX("Energy (MeV)");
-                h1f.setTitleY("cluster count");
+                h1f.setTitleY("Cluster count");
                 h1f.setFillColor(4);
 
                 dgFMT[0].addDataSet(h1f, li);
@@ -132,8 +132,8 @@ public class Data {
         if (var == 0) {
             for (int li = 1; li <= ln; ++li) {
                 H2F hi_cluster_var = new H2F("hi_cluster_var" + li, "", 40, 0, 40, 100, 0, 5000);
-                hi_cluster_var.setTitleX("cluster size");
-                hi_cluster_var.setTitleY("Energy / cluster size (MeV)");
+                hi_cluster_var.setTitleX("Cluster size");
+                hi_cluster_var.setTitleY("Energy / Cluster size (MeV)");
                 dgFMT[0].addDataSet(hi_cluster_var, li - 1);
             }
         }
