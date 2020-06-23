@@ -10,26 +10,26 @@ public class Cross {
 
     /** Get trajectory point by index. */
     public TrajPoint gett(int ti) {
-        if (ti<0 || ti>size()) return null;
+        if (ti < 0 || ti > size()) return null;
         return trajPoints[ti];
     }
 
     /** Get cluster by index. */
     public Cluster getc(int ci) {
-        if (ci<0 || ci>size()) return null;
+        if (ci < 0 || ci > size()) return null;
         return clusters[ci];
     }
 
     /** Get residual between trajectory point and cluster by index.*/
     public double getr(int ri) {
-        if (ri<0 || ri>size()) return Double.POSITIVE_INFINITY;
+        if (ri < 0 || ri > size()) return Double.POSITIVE_INFINITY;
         return (gett(ri).get_y() - getc(ri).get_y());
     }
 
     /** Return the size of the cross. Currently can only be 3. */
     public int size() {
         int clusCnt = 3;
-        for (int ci=0; ci<3; ++ci) if (clusters[ci]==null) clusCnt--;
+        for (int ci = 0; ci < 3; ++ci) if (clusters[ci] == null) clusCnt--;
         return clusCnt;
     }
 
@@ -64,7 +64,6 @@ public class Cross {
             fcuts.increaseCrossCount(cclusters[0].size()*cclusters[1].size()*cclusters[2].size());
 
             // Filter out clusters too far from their respective trajectory points.
-            // NOTE: Currently not being applied.
             for (TrajPoint trjP : trjPArr) {
                 int li = trjP.get_fmtLyr();
                 for (int ci = cclusters[li].size()-1; ci >= 0; --ci) {
@@ -74,7 +73,8 @@ public class Cross {
             }
 
             // Create crosses where the Tmin difference makes sense.
-            // NOTE: Hardcoded for 3 FMT layers.
+            // NOTE: Hardcoded for 3 FMT layers. This should change for reconstruction, where a par-
+            //       ticle can
             double bar = Double.POSITIVE_INFINITY;         // Best average residual.
             Cluster[] bc = new Cluster[] {null,null,null}; // Best clusters.
             for (Cluster c0 : cclusters[0]) {
@@ -95,16 +95,6 @@ public class Cross {
             if (bc[0]!=null && bc[1]!=null && bc[2]!=null)
                 crosses.add(new Cross(bc[0], bc[1], bc[2], trjPArr[0], trjPArr[1], trjPArr[2]));
         }
-
-//        System.out.printf(" pid  tid  cid  tmin  residual\n");
-//        for (Cross cross : crosses) {
-//            System.out.printf("________________________\n");
-//            for (int li=0; li<3; ++li) {
-//                System.out.printf("%4d %4d %4d %9.5f %9.5f\n", cross.gett(li).get_pi(),
-//                        cross.gett(li).get_id(), cross.getc(li).get_id(), cross.getc(li).get_tMin(),
-//                        cross.getr(li));
-//            }
-//        }
 
         return crosses;
     }

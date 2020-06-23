@@ -1,10 +1,13 @@
 package org.clas.analysis;
 
+import java.util.Arrays;
 import org.clas.cross.Constants;
 
-import java.util.Arrays;
-
 public class FiducialCuts {
+
+    // general setup:
+    boolean makeCrosses = false;
+    boolean ypAlign = false;
 
     // physics-wise cuts:
     private static final double maxDeltaZ = 0.05;
@@ -22,7 +25,14 @@ public class FiducialCuts {
     int[] clsc = new int[5]; // cut clusters counter.
     int[] crsc = new int[3]; // cut crosses counter.
 
-    public FiducialCuts() {
+    public FiducialCuts() {}
+
+    public FiducialCuts(boolean makeCrosses) {
+        this.makeCrosses = makeCrosses;
+    }
+
+    public void setYPAlign(boolean ypAlign) {
+        this.ypAlign = ypAlign;
     }
 
     /**
@@ -79,15 +89,15 @@ public class FiducialCuts {
      * @return true if the track is to be cut, false otherwise.
      */
     public boolean checkTrajCuts(double z, double x, double y, double zRef, double costh) {
-        if (Math.abs(z - zRef) > maxDeltaZ) {
+        if (!ypAlign && Math.abs(z - zRef) > maxDeltaZ) {
             trsc[2]++;
             return true;
         }
-        if (Constants.getInnerRadius() > (x * x + y * y) || (x * x + y * y) > Constants.getOuterRadius()) {
+        if (Constants.getInnerRadius() > (x*x + y*y) || (x*x + y*y) > Constants.getOuterRadius()) {
             trsc[3]++;
             return true;
         }
-        if (costh > maxPzOverP) {
+        if (!ypAlign && costh > maxPzOverP) {
             trsc[4]++;
             return true;
         }
@@ -116,7 +126,7 @@ public class FiducialCuts {
             clsc[3]++;
             return true;
         }
-        if (size >= 5) {
+        if (!ypAlign && size >= 5) {
             clsc[4]++;
             return true;
         }
@@ -188,15 +198,19 @@ public class FiducialCuts {
                 clscsum, clsc[0]);
         System.out.printf("                               %% │ %5.2f%%              │\n",
                 100 * ((double) clscsum) / clsc[0]);
-        System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
-        System.out.printf(" cluster y too distant to traj y | %8d (%5.2f%%)   |\n",
-                crsc[2], 100 * ((double) crsc[1]) / crsc[0]);
-        System.out.printf("   clusters with large tmin diff | %8d (%5.2f%%)   |\n",
-                crsc[2], 100 * ((double) crsc[2]) / crsc[0]);
-        System.out.printf("           TOTAL CROSSES DROPPED | %8d / %8d |\n",
-                crscsum, crsc[0]);
-        System.out.printf("                               %% | %5.2f%%              │\n",
-                100 * ((double) crscsum) / crsc[0]);
-        System.out.printf("─────────────────────────────────┴─────────────────────┘\n");
+        if (makeCrosses) {
+            System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
+            System.out.printf(" cluster y too distant to traj y | %8d (%5.2f%%)   |\n",
+                    crsc[2], 100 * ((double) crsc[1]) / crsc[0]);
+            System.out.printf("   clusters with large tmin diff | %8d (%5.2f%%)   |\n",
+                    crsc[2], 100 * ((double) crsc[2]) / crsc[0]);
+            System.out.printf("           TOTAL CROSSES DROPPED | %8d / %8d |\n",
+                    crscsum, crsc[0]);
+            System.out.printf("                               %% | %5.2f%%              │\n",
+                    100 * ((double) crscsum) / crsc[0]);
+            System.out.printf("─────────────────────────────────┴─────────────────────┘\n");
+        }
+        else
+            System.out.printf("─────────────────────────────────┴─────────────────────┘\n");
     }
 }

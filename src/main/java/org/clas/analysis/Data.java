@@ -1,5 +1,6 @@
 package org.clas.analysis;
 
+import javax.swing.*;
 import org.clas.cross.Constants;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.H1F;
@@ -10,8 +11,6 @@ import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-
-import javax.swing.*;
 
 public class Data {
 
@@ -42,7 +41,7 @@ public class Data {
         f1res.setParameter(1, mean);
         f1res.setParameter(2, 0.5);
         f1res.setRange(-r, r);
-        DataFitter.fit(f1res, hires, "Q"); // No options uses error for sigma.
+        DataFitter.fit(f1res, hires, "Q"); // No options use error for sigma.
         hires.setFunction(null);
 
         return 0;
@@ -52,10 +51,11 @@ public class Data {
      * Create a 1D data group of a specified variable.
      *
      * @param var Index defining which variable is to be plotted.
-     *            * 0 : cluster Tmin.
-     *            * 1 : cluster total energy.
-     *            * 2 : track z position.
-     *            * 3 : delta tmin between clusters in a cross.
+     *              * 0 : cluster's Tmin.
+     *              * 1 : cluster's total energy.
+     *              * 2 : track's z position.
+     *              * 3 : delta tmin between clusters in a cross.
+     *              * 4 : track's theta angle.
      * @param ln  Number of FMT layers.
      * @param r   Range of the variable (0,r).
      * @return the created data group.
@@ -76,7 +76,7 @@ public class Data {
             }
         }
 
-        if (var == 2 || var == 4) {
+        else if (var == 2 || var == 4) {
             dgFMT[0] = new DataGroup(1, 1);
             H1F hi_track_var = new H1F("tracks", 800, 0, r);
             if (var == 2) hi_track_var.setTitleX("track z (cm)");
@@ -87,7 +87,7 @@ public class Data {
             dgFMT[0].addDataSet(hi_track_var, 0);
         }
 
-        if (var == 3) {
+        else if (var == 3) {
             dgFMT[0] = new DataGroup(2, 1);
             for (int i = 0; i < 2; ++i) {
                 H1F hi_dtmin_var = new H1F("delta_tmin" + i, 2 * r, -r, r);
@@ -96,19 +96,22 @@ public class Data {
                 hi_dtmin_var.setFillColor(4);
                 dgFMT[0].addDataSet(hi_dtmin_var, i);
 
-                F1D f1_res = new F1D("f" + i, "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", -r, r);
+                F1D f1_res = new F1D("f" + i, "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x",
+                        -r, r);
                 f1_res.setParameter(0, 0);
                 f1_res.setParameter(1, 0);
                 f1_res.setParameter(2, 1.0);
                 f1_res.setParameter(3, 0);
                 f1_res.setParameter(4, 0);
-                f1_res.setParameter(6, 0);
+                f1_res.setParameter(5, 0);
                 f1_res.setLineWidth(2);
                 f1_res.setLineColor(2);
                 f1_res.setOptStat("1111");
                 dgFMT[0].addDataSet(f1_res, i);
             }
         }
+
+        else System.out.printf("[Data] var should be between 0 and 4! Something went wrong...\n");
 
         return dgFMT;
     }
@@ -128,15 +131,13 @@ public class Data {
         dgFMT[0] = new DataGroup(3, 1);
         if (var == 0) {
             for (int li = 1; li <= ln; ++li) {
-                H2F hi_cluster_var = new H2F(
-                        "hi_cluster_var" + li, "",
-                        40, 0, 40, 100, 0, 5000
-                );
+                H2F hi_cluster_var = new H2F("hi_cluster_var" + li, "", 40, 0, 40, 100, 0, 5000);
                 hi_cluster_var.setTitleX("cluster size");
                 hi_cluster_var.setTitleY("Energy / cluster size (MeV)");
                 dgFMT[0].addDataSet(hi_cluster_var, li - 1);
             }
         }
+        else System.out.printf("[Data] var should be 0! Something went wrong...\n");
 
         return dgFMT;
     }
@@ -181,20 +182,22 @@ public class Data {
                     hi_cluster_res_strip.setTitleY("Strip - Layer " + li);
                     dgFMT[zi].addDataSet(hi_cluster_res_strip, li - 1 + ln);
                 }
-                if (type == 2) {
+                else if (type == 2) {
                     H2F hi_cluster_res_theta = new H2F("hi_cluster_res_theta_l" + li,
                             200, -r, r, 200, 0, 1);
                     hi_cluster_res_theta.setTitleX("Residual - Layer " + li);
                     hi_cluster_res_theta.setTitleY("Theta - Layer " + li);
                     dgFMT[zi].addDataSet(hi_cluster_res_theta, li - 1 + ln);
                 }
-                if (type == 4) {
+                else if (type == 4) {
                     H2F hi_cluster_res_dtmin = new H2F("hi_cluster_res_dtmin_l" + li,
                             200, -r, r, 200, 0, 200);
                     hi_cluster_res_dtmin.setTitleX("Residual - Layer " + li);
                     hi_cluster_res_dtmin.setTitleY("dTmin - Layer " + li);
                     dgFMT[zi].addDataSet(hi_cluster_res_dtmin, li - 1 + ln);
                 }
+                else if (type != 3)
+                    System.out.printf("[Data] type variable should be between 0 and 4!\n");
             }
         }
 
@@ -204,10 +207,7 @@ public class Data {
     /**
      * Create 2D data groups separated by the FMT regions.
      *
-     * @param ln     Number of FMT layers
-     * @param rn     Number of FMT regions.
-     * @param iStrip Positions of strip separations.
-     * @param r      Residuals range.
+     * @param r Residuals range.
      * @return the created data group arrays.
      */
     public static DataGroup[] createFMTRegionsDataGroup(int r) {
@@ -217,14 +217,15 @@ public class Data {
         for (int li = 0; li < Constants.getNumberOfFMTLayers(); ++li) {
             for (int ri = 0; ri < Constants.getNumberOfFMTRegions(); ++ri) {
                 H2F hi_cluster_res_strip = new H2F(
-                        "hi_cluster_res_strip_l" + (Constants.getNumberOfFMTRegions() * li + ri), 200, -r, r,
-                        Constants.getFMTRegionSeparators(ri + 1) - Constants.getFMTRegionSeparators(ri),
-                        Constants.getFMTRegionSeparators(ri) + 1, Constants.getFMTRegionSeparators(ri + 1)
+                        "hi_cluster_res_strip_l" + (Constants.getNumberOfFMTRegions() * li + ri),
+                        200, -r, r,
+                        Constants.getFMTRegionSeparators(ri+1)-Constants.getFMTRegionSeparators(ri),
+                        Constants.getFMTRegionSeparators(ri)+1,Constants.getFMTRegionSeparators(ri+1)
                 );
                 hi_cluster_res_strip.setTitleX("Residual (cm) - L " + (li + 1) + ", R " + (ri + 1));
                 hi_cluster_res_strip.setTitleY("Strips");
 
-                dgFMT[0].addDataSet(hi_cluster_res_strip, Constants.getNumberOfFMTRegions() * li + ri);
+                dgFMT[0].addDataSet(hi_cluster_res_strip, Constants.getNumberOfFMTRegions()*li+ri);
             }
         }
 
@@ -333,7 +334,9 @@ public class Data {
                     }
                 }
                 if (pltLArr[3]) {
-                    int[] seps = new int[]{320, 512, 832};
+                    int[] seps = new int[]{Constants.getFMTRegionSeparators(1) + 1,
+                                           Constants.getFMTRegionSeparators(2) + 1,
+                                           Constants.getFMTRegionSeparators(3) + 1};
                     for (int sep : seps) {
                         DataLine hline = new DataLine(-30, sep, 30, sep);
                         hline.setLineColor(0);

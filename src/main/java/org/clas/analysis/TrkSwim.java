@@ -19,7 +19,7 @@ public class TrkSwim {
      */
     public TrkSwim(double[] swmSetup, double yaw, double pitch) {
         if (swmSetup.length != 3) {
-            System.out.printf("swmSetup should have a size of 3. Read the method's description.\n");
+            System.out.printf("swmSetup should have a size of 3. Read the method's description!\n");
             return;
         }
 
@@ -32,7 +32,6 @@ public class TrkSwim {
         double y = Math.sin(Math.toRadians(pitch));
         double z = Math.cos(Math.toRadians(yaw))*Math.cos(Math.toRadians(pitch));
         dir = new Vector3D(x,y,z);
-        // NOTE: I'm not sure if z is calculated correctly here, it might be the negative of that.
 
         swim = new Swim();
     }

@@ -4,13 +4,10 @@ public class Constants {
     // FMT Geometry
     private static final double innerRadius = 25;
     private static final double outerRadius = 225;
-    private static final int firstStripNumber = 0;
-    private static final int lastStripNumber = 1023;
-    //
-    private static final int numberOfFMTLayers = 3; // Number of FMT layers.
-    private static final int numberOfFMTRegions = 4; // Number of FMT regions.
-    private static final int numberOfDCSectors = 6; // Number of DC sectors.
-    private static final int[] FMTRegionSeparators = new int[]{-1, 319, 511, 831, 1023}; // FMT region separators.
+    private static final int numberOfFMTLayers = 3;
+    private static final int numberOfFMTRegions = 4;
+    private static final int numberOfDCSectors = 6;
+    private static final int[] FMTRegionSeparators = new int[]{-1, 319, 511, 831, 1023};
 
     public Constants() {
     }
@@ -24,11 +21,11 @@ public class Constants {
     }
 
     public static int getFirstStripNumber() {
-        return firstStripNumber;
+        return FMTRegionSeparators[0]+1;
     }
 
     public static int getLastStripNumber() {
-        return lastStripNumber;
+        return FMTRegionSeparators[4];
     }
 
     public static int getNumberOfFMTLayers() {

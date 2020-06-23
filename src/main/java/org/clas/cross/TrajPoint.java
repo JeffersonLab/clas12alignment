@@ -51,6 +51,7 @@ public class TrajPoint {
      * @param shArr        Array describing the shifts to be applied.
      * @param minTrjPoints Parameter defining the minimum number of trajectory points to define a
      *                     group. Can be 1, 2, or 3.
+     * @param applyCuts    Boolean defining if fiducial cuts should be applied or not.
      * @return ArrayList of a trio of trajectory points, each on a different layer.
      */
     public static ArrayList<TrajPoint[]> getTrajPoints(DataEvent event, TrkSwim swim,
@@ -82,7 +83,8 @@ public class TrajPoint {
             double costh = -1; // track theta.
 
             // Use only FMT layers 1, 2, and 3.
-            if (detector!=DetectorType.FMT.getDetectorId() || li<0 || li> Constants.getNumberOfFMTLayers() -1)
+            if (detector!=DetectorType.FMT.getDetectorId() || li<0
+                    || li> Constants.getNumberOfFMTLayers() -1)
                 continue;
 
             // Bank integrity is being assumed in this line.
