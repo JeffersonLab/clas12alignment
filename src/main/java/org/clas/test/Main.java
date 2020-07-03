@@ -27,7 +27,7 @@ public class Main {
         int pltRan           = 10;    // Plotting range.
         int gssRan           = 8;     // Fitting range.
         boolean dbgInfo      = true;  // Show debugging info.
-        boolean testRun      = false; // Shorten run for testing.
+        int nEvents          = 0;     // Number of events. Set to 0 to run all events in input file.
         boolean dataType     = false; // false for detector data, true for gemc simulation data.
         boolean analysisType = false; // false for alignment, true for plotting variables.
         boolean makeCrosses  = false; // Boolean describing if we should do crossmaking.
@@ -73,7 +73,7 @@ public class Main {
             if (varAlign == 0) { // Check current best results.
                 double[] zShArr = new double[]{0.00};
                 ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo,
-                        testRun, shArr, makeCrosses, drawPlots, false);
+                        nEvents, shArr, makeCrosses, drawPlots, false);
                 resAnls.shiftAnalysis(0, 0, zShArr, pltRan, gssRan, swmSetup, fCuts);
             }
 
@@ -83,7 +83,7 @@ public class Main {
                         {-0.05, -0.04, -0.03, -0.02, -0.01, 0.00, 0.01, 0.02, 0.03, 0.04, 0.05};
                 // Run:
                 ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo,
-                        testRun, shArr, makeCrosses, drawPlots, false);
+                        nEvents, shArr, makeCrosses, drawPlots, false);
                 resAnls.shiftAnalysis(0, 0, zShArr, pltRan, gssRan, swmSetup, fCuts);
             }
 
@@ -98,7 +98,7 @@ public class Main {
                 for (int xi = 0; xi < xShArr.length; ++xi) {
                     shArr[0][1] = orig_x + xShArr[xi];
                     ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo,
-                        testRun, shArr, makeCrosses, false, false);
+                        nEvents, shArr, makeCrosses, false, false);
                     resAnls.shiftAnalysis(0, 2, yShArr, pltRan, gssRan, swmSetup, fCuts);
                 }
             }
@@ -109,16 +109,16 @@ public class Main {
                         {-0.20, -0.15, -0.10, -0.05, 0.00, 0.05, 0.10, 0.15, 0.20};
                 // Run:
                 ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo,
-                        testRun, shArr, makeCrosses, drawPlots, false);
+                        nEvents, shArr, makeCrosses, drawPlots, false);
                 resAnls.shiftAnalysis(0, 3, phiShArr, pltRan, gssRan, swmSetup, fCuts);
             }
 
             else if (varAlign == 4) { // pitch & yaw alignment.
                 // Setup:
                 double[] yawShArr = new double[]
-                        {-0.05, -0.04, -0.03, -0.02, -0.01, 0.00, 0.01, 0.02, 0.03, 0.04, 0.05};
+                        {-0.25, -0.20, -0.15, -0.10, -0.05, 0.00, 0.05, 0.10, 0.15, 0.20, 0.25};
                 double[] pitchShArr = new double[]
-                        {-0.05, -0.04, -0.03, -0.02, -0.01, 0.00, 0.01, 0.02, 0.03, 0.04, 0.05};
+                        {-0.25, -0.20, -0.15, -0.10, -0.05, 0.00, 0.05, 0.10, 0.15, 0.20, 0.25};
 
                 // Run:
                 fCuts.setYPAlign(true);
@@ -126,7 +126,7 @@ public class Main {
                 for (int yi = 0; yi<yawShArr.length; ++yi) {
                     shArr[0][4] = orig_yaw + yawShArr[yi];
                     ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo,
-                        testRun, shArr, makeCrosses, false, true);
+                        nEvents, shArr, makeCrosses, false, true);
                     resAnls.shiftAnalysis(0, 5, pitchShArr, pltRan, gssRan, swmSetup, fCuts);
                 }
             }
@@ -149,7 +149,7 @@ public class Main {
             // * plotType == 9 : 2D plot the clusters' energy divided by their number of strips.
             int plotType = 0;
 
-            ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo, testRun,
+            ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo, nEvents,
                     shArr, makeCrosses, drawPlots, false);
 
             if      (plotType == 0) resAnls.dcSectorStripAnalysis(pltRan, gssRan, swim, fCuts);

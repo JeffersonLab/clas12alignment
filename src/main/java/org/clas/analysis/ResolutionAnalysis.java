@@ -18,7 +18,7 @@ public class ResolutionAnalysis {
     private String infile;
     private boolean[] pltLArr;
     private boolean debugInfo;
-    private boolean testRun;
+    private int nEvents;         // Number of events to run. Set to 0 to run all events in file.
     private double[] fmtZ;       // z position of the layers in cm (before shifting).
     private double[] fmtAngle;   // strip angle in deg degrees.
     private double[][] shArr;    // 2D array of shifts to be applied.
@@ -35,7 +35,7 @@ public class ResolutionAnalysis {
      *                      * [2] : Bottom plots, horizontal lines at each cable's endpoint.
      *                      * [3] : Bottom plots, horizonal lines separating each FMT "region".
      * @param dbgInfo     Boolean describing if debugging info should be printed.
-     * @param testRun     Boolean describing if the run should be cut short for expedient testing.
+     * @param nEvents     Number of events to run. Set to 0 to run all events in file.
      * @param shArr       Array of arrays describing all the shifts applied:
      *                      * [0] :  global [z,x,y,phi] shift.
      *                      * [1] : layer 1 [z,x,y,phi] shift.
@@ -45,7 +45,7 @@ public class ResolutionAnalysis {
      * @param drawPlots   Boolean describing if plots are to be drawn.
      * @param ypAlign     Special setup needed for yaw & pitch alignment.
      */
-    public ResolutionAnalysis(String infile, boolean[] pltLArr, boolean dbgInfo, boolean testRun,
+    public ResolutionAnalysis(String infile, boolean[] pltLArr, boolean dbgInfo, int nEvents,
             double[][] shArr, boolean makeCrosses, boolean drawPlots, boolean ypAlign) {
         this.makeCrosses = makeCrosses;
         this.drawPlots   = drawPlots;
@@ -68,7 +68,7 @@ public class ResolutionAnalysis {
         this.infile    = infile;
         this.pltLArr   = pltLArr;
         this.debugInfo = dbgInfo;
-        this.testRun   = testRun;
+        this.nEvents   = nEvents;
         this.shArr     = new double[][]{
             {shArr[0][0], shArr[0][1], shArr[0][2], shArr[0][3], shArr[0][4], shArr[0][5]},
             {shArr[1][0], shArr[1][1], shArr[1][2], shArr[1][3], shArr[1][4], shArr[1][5]},
@@ -138,7 +138,7 @@ public class ResolutionAnalysis {
 
         // Loop through events.
         while (reader.hasEvent()) {
-            if (testRun && ei == 50) break;
+            if (nEvents != 0 && ei >= nEvents) break;
             if (ei%50000==0) System.out.format("Analyzed %8d events...\n", ei);
             DataEvent event = reader.getNextEvent();
             ei++;
@@ -464,7 +464,7 @@ public class ResolutionAnalysis {
 
         // Loop through events.
         while (reader.hasEvent()) {
-            if (ei == 5 && testRun) break;
+            if (nEvents != 0 && ei >= nEvents) break;
             if (ei % 50000 == 0) System.out.format("Analyzed %8d events...\n", ei);
             DataEvent event = reader.getNextEvent();
             ei++;
@@ -576,7 +576,7 @@ public class ResolutionAnalysis {
 
         // Loop through events.
         while (reader.hasEvent()) {
-            if (ei == 10000 && testRun) break;
+            if (nEvents != 0 && ei >= nEvents) break;
             if (ei % 50000 == 0) System.out.format("Analyzed %8d events...\n", ei);
             DataEvent event = reader.getNextEvent();
             ei++;
