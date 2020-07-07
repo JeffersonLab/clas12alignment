@@ -1,0 +1,4 @@
+target/
+jnotebook_plots/.ipynb_checkpoints/
+*.class
+*.jar
