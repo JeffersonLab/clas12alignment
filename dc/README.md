@@ -1,1 +1,1 @@
-
+See clas12alignment/dc/CLAS12___DC_Alignment_Github_Tutorial.pdf for explanation.
