@@ -79,14 +79,18 @@ public class ResolutionAnalysis {
         // Set geometry parameters by reading from database.
         DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, "rgf_spring2020");
         String fmtTable = "/geometry/fmt/fmt_layer_noshim";
+        String fmtAlignTable = "/geometry/fmt/alignment";
         dbProvider.loadTable(fmtTable);
+        dbProvider.loadTable(fmtAlignTable);
 
         fmtZ     = new double[Constants.getNumberOfFMTLayers()]; // z position of the layers in cm.
         fmtAngle = new double[Constants.getNumberOfFMTLayers()]; // strip angle in deg.
 
         for (int li = 0; li< Constants.getNumberOfFMTLayers(); li++) {
-            fmtZ[li]     = dbProvider.getDouble(fmtTable+"/Z",li)/10;
-            fmtAngle[li] = dbProvider.getDouble(fmtTable+"/Angle",li);
+            fmtZ[li]     = dbProvider.getDouble(fmtTable+"/Z",li)/10
+                    + dbProvider.getDouble(fmtAlignTable+"/deltaZ",li)/10;
+            fmtAngle[li] = dbProvider.getDouble(fmtTable+"/Angle",li)
+                    + dbProvider.getDouble(fmtAlignTable+"/rotZ",li);
         }
     }
 

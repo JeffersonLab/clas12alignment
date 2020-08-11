@@ -87,7 +87,7 @@ public class TrajPoint {
                     || li> Constants.getNumberOfFMTLayers() -1)
                 continue;
 
-            // Bank integrity is being assumed in this line.
+            // Bank integrity is assumed from this point onward.
             if (li == 0) trajPoints.add(new TrajPoint[]{null, null, null});
 
             fcuts.increaseTrajCount();
