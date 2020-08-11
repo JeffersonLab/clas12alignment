@@ -28,7 +28,7 @@ public class Main {
         int gssRan           = 8;     // Fitting range.
         boolean dbgInfo      = true;  // Show debugging info.
         int nEvents          = 0;     // Number of events. Set to 0 to run all events in input file.
-        boolean dataType     = false; // false for detector data, true for gemc simulation data.
+        boolean dataType     = true; // false for detector data, true for gemc simulation data.
         boolean analysisType = false; // false for alignment, true for plotting variables.
         boolean makeCrosses  = false; // Boolean describing if we should do crossmaking.
         boolean drawPlots    = true;  // Boolean describing if plots are to be drawn. Due to hasty

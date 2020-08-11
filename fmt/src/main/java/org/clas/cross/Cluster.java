@@ -57,13 +57,13 @@ public class Cluster {
             int strip     = clBank.getInt("seedStrip", cri);
             int size      = clBank.getShort("size", cri);
             double energy = clBank.getFloat("ETot", cri);
-            double tMin   = clBank.getFloat("Tmin", cri);
+            // double tMin   = clBank.getFloat("Tmin", cri);
             double y      = clBank.getFloat("centroid", cri);
 
             // Apply cluster fiducial cuts.
-            if (applyCuts && fcuts.checkClusterCuts(strip, size, energy, tMin)) continue;
+            if (applyCuts && fcuts.checkClusterCuts(strip, size, energy, 100)) continue;
 
-            clusters[li].add(new Cluster(id, li, strip, y, tMin, energy));
+            clusters[li].add(new Cluster(id, li, strip, y, 100, energy));
         }
 
         return clusters;
