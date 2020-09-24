@@ -373,16 +373,16 @@ public class CentralWriter {
 						ProjThetaSVT.setX(candidates.get(track).get_VectorTrack().x());ProjThetaSVT.setY(candidates.get(track).get_VectorTrack().y());ProjThetaSVT.setZ(candidates.get(track).get_VectorTrack().z());
 						ThetaSVT.sub(ProjThetaSVT.projection(eTheta));
 						
-						bank.putShort("ID", index, (short) (track+1));
-						bank.putByte("LayerTrackIntersPlane", index, (byte) (lay+1));
-						bank.putByte("SectorTrackIntersPlane", index, (byte) (sector));
-						bank.putFloat("XtrackIntersPlane", index, (float) (inter.x()/10.));
-						bank.putFloat("YtrackIntersPlane", index, (float) (inter.y()/10.));
-						bank.putFloat("ZtrackIntersPlane", index, (float) (inter.z()/10.));
-						bank.putFloat("PhitrackIntersPlane", index, (float) Math.toDegrees(PhiSVT.angle(normSVT)));
-						bank.putFloat("ThetatrackIntersPlane", index, (float) Math.toDegrees(ThetaSVT.angle(normSVT)));
-						bank.putFloat("trkToMPlnAngl", index, (float) Math.toDegrees(candidates.get(track).get_VectorTrack().angle(normSVT)));
-						bank.putFloat("CalcCentroidStrip", index, (float) BST.getGeometry().calcNearestStrip(inter.x(), inter.y(), inter.z(), lay+1, sector));
+						bank.putShort("id", index, (short) (track+1));
+						bank.putByte("layer", index, (byte) (lay+1));
+						bank.putByte("sector", index, (byte) (sector));
+						bank.putFloat("x", index, (float) (inter.x()/10.));
+						bank.putFloat("y", index, (float) (inter.y()/10.));
+						bank.putFloat("z", index, (float) (inter.z()/10.));
+						bank.putFloat("phi", index, (float) Math.toDegrees(PhiSVT.angle(normSVT)));
+						bank.putFloat("theta", index, (float) Math.toDegrees(ThetaSVT.angle(normSVT)));
+						bank.putFloat("langle", index, (float) Math.toDegrees(candidates.get(track).get_VectorTrack().angle(normSVT)));
+						bank.putFloat("centroid", index, (float) BST.getGeometry().calcNearestStrip(inter.x(), inter.y(), inter.z(), lay+1, sector));
 						index++;
 					
 						int clus_id=-1;
@@ -415,15 +415,15 @@ public class CentralWriter {
 					Vector3D inter=new Vector3D(BMT.getGeometry().getIntercept(lay+1, sec, candidates.get(track).get_VectorTrack(), candidates.get(track).get_PointTrack()));
 					
 					if (!Double.isNaN(inter.x())&&(main.constant.isCosmic||sec==sector)) {
-						bank.putShort("ID", index, (short) (track+1));
-						bank.putByte("LayerTrackIntersPlane", index, (byte) (lay+7));
-						bank.putByte("SectorTrackIntersPlane", index, (byte) sec);
-						bank.putFloat("XtrackIntersPlane", index, (float) (inter.x()/10.));
-						bank.putFloat("YtrackIntersPlane", index, (float) (inter.y()/10.));
-						bank.putFloat("ZtrackIntersPlane", index, (float) (inter.z()/10.));
+						bank.putShort("id", index, (short) (track+1));
+						bank.putByte("layer", index, (byte) (lay+7));
+						bank.putByte("sector", index, (byte) sec);
+						bank.putFloat("x", index, (float) (inter.x()/10.));
+						bank.putFloat("y", index, (float) (inter.y()/10.));
+						bank.putFloat("z", index, (float) (inter.z()/10.));
 						
-						if (BMT.getGeometry().getZorC(lay+1)==0) bank.putFloat("CalcCentroidStrip", index, (float) BMT.getGeometry().getCStrip(lay+1, inter.z()));
-						if (BMT.getGeometry().getZorC(lay+1)==1) bank.putFloat("CalcCentroidStrip", index, (float) BMT.getGeometry().getZStrip(lay+1, Math.atan2(inter.y(), inter.x())));
+						if (BMT.getGeometry().getZorC(lay+1)==0) bank.putFloat("centroid", index, (float) BMT.getGeometry().getCStrip(lay+1, inter.z()));
+						if (BMT.getGeometry().getZorC(lay+1)==1) bank.putFloat("centroid", index, (float) BMT.getGeometry().getZStrip(lay+1, Math.atan2(inter.y(), inter.x())));
 						
 						int clus_id=-1;
 						for (int clus_track=0;clus_track<candidates.get(track).size();clus_track++) {
@@ -450,7 +450,7 @@ public class CentralWriter {
 						
 					
 						inter.setZ(0);// er is the vector normal to the tile... use inter to compute the angle between track and tile normal.
-						bank.putFloat("trkToMPlnAngl", index, (float) Math.toDegrees(candidates.get(track).get_VectorTrack().angle(inter)));
+						bank.putFloat("langle", index, (float) Math.toDegrees(candidates.get(track).get_VectorTrack().angle(inter)));
 						Vector3D PhiBMT=new Vector3D();
 						PhiBMT.setXYZ(candidates.get(track).get_VectorTrack().x(),candidates.get(track).get_VectorTrack().y() , 0);
 						Vector3D eTheta=new Vector3D();
@@ -460,8 +460,8 @@ public class CentralWriter {
 						Vector3D ProjThetaBMT=new Vector3D();
 						ProjThetaBMT=ThetaBMT.projection(eTheta);
 						ThetaBMT.sub(ProjThetaBMT);
-						bank.putFloat("PhitrackIntersPlane", index, (float) Math.toDegrees(PhiBMT.angle(inter)));
-						bank.putFloat("ThetatrackIntersPlane", index, (float) Math.toDegrees(ThetaBMT.angle(inter)));
+						bank.putFloat("phi", index, (float) Math.toDegrees(PhiBMT.angle(inter)));
+						bank.putFloat("theta", index, (float) Math.toDegrees(ThetaBMT.angle(inter)));
 						index++;
 					}
 				}
