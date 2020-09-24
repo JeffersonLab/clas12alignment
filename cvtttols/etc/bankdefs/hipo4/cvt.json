@@ -62,6 +62,8 @@
         {"name":"phi",                 "type":"F", "info":"phi (deg)"},
         {"name":"chi2",                "type":"F", "info":"Fit chi^2 "},
         {"name":"ndf",                 "type":"S", "info":" number of degrees of freedom used in the fit"},
+        {"name":"NbBSTHits",           "type":"S", "info":" number of BST hits"},
+        {"name":"NbBSMTHits",          "type":"S", "info":" number of BMT hits"},
         {"name":"Cross1_ID",           "type":"S", "info":"ID of cross in the track"},
         {"name":"Cross2_ID",           "type":"S", "info":"ID of cross in the track"},
         {"name":"Cross3_ID",           "type":"S", "info":"ID of cross in the track"},

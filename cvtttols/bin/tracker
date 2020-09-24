@@ -4,5 +4,5 @@ export CLAS12DIR=`dirname $0`/..
 
 export MALLOC_ARENA_MAX=1
 
-java -Xmx1536m -Xms1024m -cp "$CLAS12DIR/target/Tracker-1.0-SNAPSHOT-jar-with-dependencies.jar" main.StraightTracker $*
+java -Xmx1536m -Xms1024m -cp "$CLAS12DIR/target/cvttools-1.0-SNAPSHOT-jar-with-dependencies.jar" main.StraightTracker $*
 
