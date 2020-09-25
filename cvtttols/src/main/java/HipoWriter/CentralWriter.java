@@ -152,6 +152,7 @@ public class CentralWriter {
 					}
 					if (!Double.isNaN(BMT.getTile(lay,sec).getClusters().get(j+1).getZ())) bank.putFloat("err_z", index, (float) BMT.getTile(lay,sec).getClusters().get(j+1).getErr());
 					else bank.putFloat("err_z", index, Float.NaN);
+					bank.putShort("trkID", index, (short) BMT.getTile(lay,sec).getClusters().get(j+1).gettrkID());
 					index++;
 				}
 			}
@@ -182,6 +183,7 @@ public class CentralWriter {
 					bank.putFloat("err_x", index, (float) Math.abs(BST.getModule(lay,sec).getClusters().get(j+1).getErrPhi()*Math.sin(BST.getModule(lay,sec).getClusters().get(j+1).getPhi())));
 					bank.putFloat("err_y", index, (float) Math.abs(BST.getModule(lay,sec).getClusters().get(j+1).getErrPhi()*Math.cos(BST.getModule(lay,sec).getClusters().get(j+1).getPhi())));
 					bank.putFloat("err_z", index, (float) (BST.getModule(lay,sec).getClusters().get(j+1).getErrZ()/10.));
+					bank.putShort("trkID", index, (short) BST.getModule(lay,sec).getClusters().get(j+1).gettrkID());
 					index++;
 				}
 			}
