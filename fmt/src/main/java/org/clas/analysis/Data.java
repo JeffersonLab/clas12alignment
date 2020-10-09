@@ -78,7 +78,7 @@ public class Data {
 
         else if (var == 2 || var == 4) {
             dgFMT[0] = new DataGroup(1, 1);
-            H1F hi_track_var = new H1F("tracks", 800, 0, r);
+            H1F hi_track_var = new H1F("tracks", 800, -r, r);
             if (var == 2) hi_track_var.setTitleX("track z (cm)");
             if (var == 4) hi_track_var.setTitleX("track theta (deg)");
             hi_track_var.setTitleY("track count");
@@ -261,11 +261,11 @@ public class Data {
         fmtCanvas.getCanvas(title).setAxisFontSize(18);
         fmtCanvas.getCanvas(title).setAxisTitleSize(24);
 
-        DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
-        vline.setLineColor(2);
-        vline.setLineWidth(2);
-        fmtCanvas.getCanvas(title).cd(0).draw(vline);
-        fmtCanvas.getCanvas(title).cd(1).draw(vline);
+//        DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
+//        vline.setLineColor(2);
+//        vline.setLineWidth(2);
+//        fmtCanvas.getCanvas(title).cd(0).draw(vline);
+//        fmtCanvas.getCanvas(title).cd(1).draw(vline);
 
         JFrame frame = new JFrame("FMT");
         frame.setSize(1600, 1000);
@@ -273,16 +273,16 @@ public class Data {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        if (fmtZ != null) {
-            for (int pi = 0; pi < 3; ++pi) {
-                for (double lz : fmtZ) {
-                    vline = new DataLine(lz, lz, 0, Double.POSITIVE_INFINITY);
-                    vline.setLineColor(2);
-                    vline.setLineWidth(2);
-                    fmtCanvas.getCanvas(title).cd(pi).draw(vline);
-                }
-            }
-        }
+//        if (fmtZ != null) {
+//            for (int pi = 0; pi < 3; ++pi) {
+//                for (double lz : fmtZ) {
+//                    vline = new DataLine(lz, lz, 0, Double.POSITIVE_INFINITY);
+//                    vline.setLineColor(2);
+//                    vline.setLineWidth(2);
+//                    fmtCanvas.getCanvas(title).cd(pi).draw(vline);
+//                }
+//            }
+//        }
 
         return 0;
     }

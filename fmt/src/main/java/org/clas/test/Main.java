@@ -28,8 +28,8 @@ public class Main {
         int gssRan           = 8;     // Fitting range.
         boolean dbgInfo      = true;  // Show debugging info.
         int nEvents          = 0;     // Number of events. Set to 0 to run all events in input file.
-        boolean dataType     = true; // false for detector data, true for gemc simulation data.
-        boolean analysisType = false; // false for alignment, true for plotting variables.
+        boolean runAlign     = false; // false for detector data, true for gemc simulation data.
+        boolean analysisType = true; // false for alignment, true for plotting variables.
         boolean makeCrosses  = false; // Boolean describing if we should do crossmaking.
         boolean drawPlots    = true;  // Boolean describing if plots are to be drawn. Due to hasty
                                       // implementation, can't be set to true for xy and pitch & yaw
@@ -39,7 +39,7 @@ public class Main {
         // NOTE: Since the y axis is pointing up, the yaw direction is inverted from common aviation
         // standards.
         double[][] shArr;
-        if (!dataType) { // detector data.
+        if (runAlign) { // apply alignment.
             shArr = new double[][]{
                     // z     x     y    phi   yaw  pitch
                     {-3.65,-0.02, 0.15,-0.35,-0.10, 0.15}, // Global shifts
@@ -48,7 +48,7 @@ public class Main {
                     { 0.05, 0.00, 0.00, 0.00, 0.00, 0.00}  // Layer 3 shifts
             };
         }
-        else { // gemc data.
+        else { // don't apply alignment.
             shArr = new double[][]{
                     // z     x     y    phi   yaw  pitch
                     { 0.00, 0.00, 0.00, 0.00, 0.00, 0.00}, // Global shifts
@@ -147,7 +147,7 @@ public class Main {
             // * plotType == 7 : Plot the delta Tmin between clusters inside crosses.
             // * plotType == 8 : Plot the tracks' theta coordinate.
             // * plotType == 9 : 2D plot the clusters' energy divided by their number of strips.
-            int plotType = 0;
+            int plotType = 6;
 
             ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo, nEvents,
                     shArr, makeCrosses, drawPlots, false);
@@ -158,7 +158,7 @@ public class Main {
             else if (plotType == 3) resAnls.deltaTminAnalysis(pltRan, swim, fCuts);
             else if (plotType == 4) resAnls.plot1DCount(0, swim, fCuts, 1000);
             else if (plotType == 5) resAnls.plot1DCount(1, swim, fCuts, 2000);
-            else if (plotType == 6) resAnls.plot1DCount(2, swim, fCuts, 100);
+            else if (plotType == 6) resAnls.plot1DCount(2, swim, fCuts, 50);
             else if (plotType == 7) resAnls.plot1DCount(3, swim, fCuts, 150);
             else if (plotType == 8) resAnls.plot1DCount(4, swim, fCuts, 90);
             else if (plotType == 9) resAnls.plot2DCount(0, -1);

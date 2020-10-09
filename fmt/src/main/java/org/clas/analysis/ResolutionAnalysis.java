@@ -33,7 +33,7 @@ public class ResolutionAnalysis {
      *                      * [0] : Top plots, vertical line at 0.
      *                      * [1] : Bottom plots, vertical line at 0.
      *                      * [2] : Bottom plots, horizontal lines at each cable's endpoint.
-     *                      * [3] : Bottom plots, horizonal lines separating each FMT "region".
+     *                      * [3] : Bottom plots, horizontal lines separating each FMT "region".
      * @param dbgInfo     Boolean describing if debugging info should be printed.
      * @param nEvents     Number of events to run. Set to 0 to run all events in file.
      * @param shArr       Array of arrays describing all the shifts applied:
@@ -454,7 +454,7 @@ public class ResolutionAnalysis {
         String title = null;
         if (var == 0) title = "Tmin count";
         if (var == 1) title = "energy count";
-        if (var == 2) title = "track z";
+        if (var == 2) title = "vertex z";
         if (var == 3) title = "delta Tmin";
         if (var == 4) title = "track theta";
 
@@ -464,7 +464,7 @@ public class ResolutionAnalysis {
         int ei = 0; // Event number.
         HipoDataSource reader = new HipoDataSource();
         reader.open(infile);
-        System.out.printf("\nRunning analysis...\n");
+        System.out.printf("\nPlotting...\n");
 
         // Loop through events.
         while (reader.hasEvent()) {
@@ -496,9 +496,9 @@ public class ResolutionAnalysis {
                     int li = traj.getByte("layer", tri);
                     int pi = traj.getShort("pindex", tri);
                     // Use only FMT layers 1, 2, and 3.
-                    if (detector!=DetectorType.FMT.getDetectorId() || li < 1 ||
-                            li > Constants.getNumberOfFMTLayers())
-                        continue;
+                    // if (detector!=DetectorType.FMT.getDetectorId() || li < 1 ||
+                    //         li > Constants.getNumberOfFMTLayers())
+                    //      continue;
 
                     // Get particle data.
                     double z  = (double) part.getFloat("vz", pi);
