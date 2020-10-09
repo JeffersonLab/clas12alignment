@@ -1,0 +1,8 @@
+/**
+ * 
+ */
+/**
+ * @author mdefurne
+ *
+ */
+package HipoWriter;
