@@ -444,6 +444,8 @@ public class ResolutionAnalysis {
      *              * 1 : clusters' energy.
      *              * 2 : tracks' z.
      *              * 3 : tmin between clusters.
+     *              * 4 : theta of each track.
+     *              * 5 : tracks' z (special case).
      * @param r   Range for the plot.
      * @return status int.
      */
@@ -452,11 +454,11 @@ public class ResolutionAnalysis {
         if (var < 0 || var > 5) return 0;
 
         String title = null;
-        if (var == 0) title = "Tmin count";
-        if (var == 1) title = "energy count";
-        if (var == 2) title = "vertex z";
-        if (var == 3) title = "delta Tmin";
-        if (var == 4) title = "track theta";
+        if (var == 0)             title = "Tmin count";
+        if (var == 1)             title = "energy count";
+        if (var == 2 || var == 5) title = "vertex z";
+        if (var == 3)             title = "delta Tmin";
+        if (var == 4)             title = "track theta";
 
         DataGroup[] dgFMT = Data.create1DDataGroup(var, Constants.getNumberOfFMTLayers(), r);
 
@@ -465,6 +467,10 @@ public class ResolutionAnalysis {
         HipoDataSource reader = new HipoDataSource();
         reader.open(infile);
         System.out.printf("\nPlotting...\n");
+
+        // Special event counters only used for var==5.
+        int ecDCTB = 0;
+        int ecFMT  = 0;
 
         // Loop through events.
         while (reader.hasEvent()) {
@@ -488,22 +494,34 @@ public class ResolutionAnalysis {
                 }
             }
             else if (var == 2) {
-                DataBank traj = Data.getBank(event, "REC::Traj");
-                DataBank part = Data.getBank(event, "REC::Particle");
-                if (traj == null || part == null) continue;
-                for (int tri = 0; tri < traj.rows(); ++tri) {
-                    int detector = traj.getByte("detector", tri);
-                    int li = traj.getByte("layer", tri);
-                    int pi = traj.getShort("pindex", tri);
-                    // Use only FMT layers 1, 2, and 3.
-                    // if (detector!=DetectorType.FMT.getDetectorId() || li < 1 ||
-                    //         li > Constants.getNumberOfFMTLayers())
-                    //      continue;
-
-                    // Get particle data.
-                    double z  = (double) part.getFloat("vz", pi);
+                // Plot z from FMT track bank.
+                DataBank fmtTracks = Data.getBank(event, "FMTRec::Tracks");
+                if (fmtTracks == null) continue;
+                for (int tri = 0; tri < fmtTracks.rows(); ++tri) {
+                    double z = fmtTracks.getFloat("Vtx0_z", tri);
                     dgFMT[0].getH1F("tracks").fill(z);
                 }
+
+                // // Plot z from particle bank.
+                // DataBank traj = Data.getBank(event, "REC::Traj");
+                // DataBank part = Data.getBank(event, "REC::Particle");
+                // if (traj == null || part == null) continue;
+                // for (int tri = 0; tri < traj.rows(); ++tri) {
+                //     int detector = traj.getByte("detector", tri);
+                //     int li = traj.getByte("layer", tri);
+                //     int pi = traj.getShort("pindex", tri);
+                //     int status = (int) part.getShort("status", pi)/1000;
+                //     // Check that FMT was used.
+                //     if (status != 2) continue;
+                //     // Use only FMT layers 1, 2, and 3.
+                //     if (detector!=DetectorType.FMT.getDetectorId() || li < 1 ||
+                //             li > Constants.getNumberOfFMTLayers())
+                //         continue;
+                //
+                //     // Get particle data.
+                //     double z  = (double) part.getFloat("vz", pi);
+                //     dgFMT[0].getH1F("tracks").fill(z);
+                // }
             }
             else if (var == 3) {
                 ArrayList<TrajPoint[]> trajPoints =
@@ -531,13 +549,44 @@ public class ResolutionAnalysis {
                     }
                 }
             }
-            else System.out.printf("[ResolutionAnalysis] var should be between 0 and 4!\n");
+            else if (var == 5) {
+                // Plot z from FMT track bank.
+                DataBank dctbTracks = Data.getBank(event, "TimeBasedTrkg::TBTracks");
+                DataBank fmtTracks  = Data.getBank(event, "FMTRec::Tracks");
 
+                // Count events with DCTB tracks without FMT tracks.
+                if (dctbTracks == null) continue;
+//                if (dctbTracks.rows() != 1) continue;
+
+                if (dctbTracks != null) ecDCTB++;
+                if (fmtTracks  != null) ecFMT++;
+
+                if (fmtTracks == null) continue;
+
+//                double z_dctb = (double) dctbTracks.getFloat("Vtx0_z", 0);
+//                if (z_dctb < -36. || z_dctb > -30.) continue;
+//                dgFMT[0].getH1F("DCTB tracks").fill(z_dctb);
+
+                for (int tri = 0; tri < dctbTracks.rows(); ++tri) {
+                    double z_dctb = (double) dctbTracks.getFloat("Vtx0_z", tri);
+                    dgFMT[0].getH1F("DCTB tracks").fill(z_dctb);
+                }
+
+                for (int tri = 0; tri < fmtTracks.rows(); ++tri) {
+                    double z_fmt = (double) fmtTracks.getFloat("Vtx0_z", tri);
+                    dgFMT[0].getH1F("FMT tracks").fill(z_fmt);
+                }
+            }
+            else System.out.printf("[ResolutionAnalysis] var should be between 0 and 5!\n");
         }
+
         System.out.format("Analyzed %8d events... Done!\n", ei);
         reader.close();
 
-        if ((var == 0 || var == 1 || var == 4) && drawPlots) Data.drawPlots(dgFMT, title);
+        if (var == 5) System.out.printf("FMT event # / DCTB event #\n%11d /%11d\n", ecFMT, ecDCTB);
+
+        if ((var == 0 || var == 1 || var == 4 || var == 5) && drawPlots)
+            Data.drawPlots(dgFMT, title);
         if (var == 2) {
             // Apply z shifts and draw plots.
             for (int li = 0; li< Constants.getNumberOfFMTLayers(); ++li)

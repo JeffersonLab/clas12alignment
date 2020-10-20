@@ -79,12 +79,32 @@ public class Data {
         else if (var == 2 || var == 4) {
             dgFMT[0] = new DataGroup(1, 1);
             H1F hi_track_var = new H1F("tracks", 800, -r, r);
-            if (var == 2) hi_track_var.setTitleX("track z (cm)");
+            if (var == 2) hi_track_var.setTitleX("vertex z (cm)");
             if (var == 4) hi_track_var.setTitleX("track theta (deg)");
             hi_track_var.setTitleY("track count");
             hi_track_var.setFillColor(4);
 
             dgFMT[0].addDataSet(hi_track_var, 0);
+        }
+
+        else if (var == 5) {
+            dgFMT[0] = new DataGroup(2, 1);
+            // We're only interested in the target's first window.
+            for (int i = 0; i < 2; ++i) {
+                H1F hi_track_var = null;
+
+//                if (i == 0) hi_track_var = new H1F("DCTB tracks", 100, -40, -26);
+//                if (i == 1) hi_track_var = new H1F("FMT tracks",  100, -40, -26);
+
+                if (i == 0) hi_track_var = new H1F("DCTB tracks", 201, -50, 50);
+                if (i == 1) hi_track_var = new H1F("FMT tracks",  201, -50, 50);
+
+                hi_track_var.setTitleX("vertex z (cm)");
+                hi_track_var.setTitleY("track count");
+                hi_track_var.setFillColor(4);
+
+                dgFMT[0].addDataSet(hi_track_var, i);
+            }
         }
 
         else if (var == 3) {
@@ -111,7 +131,7 @@ public class Data {
             }
         }
 
-        else System.out.printf("[Data] var should be between 0 and 4! Something went wrong...\n");
+        else System.out.printf("[Data] var should be between 0 and 5! Something went wrong...\n");
 
         return dgFMT;
     }
@@ -261,11 +281,11 @@ public class Data {
         fmtCanvas.getCanvas(title).setAxisFontSize(18);
         fmtCanvas.getCanvas(title).setAxisTitleSize(24);
 
-//        DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
-//        vline.setLineColor(2);
-//        vline.setLineWidth(2);
-//        fmtCanvas.getCanvas(title).cd(0).draw(vline);
-//        fmtCanvas.getCanvas(title).cd(1).draw(vline);
+        DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
+        vline.setLineColor(2);
+        vline.setLineWidth(2);
+        fmtCanvas.getCanvas(title).cd(0).draw(vline);
+        fmtCanvas.getCanvas(title).cd(1).draw(vline);
 
         JFrame frame = new JFrame("FMT");
         frame.setSize(1600, 1000);

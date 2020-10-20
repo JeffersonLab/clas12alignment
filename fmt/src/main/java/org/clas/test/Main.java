@@ -1,5 +1,7 @@
 package org.clas.test;
 
+import org.jlab.groot.base.GStyle;
+
 import org.clas.analysis.TrkSwim;
 import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.ResolutionAnalysis;
@@ -19,6 +21,8 @@ public class Main {
         if (args.length != 1 || !infile.endsWith(".hipo")) {
             printUsageAndExit();
         }
+
+        GStyle.getH1FAttributes().setOptStat("1111111");
 
         // === Setup ===============================================================================
         boolean[] pltLArr = new boolean[]{true, true, false, false};
@@ -137,31 +141,34 @@ public class Main {
         // === Variable plots ======================================================================
         else {
             // Config: plotType defines the type of alignment that's to be done.
-            // * plotType == 0 : Plot data in each FMT strip separating data by DC's sectors.
-            // * plotType == 1 : Plot the Tracks' theta separating data by DC's sectors.
-            // * plotType == 2 : Plot data in each FMT strip separating by FMT's "regions".
-            // * plotType == 3 : Plot the delta Tmin between clusters inside crosses.
-            // * plotType == 4 : Plot the clusters' Tmin.
-            // * plotType == 5 : Plot the clusters' energy.
-            // * plotType == 6 : Plot the tracks' z vertex coordinate.
-            // * plotType == 7 : Plot the delta Tmin between clusters inside crosses.
-            // * plotType == 8 : Plot the tracks' theta coordinate.
-            // * plotType == 9 : 2D plot the clusters' energy divided by their number of strips.
-            int plotType = 6;
+            // * plotType ==  0 : Plot data in each FMT strip separating data by DC's sectors.
+            // * plotType ==  1 : Plot the Tracks' theta separating data by DC's sectors.
+            // * plotType ==  2 : Plot data in each FMT strip separating by FMT's "regions".
+            // * plotType ==  3 : Plot the delta Tmin between clusters inside crosses.
+            // * plotType ==  4 : Plot the clusters' Tmin.
+            // * plotType ==  5 : Plot the clusters' energy.
+            // * plotType ==  6 : Plot the tracks' z vertex coordinate.
+            // * plotType ==  7 : Plot the delta Tmin between clusters inside crosses.
+            // * plotType ==  8 : Plot the tracks' theta coordinate.
+            // * plotType ==  9 : 2D plot the clusters' energy divided by their number of strips.
+            // * plotType == 10 : Plot the tracks' z vertex coordinate for the RG-F target's first
+            //                    window.
+            int plotType = 10;
 
             ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo, nEvents,
                     shArr, makeCrosses, drawPlots, false);
 
-            if      (plotType == 0) resAnls.dcSectorStripAnalysis(pltRan, gssRan, swim, fCuts);
-            else if (plotType == 1) resAnls.dcSectorThetaAnalysis(pltRan, gssRan, swim, fCuts);
-            else if (plotType == 2) resAnls.fmtRegionAnalysis(pltRan, swim, fCuts);
-            else if (plotType == 3) resAnls.deltaTminAnalysis(pltRan, swim, fCuts);
-            else if (plotType == 4) resAnls.plot1DCount(0, swim, fCuts, 1000);
-            else if (plotType == 5) resAnls.plot1DCount(1, swim, fCuts, 2000);
-            else if (plotType == 6) resAnls.plot1DCount(2, swim, fCuts, 50);
-            else if (plotType == 7) resAnls.plot1DCount(3, swim, fCuts, 150);
-            else if (plotType == 8) resAnls.plot1DCount(4, swim, fCuts, 90);
-            else if (plotType == 9) resAnls.plot2DCount(0, -1);
+            if      (plotType ==  0) resAnls.dcSectorStripAnalysis(pltRan, gssRan, swim, fCuts);
+            else if (plotType ==  1) resAnls.dcSectorThetaAnalysis(pltRan, gssRan, swim, fCuts);
+            else if (plotType ==  2) resAnls.fmtRegionAnalysis(pltRan, swim, fCuts);
+            else if (plotType ==  3) resAnls.deltaTminAnalysis(pltRan, swim, fCuts);
+            else if (plotType ==  4) resAnls.plot1DCount(0, swim, fCuts, 1000);
+            else if (plotType ==  5) resAnls.plot1DCount(1, swim, fCuts, 2000);
+            else if (plotType ==  6) resAnls.plot1DCount(2, swim, fCuts, 50);
+            else if (plotType ==  7) resAnls.plot1DCount(3, swim, fCuts, 150);
+            else if (plotType ==  8) resAnls.plot1DCount(4, swim, fCuts, 90);
+            else if (plotType ==  9) resAnls.plot2DCount(0, -1);
+            else if (plotType == 10) resAnls.plot1DCount(5, swim, fCuts, 0);
             else System.out.printf("plotType should be between 0 and 9!\n");
         }
     }
