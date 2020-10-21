@@ -494,34 +494,35 @@ public class ResolutionAnalysis {
                 }
             }
             else if (var == 2) {
-                // Plot z from FMT track bank.
-                DataBank fmtTracks = Data.getBank(event, "FMTRec::Tracks");
-                if (fmtTracks == null) continue;
-                for (int tri = 0; tri < fmtTracks.rows(); ++tri) {
-                    double z = fmtTracks.getFloat("Vtx0_z", tri);
-                    dgFMT[0].getH1F("tracks").fill(z);
-                }
-
-                // // Plot z from particle bank.
-                // DataBank traj = Data.getBank(event, "REC::Traj");
-                // DataBank part = Data.getBank(event, "REC::Particle");
-                // if (traj == null || part == null) continue;
-                // for (int tri = 0; tri < traj.rows(); ++tri) {
-                //     int detector = traj.getByte("detector", tri);
-                //     int li = traj.getByte("layer", tri);
-                //     int pi = traj.getShort("pindex", tri);
-                //     int status = (int) part.getShort("status", pi)/1000;
-                //     // Check that FMT was used.
-                //     if (status != 2) continue;
-                //     // Use only FMT layers 1, 2, and 3.
-                //     if (detector!=DetectorType.FMT.getDetectorId() || li < 1 ||
-                //             li > Constants.getNumberOfFMTLayers())
-                //         continue;
-                //
-                //     // Get particle data.
-                //     double z  = (double) part.getFloat("vz", pi);
+                // // Plot z from FMT track bank.
+                // DataBank fmtTracks = Data.getBank(event, "FMTRec::Tracks");
+                // if (fmtTracks == null) continue;
+                // for (int tri = 0; tri < fmtTracks.rows(); ++tri) {
+                //     double z = fmtTracks.getFloat("Vtx0_z", tri);
                 //     dgFMT[0].getH1F("tracks").fill(z);
                 // }
+
+                // Plot z from particle bank.
+                DataBank traj = Data.getBank(event, "REC::Traj");
+                DataBank part = Data.getBank(event, "REC::Particle");
+                if (traj == null || part == null) continue;
+                for (int tri = 0; tri < traj.rows(); ++tri) {
+                    int detector = traj.getByte("detector", tri);
+                    int li = traj.getByte("layer", tri);
+                    int pi = traj.getShort("pindex", tri);
+                    int status = (int) part.getShort("status", pi)/1000;
+                    // Check that FMT was used.
+                    if (status == 2) continue;
+                    
+                    // // Use only FMT layers 1, 2, and 3.
+                    // if (detector!=DetectorType.FMT.getDetectorId() || li < 1 ||
+                    //         li > Constants.getNumberOfFMTLayers())
+                    //     continue;
+                    
+                    // Get particle data.
+                    double z  = (double) part.getFloat("vz", pi);
+                    dgFMT[0].getH1F("tracks").fill(z);
+                }
             }
             else if (var == 3) {
                 ArrayList<TrajPoint[]> trajPoints =
@@ -556,21 +557,21 @@ public class ResolutionAnalysis {
 
                 // Count events with DCTB tracks without FMT tracks.
                 if (dctbTracks == null) continue;
-//                if (dctbTracks.rows() != 1) continue;
+                if (dctbTracks.rows() != 1) continue;
 
                 if (dctbTracks != null) ecDCTB++;
                 if (fmtTracks  != null) ecFMT++;
 
                 if (fmtTracks == null) continue;
 
-//                double z_dctb = (double) dctbTracks.getFloat("Vtx0_z", 0);
-//                if (z_dctb < -36. || z_dctb > -30.) continue;
-//                dgFMT[0].getH1F("DCTB tracks").fill(z_dctb);
+                double z_dctb = (double) dctbTracks.getFloat("Vtx0_z", 0);
+                if (z_dctb < -36. || z_dctb > -30.) continue;
+                dgFMT[0].getH1F("DCTB tracks").fill(z_dctb);
 
-                for (int tri = 0; tri < dctbTracks.rows(); ++tri) {
-                    double z_dctb = (double) dctbTracks.getFloat("Vtx0_z", tri);
-                    dgFMT[0].getH1F("DCTB tracks").fill(z_dctb);
-                }
+//                for (int tri = 0; tri < dctbTracks.rows(); ++tri) {
+//                    double z_dctb = (double) dctbTracks.getFloat("Vtx0_z", tri);
+//                    dgFMT[0].getH1F("DCTB tracks").fill(z_dctb);
+//                }
 
                 for (int tri = 0; tri < fmtTracks.rows(); ++tri) {
                     double z_fmt = (double) fmtTracks.getFloat("Vtx0_z", tri);
@@ -613,14 +614,19 @@ public class ResolutionAnalysis {
      */
     public int plot2DCount(int var, int r) {
         // Sanitize input.
-        if (var < 0 || var > 1) return 0;
+        if (var < 0 || var > 2) return 0;
 
         String title = null;
         if (var == 0) title = "energy / cluster size count";
         if (var == 1) title = "residual vs delta Tmin";
+        if (var == 2) title = "vertex z vs track theta";
 
-        DataGroup[] dgFMT = Data.create2DDataGroup(var, Constants.getNumberOfFMTLayers(), r);
-
+        DataGroup[] dgFMT = null;
+        if (var == 0 || var == 1)
+            dgFMT = Data.create2DDataGroup(var, Constants.getNumberOfFMTLayers(), r);
+        if (var == 2)
+            dgFMT = Data.create2DDataGroup(var, 1, r);
+        
         // Run.
         int ei = 0; // Event number.
         HipoDataSource reader = new HipoDataSource();
@@ -634,17 +640,38 @@ public class ResolutionAnalysis {
             DataEvent event = reader.getNextEvent();
             ei++;
 
-            // Get relevant data banks.
-            DataBank clusters = Data.getBank(event, "FMTRec::Clusters");
-            DataBank traj     = Data.getBank(event, "REC::Traj");
-            if (clusters == null || traj == null) continue;
+            if (var == 0) {
+                // Get relevant data banks.
+                DataBank clusters = Data.getBank(event, "FMTRec::Clusters");
+                DataBank traj     = Data.getBank(event, "REC::Traj");
+                if (clusters == null || traj == null) continue;
 
-            for (int ri=0; ri<clusters.rows(); ++ri) {
-                int li        = clusters.getByte("layer", ri);
-                double energy = clusters.getFloat("ETot", ri);
-                int size      = clusters.getShort("size", ri);
+                for (int ri=0; ri<clusters.rows(); ++ri) {
+                    int li        = clusters.getByte("layer", ri);
+                    double energy = clusters.getFloat("ETot", ri);
+                    int size      = clusters.getShort("size", ri);
 
-                if (var == 0) dgFMT[0].getH2F("hi_cluster_var"+li).fill(size, energy/size);
+                    if (var == 0) dgFMT[0].getH2F("hi_cluster_var"+li).fill(size, energy/size);
+                }
+            }
+            
+            if (var == 2) {
+                // DataBank tracks = Data.getBank(event, "TimeBasedTrkg::TBTracks");
+                DataBank tracks  = Data.getBank(event, "FMTRec::Tracks");
+
+                // Count events with DCTB tracks without FMT tracks.
+                if (tracks == null) continue;
+
+                for (int tri = 0; tri < tracks.rows(); ++tri) {
+                    double vz = (double) tracks.getFloat("Vtx0_z", tri);
+                    
+                    double px = (double) tracks.getFloat("p0_x", tri);
+                    double py = (double) tracks.getFloat("p0_y", tri);
+                    double pz = (double) tracks.getFloat("p0_z", tri);
+                    double th = Math.toDegrees(Math.acos(pz/Math.sqrt(px*px+py*py+pz*pz)));
+
+                    dgFMT[0].getH2F("theta_vs_vz").fill(vz, th);
+                }
             }
         }
         System.out.format("Analyzed %8d events... Done!\n", ei);

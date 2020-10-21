@@ -153,7 +153,8 @@ public class Main {
             // * plotType ==  9 : 2D plot the clusters' energy divided by their number of strips.
             // * plotType == 10 : Plot the tracks' z vertex coordinate for the RG-F target's first
             //                    window.
-            int plotType = 10;
+            // * plotType == 11 : 2D plot the tracks' vz vs their polar angle (theta).
+            int plotType = 11;
 
             ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo, nEvents,
                     shArr, makeCrosses, drawPlots, false);
@@ -169,6 +170,7 @@ public class Main {
             else if (plotType ==  8) resAnls.plot1DCount(4, swim, fCuts, 90);
             else if (plotType ==  9) resAnls.plot2DCount(0, -1);
             else if (plotType == 10) resAnls.plot1DCount(5, swim, fCuts, 0);
+            else if (plotType == 11) resAnls.plot2DCount(2, 50);
             else System.out.printf("plotType should be between 0 and 9!\n");
         }
     }
