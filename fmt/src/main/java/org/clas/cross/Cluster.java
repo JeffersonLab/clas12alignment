@@ -8,21 +8,26 @@ import org.clas.analysis.FiducialCuts;
 
 public class Cluster {
     // Cluster data:
-    private int id;        // Cluster ID.
-    private int fmtLyr;    // FMT layer.
-    private int strip;     // FMT strip.
-    private double y;      // y position in the layer's local coordinate system.
-    private double tMin;   // Minimum time information among the cluster's hits.
-    private double energy; // Total energy of the strips in the cluster.
+    private int id;           // Cluster ID.
+    private int fmtLyr;       // FMT layer.
+    private int strip;        // FMT strip.
+    private double y;         // y position in the layer's local coordinate system.
+    private double tMin;      // Minimum time information among the cluster's hits.
+    private double energy;    // Total energy of the strips in the cluster.
+    private double cResidual; // Centroid residual of the cluster.
+    private int tID;       // Associated track ID.
 
     /** Class constructor. */
-    private Cluster(int _id, int _fmtLyr, int _strip, double _y, double _tMin, double _energy) {
-        this.id       = _id;
-        this.fmtLyr   = _fmtLyr;
-        this.strip    = _strip;
-        this.y        = _y;
-        this.tMin     = _tMin;
-        this.energy   = _energy;
+    private Cluster(int _id, int _fmtLyr, int _strip, double _y, double _tMin, double _energy,
+            double _cResidual, int _tID) {
+        this.id        = _id;
+        this.fmtLyr    = _fmtLyr;
+        this.strip     = _strip;
+        this.y         = _y;
+        this.tMin      = _tMin;
+        this.energy    = _energy;
+        this.cResidual = _cResidual;
+        this.tID       = _tID;
     }
 
     public int get_id() {return id;}
@@ -31,6 +36,8 @@ public class Cluster {
     public double get_y() {return y;}
     public double get_tMin() {return tMin;}
     public double get_energy() {return energy;}
+    public double get_cResidual() {return cResidual;}
+    public int get_trkID() {return tID;}
 
     /**
      * Get clusters from event bank.
@@ -60,11 +67,13 @@ public class Cluster {
             // double tMin   = clBank.getFloat("Tmin", cri);
             double tMin   = 100;
             double y      = clBank.getFloat("centroid", cri);
+            double cRes   = clBank.getFloat("centroidResidual", cri);
+            int tID       = clBank.getShort("trkID", cri);
 
             // Apply cluster fiducial cuts.
             if (applyCuts && fcuts.checkClusterCuts(strip, size, energy, tMin)) continue;
 
-            clusters[li].add(new Cluster(id, li, strip, y, tMin, energy));
+            clusters[li].add(new Cluster(id, li, strip, y, tMin, energy, cRes, tID));
         }
 
         return clusters;

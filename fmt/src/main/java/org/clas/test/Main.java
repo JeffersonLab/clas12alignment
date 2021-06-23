@@ -23,13 +23,14 @@ public class Main {
         }
 
         GStyle.getH1FAttributes().setOptStat("1111111");
+        GStyle.getH2FAttributes().setOptStat("1111111");
 
         // === Setup ===============================================================================
         boolean[] pltLArr = new boolean[]{true, true, false, false};
         double[] swmSetup = new double[]{-0.75, -1.0, -3.0};
 
-        int pltRan           = 10;    // Plotting range.
-        int gssRan           = 8;     // Fitting range.
+        int pltRan           = 5;    // Plotting range.
+        int gssRan           = 4;     // Fitting range.
         boolean dbgInfo      = true;  // Show debugging info.
         int nEvents          = 0;     // Number of events. Set to 0 to run all events in input file.
         boolean runAlign     = false; // false for detector data, true for gemc simulation data.
@@ -151,10 +152,13 @@ public class Main {
             // * plotType ==  7 : Plot the delta Tmin between clusters inside crosses.
             // * plotType ==  8 : Plot the tracks' theta coordinate.
             // * plotType ==  9 : 2D plot the clusters' energy divided by their number of strips.
-            // * plotType == 10 : Plot the tracks' z vertex coordinate for the RG-F target's first
-            //                    window.
+            // * plotType == 10 : Plot the DCTB vs FMT tracks' vertex z.
             // * plotType == 11 : 2D plot the tracks' vz vs their polar angle (theta).
-            int plotType = 11;
+            // * plotType == 12 : Plot FMT tracks' vertex z.
+            // * plotType == 13 : 2D plot the tracks' vz vs their azimuthal (phi) angle.
+            // * plotType == 14 : Plot the status of each FMT track.
+            // * plotType == 15 : Plot the chi^2 of the FMT tracks.
+            int plotType = 12;
 
             ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, dbgInfo, nEvents,
                     shArr, makeCrosses, drawPlots, false);
@@ -171,7 +175,11 @@ public class Main {
             else if (plotType ==  9) resAnls.plot2DCount(0, -1);
             else if (plotType == 10) resAnls.plot1DCount(5, swim, fCuts, 0);
             else if (plotType == 11) resAnls.plot2DCount(2, 50);
-            else System.out.printf("plotType should be between 0 and 9!\n");
+            else if (plotType == 12) resAnls.plot1DCount(6, swim, fCuts, 0);
+            else if (plotType == 13) resAnls.plot2DCount(3, 50);
+            else if (plotType == 14) resAnls.plot1DCount(7, swim, fCuts, 0);
+            else if (plotType == 15) resAnls.plot1DCount(8, swim, fCuts, 0);
+            else System.out.printf("plotType should be between 0 and 14!\n");
         }
     }
 }

@@ -87,26 +87,6 @@ public class Data {
             dgFMT[0].addDataSet(hi_track_var, 0);
         }
 
-        else if (var == 5) {
-            dgFMT[0] = new DataGroup(2, 1);
-            // We're only interested in the target's first window.
-            for (int i = 0; i < 2; ++i) {
-                H1F hi_track_var = null;
-
-                if (i == 0) hi_track_var = new H1F("DCTB tracks", 100, -40, -26);
-                if (i == 1) hi_track_var = new H1F("FMT tracks",  100, -40, -26);
-
-//                if (i == 0) hi_track_var = new H1F("DCTB tracks", 201, -50, 50);
-//                if (i == 1) hi_track_var = new H1F("FMT tracks",  201, -50, 50);
-
-                hi_track_var.setTitleX("vertex z (cm)");
-                hi_track_var.setTitleY("track count");
-                hi_track_var.setFillColor(4);
-
-                dgFMT[0].addDataSet(hi_track_var, i);
-            }
-        }
-
         else if (var == 3) {
             dgFMT[0] = new DataGroup(2, 1);
             for (int i = 0; i < 2; ++i) {
@@ -131,7 +111,56 @@ public class Data {
             }
         }
 
-        else System.out.printf("[Data] var should be between 0 and 5! Something went wrong...\n");
+        else if (var == 5) {
+            dgFMT[0] = new DataGroup(2, 1);
+            // We're only interested in the target's first window.
+            for (int i = 0; i < 2; ++i) {
+                H1F hi_track_var = null;
+
+                if (i == 0) hi_track_var = new H1F("DCTB tracks", 401, -50, 50);
+                if (i == 1) hi_track_var = new H1F("FMT tracks",  401, -50, 50);
+
+                hi_track_var.setTitleX("vertex z (cm)");
+                hi_track_var.setTitleY("track count");
+                hi_track_var.setFillColor(4);
+
+                dgFMT[0].addDataSet(hi_track_var, i);
+            }
+        }
+
+        else if (var == 6) {
+            dgFMT[0] = new DataGroup(1, 1);
+            H1F hi_track_var = null;
+
+            hi_track_var = new H1F("FMT tracks", 801, -50, 50);
+
+            hi_track_var.setTitleX("vertex z (cm)");
+            hi_track_var.setTitleY("track count");
+            hi_track_var.setFillColor(4);
+
+            dgFMT[0].addDataSet(hi_track_var, 0);
+        }
+
+        else if (var == 7) {
+            dgFMT[0] = new DataGroup(1, 1);
+            H1F plt = new H1F("track_status", 110, 0, 110);
+            plt.setTitleX("Track Status");
+            plt.setTitleY("Counts");
+            plt.setFillColor(4);
+            dgFMT[0].addDataSet(plt, 0);
+        }
+
+        else if (var == 8) {
+            dgFMT[0] = new DataGroup(1, 1);
+            H1F plt = new H1F("chi2", 200, 0, 0.2);
+            plt.setTitleX("Chi2");
+            plt.setTitleY("Counts");
+            plt.setFillColor(4);
+            dgFMT[0].addDataSet(plt, 0);
+        }
+
+
+        else System.out.printf("[Data] var should be between 0 and 7! Something went wrong...\n");
 
         return dgFMT;
     }
@@ -158,12 +187,24 @@ public class Data {
             }
         }
         else if (var == 2) {
-           H2F plt = new H2F("theta_vs_vz", "", 201, -50, 50, 181, 0, 180);
-           plt.setTitleX("vz");
-           plt.setTitleY("theta");
-           dgFMT[0].addDataSet(plt, 0);
+            H2F plt = new H2F("theta_vs_vz", "", 201, -50, 50, 181, 0, 180); // Full target
+            plt.setTitleX("vz");
+            plt.setTitleY("theta");
+            dgFMT[0].addDataSet(plt, 0);
         }
-        else System.out.printf("[Data] var should be 0 or 2! Something went wrong...\n");
+        else if (var == 3) {
+            for (int i = 0; i < ln; ++i) {
+                String name = "";
+                if (i == 0) name = "positive";
+                if (i == 1) name = "negative";
+                H2F plt = new H2F("phi_vs_vz_" + name, "", 201, -50, 50, 360, -180, 180); // Full target
+                // H2F plt = new H2F("phi_vs_vz_" + name, "", 100, -37, -27, 360, -180, 180); // Upstream window
+                plt.setTitleX("vz " + name);
+                plt.setTitleY("phi");
+                dgFMT[0].addDataSet(plt, i);
+            }
+        }
+        else System.out.printf("[Data] var should be 0 or 3! Something went wrong...\n");
 
         return dgFMT;
     }
@@ -287,11 +328,11 @@ public class Data {
         fmtCanvas.getCanvas(title).setAxisFontSize(18);
         fmtCanvas.getCanvas(title).setAxisTitleSize(24);
 
-        DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
-        vline.setLineColor(2);
-        vline.setLineWidth(2);
-        fmtCanvas.getCanvas(title).cd(0).draw(vline);
-        fmtCanvas.getCanvas(title).cd(1).draw(vline);
+        // DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
+        // vline.setLineColor(2);
+        // vline.setLineWidth(2);
+        // fmtCanvas.getCanvas(title).cd(0).draw(vline);
+        // fmtCanvas.getCanvas(title).cd(1).draw(vline);
 
         JFrame frame = new JFrame("FMT");
         frame.setSize(1600, 1000);
