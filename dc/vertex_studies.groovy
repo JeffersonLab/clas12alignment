@@ -1,8 +1,21 @@
 /*
- * author Timothy B. Hayward
- * 2018-2020
- * CLAS (12) Collaboration Service Work 
- * (supervised by Mac Mestayer)
+* This script has been modified from the original vertex_studies.goovy script. This version allows
+* the user to choose between reading the data from a process file list or histograms with an input
+* variable. The user also has the option (by an input variable) to display the resultant histograms or not.
+* To run this script: run-groovy vertex_studies.groovy (0 or 1) (0 or 1) 
+*           /path/to/(data_directory or histogram_file) 4 2 10 20 30 40 30 60
+* The first input variable in the above command (after the groovy script name) is the "read" variable 
+* and is for declaring whether
+* the data is read from a process file list or from histograms, 0 for process files and 1 for histograms.
+* The second input variable, "window", declares whether or not the histograms should be displayed, 0 if not and 1
+* if yes. The inputs that come after the input directory are for the theta and phi angle bins and
+* follow the same rules as for the original script.
+* This version also has a more developed method for automatically fitting the downstaream peak with a gaussian.
+*/
+
+/**
+ *
+ * @author trevorreed
  */
 
 import java.io.File;
@@ -13,6 +26,7 @@ import org.jlab.clas.physics.*;
 import org.jlab.clas12.physics.*;
 
 import javax.swing.JFrame;
+import java.awt.Graphics;
 import org.jlab.groot.data.*;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.io.hipo.HipoDataBank;
@@ -24,9 +38,8 @@ import org.jlab.groot.base.GStyle;
 
 import org.jlab.utils.benchmark.ProgressPrintout;
 
-public class vertex_studies {
-
-    public static boolean banks_test(HipoDataEvent event){
+class vertex_studies {
+	public static boolean banks_test(HipoDataEvent event){
         boolean banks_result = true; // check to see if the event has all of the banks present
         // TBHits required for residuals, TBTracks required for angular limit
         // REC::* required for track_check to ensure electron
@@ -208,7 +221,7 @@ public class vertex_studies {
         // histogram ranges
         // may need to be updated in the future
         int n_bins = 100;
-        double min_bin = -9.999;
+        double min_bin = -12;
         double max_bin = 9.999;
 
         // create the histograms for each sector and angular bin
@@ -329,12 +342,14 @@ public class vertex_studies {
                 if(canvas==null) canvas = new EmbeddedCanvasTabbed(cname);
                 else             canvas.addCanvas(cname);
                 for (int i = 0; i<theta_bins; i++) {
+                //for (int i = 0; 0; i++) {
                     for (int j = 0; j<phi_bins; j++) {
+                    //for (int j = 0; 0; j++) {
                         canvas.getCanvas(cname).divide(theta_bins,phi_bins);
                         canvas.getCanvas(cname).cd(j*theta_bins+i);
                         vertex_x0z[sector][i][j].unit();
                         fitVertex(vertex_x0z[sector][i][j]);
-                        canvas.getCanvas(cname).draw(vertex_x0z[sector][i][j]);
+			canvas.getCanvas(cname).draw(vertex_x0z[sector][i][j]);
                         canvas.getCanvas(cname).getPad(j*theta_bins+i).getAxisY().setRange(0,1.00001);
                     }
                 }
@@ -349,17 +364,75 @@ public class vertex_studies {
     
     
     public static void fitVertex(H1F histo) {
-        F1D f1_vtx   = new F1D("f1vertex","[amp]*gaus(x,[mean],[sigma])", -10, 10);
-        f1_vtx.setLineColor(2);
-        f1_vtx.setLineWidth(2);
-        f1_vtx.setOptStat("1111");
         double mean  = histo.getDataX(histo.getMaximumBin());
         double amp   = histo.getBinContent(histo.getMaximumBin());
-        double sigma = histo.getRMS();
-        f1_vtx.setParameter(0, amp);
-        f1_vtx.setParameter(1, mean);
-        f1_vtx.setParameter(2, sigma);
-        f1_vtx.setRange(mean-2.0*sigma,mean+2.0*sigma);
-        DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
+        double sigma = 1.0;
+        
+        //Define peak to right of max peak
+        //Look to the right (higher x values) of the previusly found peak to find the next peak)
+        double binMaxAmp2 = 0;
+        double maxBinXVal2;
+        double maxBinNum2;
+        for(int k = 0; k < histo.getAxis().getNBins() - 1; k++) {
+            double binXVal2 = histo.getAxis().getBinCenter(k);
+            if(binXVal2 > mean + 1.5 * sigma) {
+                double tempBinContent2  = histo.getBinContent(k);
+                if(tempBinContent2 > binMaxAmp2) {
+                    binMaxAmp2 = tempBinContent2;
+                    maxBinNum2 = k;
+                    maxBinXVal2 = binXVal2;
+                }
+            }
+        }
+        
+        //Define peak to left of max peak
+        //Look to the left (lower x values) of the first found peak (max peak) to determine if there is another peak to left)
+        double binMaxAmp3 = 0;
+        double maxBinXVal3;
+        double maxBinNum3;
+        for(int k = 0; k < histo.getAxis().getNBins() - 1; k++) {
+            double binXVal3 = histo.getAxis().getBinCenter(k);
+            if(binXVal3 < mean - 1.5 * sigma) {
+                double tempBinContent3  = histo.getBinContent(k);
+                if(tempBinContent3 > binMaxAmp3) {
+                    binMaxAmp3 = tempBinContent3;
+                    maxBinNum3 = k;
+                    maxBinXVal3 = binXVal3;
+                }
+            }
+        }
+       
+        //The if statement checks if there is a peak (at least 2/3 of the plot's max peak) to the left of the max peak
+        //If so, it fits the max peak since the downstream peak is desired
+        if(binMaxAmp3 >= 0.67 * amp) {
+            F1D f1_vtx   = new F1D("f1vertex","[amp]*gaus(x,[mean],[sigma])", -10, 10);
+            f1_vtx.setLineColor(2);
+            f1_vtx.setLineWidth(2);
+            f1_vtx.setOptStat("1111");
+            f1_vtx.setParameter(0, amp);
+            f1_vtx.setParameter(1, mean);
+            f1_vtx.setParameter(2, sigma);
+            f1_vtx.setRange(mean-2.0*sigma,mean+2.0*sigma);
+            DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
+        }
+        //The else statement runs when there is no significant peak to the left of max peak
+        //So max peak is the leftmost peak (upstream peak)
+        //Since the downstream peak is desired, the peak to the right of the max peak is fit
+        else {
+            F1D f2_vtx   = new F1D("f2vertex","[amp2]*gaus(x,[mean2],[sigma2])", -10, 10);
+            f2_vtx.setLineColor(2);
+            f2_vtx.setLineWidth(2);
+            f2_vtx.setOptStat("1111");
+            double mean2  = maxBinXVal2;
+            double amp2   = binMaxAmp2;
+            double sigma2 = 1.0;
+            f2_vtx.setParameter(0, amp2);
+            f2_vtx.setParameter(1, mean2);
+            f2_vtx.setParameter(2, sigma2);
+            f2_vtx.setRange(mean2-2.0*sigma2,mean2+2.0*sigma2);
+            DataFitter.fit(f2_vtx, histo, "Q"); //No options uses error for sigma
+        }
     }
 }
+
+
