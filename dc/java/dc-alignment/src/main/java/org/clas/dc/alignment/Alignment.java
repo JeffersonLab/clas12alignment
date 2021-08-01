@@ -317,7 +317,8 @@ public class Alignment {
             String phiBins     = parser.getOptionParser("-process").getOption("-phi").stringValue();
             String optStats    = parser.getOptionParser("-process").getOption("-stats").stringValue();
             openWindow         = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
-            
+            if(!openWindow) System.setProperty("java.awt.headless", "true");
+
             align.setAngularBins(thetaBins, phiBins);
             for(int i=0; i<inputs.length; i++) {
                 String input = parser.getOptionParser("-process").getOption("-" + inputs[i]).stringValue();
@@ -335,15 +336,15 @@ public class Alignment {
             String phiBins     = parser.getOptionParser("-analyze").getOption("-phi").stringValue();
             String optStats    = parser.getOptionParser("-analyze").getOption("-stats").stringValue();
             openWindow         = parser.getOptionParser("-analyze").getOption("-display").intValue()!=0;
-            
+            if(!openWindow) System.setProperty("java.awt.headless", "true");
+
             String histoName   = parser.getOptionParser("-analyze").getOption("-input").stringValue();
             align.setAngularBins(thetaBins, phiBins);
             align.readHistos(histoName,align.getThetaBins(),align.getPhiBins(),optStats);
             align.analyzeHistos();
         }
 
-        if(!openWindow) System.setProperty("java.awt.headless", "true");
-        else {
+        if(openWindow) {
             JFrame frame = new JFrame("DC Alignment");
             frame.setSize(1200, 800);
             frame.add(align.getCanvases());
