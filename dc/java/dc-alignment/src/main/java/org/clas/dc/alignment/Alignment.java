@@ -52,7 +52,7 @@ public class Alignment {
     
     public void analyzeHistos() {
         for(String key : histos.keySet()) {
-            System.out.println("Analyzing histos for variation " + key);
+            System.out.println("\nAnalyzing histos for variation " + key);
             histos.get(key).analyzeHisto();
         }
     }

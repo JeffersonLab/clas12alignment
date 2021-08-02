@@ -245,6 +245,7 @@ public class Histo {
                 for(int ip=0; ip<phiBins.length; ip++) {
                     for(int l=1; l<=nLayer; l++) {
                         H1F hres = residuals[is][it][ip].getH1F("hi_L"+l);
+                        System.out.print(String.format("sector=%1d theta bin=%1d phi bin=%1d layer=%2d...",s,it,ip,l));
                         Histo.fitResiduals(hres);
                         if(hres.getFunction()!=null) {
                             this.resValues[is][it][ip][l-1] = hres.getFunction().getParameter(1); 
@@ -341,8 +342,8 @@ public class Histo {
         double amp   = histo.getBinContent(histo.getMaximumBin());
         double rms   = histo.getRMS();
         double sigma = rms/2;
-        double min = mean - 2*rms;
-        double max = mean + 2*rms;
+        double min = mean - rms;
+        double max = mean + rms;
         
         if(amp>10) {
             F1D f1   = new F1D("f1res","[amp]*gaus(x,[mean],[sigma])", min, max);
@@ -352,17 +353,25 @@ public class Histo {
             f1.setParameter(0, amp);
             f1.setParameter(1, mean);
             f1.setParameter(2, sigma);
-            f1.setRange(mean-2.0*sigma,mean+2.0*sigma);
+            f1.setParLimits(0, amp*0.2,   amp*1.2);
+            f1.setParLimits(1, mean*0.8,  mean*1.2);
+            f1.setParLimits(2, sigma*0.2, sigma*1.2);
+            System.out.print("1st...");
             DataFitter.fit(f1, histo, "Q");
-            mean = f1.getParameter(1);
+            mean  = f1.getParameter(1);
             sigma = f1.getParameter(2);
+            f1.setParLimits(0, 0, 2*amp);
+            f1.setParLimits(1, mean-sigma, mean+sigma);
+            f1.setParLimits(2, 0, sigma*2);
             f1.setRange(mean-2.0*sigma,mean+2.0*sigma);
             DataFitter.fit(f1, histo, "Q");
-
+            System.out.print("2nd\r");
             return true;
         }
-        else return false;
-        
+        else {
+            System.out.print("\r");
+            return false;
+        }
     }    
 
     
