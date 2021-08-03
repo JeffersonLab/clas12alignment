@@ -142,7 +142,8 @@ public class Alignment {
     }
     
     public void printResults() {
-        for(String key: histos.keySet()) {
+        for(int i=0; i<inputs.length; i++) {
+            String key = inputs[i];
             if(key.equals("nominal")) {
                 for(int is=0; is<nSector; is++) {
                     int sector = is+1;
@@ -167,16 +168,20 @@ public class Alignment {
                         System.out.print("{");
                         for(int il=0; il<nLayer; il++) {
                             double shift=0;
-                            for(int is=0; is<nSector; is++) {
-                                int sector = is+1;
-                                shift += (histos.get(key).getResidualValues(sector, it, ip)[il]-histos.get("nominal").getResidualValues(sector, it, ip)[il])/nSector;
+                                if(histos.containsKey(key)) {
+                                for(int is=0; is<nSector; is++) {
+                                    int sector = is+1;
+                                    shift += (histos.get(key).getResidualValues(sector, it, ip)[il]-histos.get("nominal").getResidualValues(sector, it, ip)[il])/nSector;
+                                }
                             }
                             System.out.print(String.format("%.1f, ", shift));
                         }
                         double shift=0;
-                        for(int is=0; is<nSector; is++) {
-                            int sector = is+1;
-                            shift += (histos.get(key).getVertexValues(sector, it, ip)-histos.get("nominal").getVertexValues(sector, it, ip))*1E4/nSector;
+                        if(histos.containsKey(key)) {
+                            for(int is=0; is<nSector; is++) {
+                                int sector = is+1;
+                                shift += (histos.get(key).getVertexValues(sector, it, ip)-histos.get("nominal").getVertexValues(sector, it, ip))*1E4/nSector;
+                            }
                         }
                         System.out.print(String.format("%.1f}", shift));
                         if(!(it==thetaBins.length-1 && ip==phiBins.length-1)) System.out.println(",");
@@ -287,7 +292,8 @@ public class Alignment {
         parser.addCommand("-process", "process event files");
         parser.getOptionParser("-process").addOption("-o"       ,"",   "output file name prefix");
         parser.getOptionParser("-process").addOption("-nevent"  ,"-1", "maximum number of events to process");
-        for(int i=0; i<inputs.length; i++) parser.getOptionParser("-process").addOption("-" + inputs[i],"");
+        parser.getOptionParser("-process").addRequired("-" + inputs[0],"nominal geometry files");
+        for(int i=1; i<inputs.length; i++) parser.getOptionParser("-process").addOption("-" + inputs[i],"");
         parser.getOptionParser("-process").addOption("-display" ,"1",  "display histograms (0/1)");
         parser.getOptionParser("-process").addOption("-stats"   ,"",   "set histogram stat option");
         parser.getOptionParser("-process").addOption("-theta"   , "",  "theta bin limits, e.g. \"5:10:20:30\"");
