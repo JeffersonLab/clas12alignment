@@ -48,15 +48,15 @@ public class ResolutionAnalysis {
 
         // Sanitize input.
         if (pltLArr.length != 4) {
-            System.out.printf("pltLArr should have a size of 4. Read the method's description.\n");
+            System.err.printf("pltLArr should have a size of 4. Read the method's description.\n");
             System.exit(1);
         }
         if (shArr.length != 4) {
-            System.out.printf("shArr should have a size of 4!\n");
+            System.err.printf("shArr should have a size of 4!\n");
             System.exit(1);
         }
         if (shArr[0].length != 6) {
-            System.out.printf("Each array inside shArr should have a size of 6!\n");
+            System.err.printf("Each array inside shArr should have a size of 6!\n");
             System.exit(1);
         }
 
@@ -145,50 +145,22 @@ public class ResolutionAnalysis {
 
             if (trajPoints==null || clusters==null) continue;
 
-            ArrayList<Cross> crosses = Cross.makeCrosses(trajPoints, clusters, fcuts);
+            for (TrajPoint[] tpArr : trajPoints) {
+                for (int layer=0; layer<tpArr.length; ++layer) {
+                    for (Cluster c : clusters[layer]) {
+                        int strip    = c.get_strip();
+                        double costh = tpArr[layer].get_cosTh();
+                        double res   = tpArr[layer].get_y() - c.get_y();
 
-            // Loop through crosses.
-            for (Cross cross : crosses) {
-                // Loop through trajectory points, clusters, and residuals in the cross.
-                for (int ci=0; ci<cross.size(); ++ci) {
-                    // Get necessary data
-                    int li       = cross.getc(ci).get_fmtLyr();
-                    int si       = cross.gett(ci).get_dcSec();
-                    int strip    = cross.getc(ci).get_strip();
-                    double costh = cross.gett(ci).get_cosTh();
-
-                    // Setup plots
-                    int plti = -1;
-                    if (func == 0) plti = opt;
-                    if (func == 1 || func == 2) plti = si;
-                    if (func == 4) plti = 0;
-
-                    // Plot per FMT-region residuals.
-                    if (func==3) {
-                        for (int ri = 0; ri<= Constants.getNumberOfFMTRegions(); ++ri) {
-                            if (Constants.getFMTRegionSeparators(ri) + 1 <= strip
-                                    && strip<= Constants.getFMTRegionSeparators(ri + 1)) {
-                                dgFMT[0].getH2F("hi_cluster_res_strip_l" +
-                                        (Constants.getNumberOfFMTRegions() * li + ri))
-                                        .fill(cross.getr(ci), strip);
-                            }
+                        if (ypAlign) {
+                            double theta_inv = 1/Math.toDegrees(Math.acos(costh));
+                            if (!Double.isFinite(theta_inv)) continue;
+                            dgFMT[opt].getH1F("hi_cluster_res_l"+(layer+1)).fill(res, theta_inv);
                         }
-                        continue;
-                    }
-
-                    // Plot other types of analysis.
-                    dgFMT[plti].getH1F("hi_cluster_res_l"+(li+1)).fill(cross.getr(ci));
-                    if (func==0 || func==1)
-                        dgFMT[plti].getH2F("hi_cluster_res_strip_l"+(li+1))
-                                .fill(cross.getr(ci), strip);
-                    if (func==2)
-                        dgFMT[plti].getH2F("hi_cluster_res_theta_l"+(li+1))
-                                .fill(cross.getr(ci), costh);
-                    if (func==4) {
-                        dgFMT[plti].getH2F("hi_cluster_res_dtmin_l"+(li+1))
-                                .fill(cross.getr(ci),
-                                Math.abs(cross.getc(li).get_tMin() -
-                                        cross.getc((li+1)%3).get_tMin()));
+                        else {
+                            dgFMT[opt].getH1F("hi_cluster_res_l"+(layer+1)).fill(res);
+                        }
+                        dgFMT[opt].getH2F("hi_cluster_res_strip_l"+(layer+1)).fill(res, strip);
                     }
                 }
             }
@@ -199,20 +171,20 @@ public class ResolutionAnalysis {
         fcuts.printCutsInfo(); // Show the lost tracks due to the cuts.
 
         // Fit residual plots
-//        if (func == 0) {
-//            for (int li = 1; li<= Constants.getNumberOfFMTLayers(); ++li) {
-//                Data.fitRes(dgFMT[opt].getH1F("hi_cluster_res_l"+li),
-//                        dgFMT[opt].getF1D("f1_res_l"+li), g);
-//            }
-//        }
-//        else if (func == 1 || func == 2) {
-//            for (int si=0; si<opt; ++si) {
-//                for (int li = 1; li<= Constants.getNumberOfFMTLayers(); ++li) {
-//                    Data.fitRes(dgFMT[si].getH1F("hi_cluster_res_l"+li),
-//                            dgFMT[si].getF1D("f1_res_l"+li), g);
-//                }
-//            }
-//        }
+        if (func == 0) {
+            for (int li = 1; li<= Constants.getNumberOfFMTLayers(); ++li) {
+                Data.fitRes(dgFMT[opt].getH1F("hi_cluster_res_l"+li),
+                        dgFMT[opt].getF1D("f1_res_l"+li), g);
+            }
+        }
+        else if (func == 1 || func == 2) {
+            for (int si=0; si<opt; ++si) {
+                for (int li = 1; li<= Constants.getNumberOfFMTLayers(); ++li) {
+                    Data.fitRes(dgFMT[si].getH1F("hi_cluster_res_l"+li),
+                            dgFMT[si].getF1D("f1_res_l"+li), g);
+                }
+            }
+        }
 
         return 0;
     }
@@ -267,13 +239,13 @@ public class ResolutionAnalysis {
         }
 
         // Print alignment data and draw plots.
-        if (var==0) System.out.printf("\nz_");
-        if (var==1) System.out.printf("\nx_");
-        if (var==2) System.out.printf("\ny_");
-        if (var==3) System.out.printf("\nphi_");
-        if (var==4) System.out.printf("\nyaw_");
-        if (var==5) System.out.printf("\npitch_");
-        System.out.printf("shift = [");
+        if (var==0) System.out.printf("\nz ");
+        if (var==1) System.out.printf("\nx ");
+        if (var==2) System.out.printf("\ny ");
+        if (var==3) System.out.printf("\nphi ");
+        if (var==4) System.out.printf("\nyaw ");
+        if (var==5) System.out.printf("\npitch ");
+        System.out.printf("shift   = [");
         for (int ci=0; ci<cn; ++ci) System.out.printf("%9.5f, ", inShArr[ci]);
         System.out.printf("\b\b]\n");
         for (int li = 0; li< Constants.getNumberOfFMTLayers(); ++li) {
@@ -629,7 +601,10 @@ public class ResolutionAnalysis {
                 }
             }
 
-            else System.out.printf("[ResolutionAnalysis] var should be between 0 and 9!\n");
+            else {
+                System.err.printf("[ResolutionAnalysis] var should be between 0 and 9!\n");
+                System.exit(1);
+            }
         }
 
         System.out.format("Analyzed %8d events... Done!\n", ei);

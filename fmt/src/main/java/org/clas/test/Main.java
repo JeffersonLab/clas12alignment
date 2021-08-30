@@ -18,9 +18,7 @@ public class Main {
     public static void main(String[] args) {
         // === Process input ===================================================
         String infile = args[0];
-        if (args.length != 1 || !infile.endsWith(".hipo")) {
-            usage();
-        }
+        if (args.length != 1 || !infile.endsWith(".hipo")) usage();
 
         GStyle.getH1FAttributes().setOptStat("1111111");
         GStyle.getH2FAttributes().setOptStat("1111111");
@@ -68,16 +66,17 @@ public class Main {
             }
             else if (varAlign == 1) { // z alignment.
                 double[] zShArr = new double[]
-                        {-0.05, -0.04, -0.03, -0.02, -0.01, 0.00, 0.01, 0.02, 0.03, 0.04, 0.05};
-                ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr,
-                        nEvents, shArr, drawPlots, false);
-                resAnls.shiftAnalysis(0, 0, zShArr, pltRan, gssRan, swmSetup, fCuts);
+                        {-1.0, -0.5, 0.0, 0.5, 1.0};
+                ResolutionAnalysis resAnls = new ResolutionAnalysis(infile,
+                        pltLArr, nEvents, shArr, drawPlots, false);
+                resAnls.shiftAnalysis(0, 0, zShArr, pltRan, gssRan, swmSetup,
+                        fCuts);
             }
             else if (varAlign == 2) { // x & y alignment.
                 double[] xShArr = new double[]
-                        {-0.05, -0.04, -0.03, -0.02, -0.01, 0.00, 0.01, 0.02, 0.03, 0.04, 0.05};
+                        {-2.0, -1.0, 0.0, 1.0, 2.0};
                 double[] yShArr = new double[]
-                        {-0.05, -0.04, -0.03, -0.02, -0.01, 0.00, 0.01, 0.02, 0.03, 0.04, 0.05};
+                        {-2.0, -1.0, 0.0, 1.0, 2.0};
                 double orig_x = shArr[0][1];
                 for (int xi = 0; xi < xShArr.length; ++xi) {
                     shArr[0][1] = orig_x + xShArr[xi];
@@ -108,7 +107,7 @@ public class Main {
                 }
             }
             else {
-                System.out.printf("varAlign should be between 0 and 4!\n");
+                System.err.printf("varAlign should be between 0 and 4!\n");
                 System.exit(1);
             }
         }
@@ -155,7 +154,10 @@ public class Main {
             else if (plotType == 14) resAnls.plot1DCount(7, swim, fCuts, 0);
             else if (plotType == 15) resAnls.plot1DCount(8, swim, fCuts, 0);
             else if (plotType == 16) resAnls.plot1DCount(9, swim, fCuts, 0);
-            else System.out.printf("plotType should be between 0 and 16!\n");
+            else {
+                System.err.printf("plotType should be between 0 and 16!\n");
+                System.exit(1);
+            }
         }
     }
 }
