@@ -6,7 +6,6 @@ import org.clas.cross.Constants;
 public class FiducialCuts {
 
     // general setup:
-    boolean makeCrosses = false;
     boolean ypAlign = false;
 
     // physics-wise cuts:
@@ -26,10 +25,6 @@ public class FiducialCuts {
     int[] crsc = new int[3]; // cut crosses counter.
 
     public FiducialCuts() {}
-
-    public FiducialCuts(boolean makeCrosses) {
-        this.makeCrosses = makeCrosses;
-    }
 
     public void setYPAlign(boolean ypAlign) {
         this.ypAlign = ypAlign;
@@ -198,19 +193,15 @@ public class FiducialCuts {
                 clscsum, clsc[0]);
         System.out.printf("                               %% │ %5.2f%%              │\n",
                 100 * ((double) clscsum) / clsc[0]);
-        if (makeCrosses) {
-            System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
-            System.out.printf(" cluster y too distant to traj y | %8d (%5.2f%%)   |\n",
-                    crsc[2], 100 * ((double) crsc[1]) / crsc[0]);
-            System.out.printf("   clusters with large tmin diff | %8d (%5.2f%%)   |\n",
-                    crsc[2], 100 * ((double) crsc[2]) / crsc[0]);
-            System.out.printf("           TOTAL CROSSES DROPPED | %8d / %8d |\n",
-                    crscsum, crsc[0]);
-            System.out.printf("                               %% | %5.2f%%              │\n",
-                    100 * ((double) crscsum) / crsc[0]);
-            System.out.printf("─────────────────────────────────┴─────────────────────┘\n");
-        }
-        else
-            System.out.printf("─────────────────────────────────┴─────────────────────┘\n");
+        System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
+        System.out.printf(" cluster y too distant to traj y | %8d (%5.2f%%)   |\n",
+                crsc[2], 100 * ((double) crsc[1]) / crsc[0]);
+        System.out.printf("   clusters with large tmin diff | %8d (%5.2f%%)   |\n",
+                crsc[2], 100 * ((double) crsc[2]) / crsc[0]);
+        System.out.printf("           TOTAL CROSSES DROPPED | %8d / %8d |\n",
+                crscsum, crsc[0]);
+        System.out.printf("                               %% | %5.2f%%              │\n",
+                100 * ((double) crscsum) / crsc[0]);
+        System.out.printf("─────────────────────────────────┴─────────────────────┘\n");
     }
 }

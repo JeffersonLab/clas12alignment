@@ -49,7 +49,7 @@ public class Cluster {
     public static ArrayList<Cluster>[] getClusters(DataEvent event, FiducialCuts fcuts,
             boolean applyCuts) {
         // Get data bank.
-        DataBank clBank  = Data.getBank(event, "FMTRec::Clusters");
+        DataBank clBank  = Data.getBank(event, "FMT::Clusters");
         if (clBank==null) return null;
 
         // NOTE: Here it's assumed that there are 3 FMT layers. Needs to be fixed if working with
@@ -59,16 +59,16 @@ public class Cluster {
 
         for (int cri=0; cri<clBank.rows(); cri++) {
             fcuts.increaseClusterCount();
-            int id        = clBank.getShort("ID", cri);
+            int id        = clBank.getShort("index", cri);
             int li        = clBank.getByte("layer", cri)-1;
             int strip     = clBank.getInt("seedStrip", cri);
             int size      = clBank.getShort("size", cri);
-            double energy = clBank.getFloat("ETot", cri);
-            // double tMin   = clBank.getFloat("Tmin", cri);
+            double energy = clBank.getFloat("energy", cri);
+            // double tMin   = clBank.getFloat("Tmin", cri); // TODO: Check out what's up with this.
             double tMin   = 100;
             double y      = clBank.getFloat("centroid", cri);
-            double cRes   = clBank.getFloat("centroidResidual", cri);
-            int tID       = clBank.getShort("trkID", cri);
+            double cRes   = clBank.getFloat("centroidError", cri);
+            int tID       = clBank.getShort("trackIndex", cri);
 
             // Apply cluster fiducial cuts.
             if (applyCuts && fcuts.checkClusterCuts(strip, size, energy, tMin)) continue;

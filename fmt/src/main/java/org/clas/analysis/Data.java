@@ -117,21 +117,31 @@ public class Data {
             for (int i = 0; i < 2; ++i) {
                 H1F hi_track_var = null;
 
-                if (i == 0) hi_track_var = new H1F("DCTB tracks", 401, -50, 50);
-                if (i == 1) hi_track_var = new H1F("FMT tracks",  401, -50, 50);
+                if (i == 0) hi_track_var = new H1F("DCTB tracks", 801, -50, 50);
+                if (i == 1) hi_track_var = new H1F("FMT tracks",  801, -50, 50);
 
                 hi_track_var.setTitleX("vertex z (cm)");
                 hi_track_var.setTitleY("track count");
+                hi_track_var.setLineWidth(1);
                 hi_track_var.setFillColor(4);
 
                 dgFMT[0].addDataSet(hi_track_var, i);
+
+                // Prepare fit.
+                F1D f1_2peaks = new F1D("twinpeaks"+i, "[amp1]*gaus(x,[mean],[sigma])+[amp2]*gaus(x,[mean]-2.4,[sigma])+[p0]+[p1]*x+[p2]*x*x",
+                        -r, r);
+
+                f1_2peaks.setLineWidth(2);
+                f1_2peaks.setLineColor(2);
+                f1_2peaks.setOptStat("1111");
+                dgFMT[0].addDataSet(f1_2peaks, i);
             }
         }
 
         else if (var == 6) {
+            // Setup plot.
             dgFMT[0] = new DataGroup(1, 1);
             H1F hi_track_var = null;
-
             hi_track_var = new H1F("FMT tracks", 801, -50, 50);
 
             hi_track_var.setTitleX("vertex z (cm)");
@@ -139,6 +149,15 @@ public class Data {
             hi_track_var.setFillColor(4);
 
             dgFMT[0].addDataSet(hi_track_var, 0);
+
+            // Prepare fit.
+            F1D f1 = new F1D("upstream fit",   "[amp1]*gaus(x,[mean],[sigma])+[amp2]*gaus(x,[mean]-2.4,[sigma])+[p0]+[p1]*x+[p2]*x*x", -r, r); // found peak distance
+            F1D f2 = new F1D("downstream fit", "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", -r, r);
+
+            f1.setLineWidth(2);         f2.setLineWidth(2);
+            f1.setLineColor(2);         f2.setLineColor(2);
+            f1.setOptStat("1111");      f2.setOptStat("1111");
+            dgFMT[0].addDataSet(f1, 0); dgFMT[0].addDataSet(f2, 0);
         }
 
         else if (var == 7) {
@@ -159,8 +178,30 @@ public class Data {
             dgFMT[0].addDataSet(plt, 0);
         }
 
+        else if (var == 9) {
+            // Setup plot.
+            dgFMT[0] = new DataGroup(1, 1);
+            H1F hi_track_var = null;
+            hi_track_var = new H1F("DC tracks", 801, -50, 50);
 
-        else System.out.printf("[Data] var should be between 0 and 7! Something went wrong...\n");
+            hi_track_var.setTitleX("vertex z (cm)");
+            hi_track_var.setTitleY("track count");
+            hi_track_var.setFillColor(4);
+
+            dgFMT[0].addDataSet(hi_track_var, 0);
+
+            // Prepare fits.
+            F1D f1 = new F1D("upstream fit",   "[amp1]*gaus(x,[mean],[sigma])+[amp2]*gaus(x,[mean]-2.4,[sigma])+[p0]+[p1]*x+[p2]*x*x", -r, r); // found peak distance.
+            F1D f2 = new F1D("downstream fit", "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", -r, r);
+
+            f1.setLineWidth(2);         f2.setLineWidth(2);
+            f1.setLineColor(2);         f2.setLineColor(2);
+            f1.setOptStat("1111");      f2.setOptStat("1111");
+            dgFMT[0].addDataSet(f1, 0); dgFMT[0].addDataSet(f2,0);
+        }
+
+
+        else System.out.printf("[Data] var should be between 0 and 9! Something went wrong...\n");
 
         return dgFMT;
     }
@@ -187,9 +228,9 @@ public class Data {
             }
         }
         else if (var == 2) {
-            H2F plt = new H2F("theta_vs_vz", "", 201, -50, 50, 181, 0, 180); // Full target
-            plt.setTitleX("vz");
-            plt.setTitleY("theta");
+            H2F plt = new H2F("theta_vs_vz", "", 201, -50, 50, 201, 0, 60); // Full target
+            plt.setTitleX("vz (cm)");
+            plt.setTitleY("#theta (deg)");
             dgFMT[0].addDataSet(plt, 0);
         }
         else if (var == 3) {
@@ -312,6 +353,76 @@ public class Data {
     }
 
     /**
+     * Fit highest peak in vertex plot.
+     *
+     * @param hires 1-dimensional residuals distribution.
+     * @param f1res function to use for fitting.
+     * @param min   minimum for the gaussian fit.
+     * @param max   maximum for the gaussian fit.
+     * @return status int.
+     */
+    public static int fitZ(H1F hires, F1D f1res, double min, double max) {
+        double mean = hires.getDataX(hires.getMaximumBin());
+        double amp = hires.getBinContent(hires.getMaximumBin());
+
+        f1res.setParameter(0, 2*amp);  // amp1
+        f1res.setParameter(1, mean); // mean
+        f1res.setParameter(2, 0.2);  // sigma
+
+        f1res.setRange(min, max);
+        DataFitter.fit(f1res, hires, "Q"); // No options use error for sigma.
+        hires.setFunction(null);
+
+        return 0;
+    }
+
+    /**
+     * Fit upstream window with two gaussians.
+     *
+     * @param hires 1-dimensional residuals distribution.
+     * @param f1res function to use for fitting.
+     * @param min   minimum for the fit.
+     * @param max   maximum for the fit.
+     * @return status int.
+     */
+    public static int fitUpstream(H1F hires, F1D f1res, double min, double max) {
+        double amp = hires.getBinContent(hires.getMaximumBin());
+
+        f1res.setParameter(0, 2*amp);  // amp1
+        f1res.setParameter(1, -32.085); // mean
+       f1res.setParameter(2, 1);  // sigma
+
+        f1res.setRange(min, max);
+        DataFitter.fit(f1res, hires, "Q"); // No options use error for sigma.
+        hires.setFunction(null);
+
+        return 0;
+    }
+
+    /**
+     * Fit downstream window with a gaussian.
+     *
+     * @param hires 1-dimensional residuals distribution.
+     * @param f1res function to use for fitting.
+     * @param min   minimum for the fit.
+     * @param max   maximum for the fit.
+     * @return status int.
+     */
+    public static int fitDownstream(H1F hires, F1D f1res, double min, double max) {
+        double amp = hires.getBinContent(hires.getMaximumBin());
+
+        f1res.setParameter(0, 2*amp);  // amp1
+        f1res.setParameter(1, 23.221); // mean
+        f1res.setParameter(2, 0.2);  // sigma
+
+        f1res.setRange(min, max);
+        DataFitter.fit(f1res, hires, "Q"); // No options use error for sigma.
+        hires.setFunction(null);
+
+        return 0;
+    }
+
+    /**
      * Render plots for tracks' z position.
      *
      * @param dgFMT Array of data groups.
@@ -328,11 +439,15 @@ public class Data {
         fmtCanvas.getCanvas(title).setAxisFontSize(18);
         fmtCanvas.getCanvas(title).setAxisTitleSize(24);
 
-        // DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
-        // vline.setLineColor(2);
-        // vline.setLineWidth(2);
-        // fmtCanvas.getCanvas(title).cd(0).draw(vline);
-        // fmtCanvas.getCanvas(title).cd(1).draw(vline);
+//        DataLine vline = new DataLine(-32.1, 0, 0, Double.POSITIVE_INFINITY);
+//        vline.setLineColor(2);
+//        vline.setLineWidth(2);
+//        fmtCanvas.getCanvas(title).cd(0).draw(vline);
+//
+//        DataLine vline2 = new DataLine(-34.2, 0, 0, Double.POSITIVE_INFINITY);
+//        vline2.setLineColor(2);
+//        vline2.setLineWidth(2);
+//        fmtCanvas.getCanvas(title).cd(0).draw(vline2);
 
         JFrame frame = new JFrame("FMT");
         frame.setSize(1600, 1000);

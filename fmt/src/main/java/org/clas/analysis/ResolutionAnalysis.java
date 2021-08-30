@@ -17,12 +17,10 @@ public class ResolutionAnalysis {
     // Class variables:
     private String infile;
     private boolean[] pltLArr;
-    private boolean debugInfo;
     private int nEvents;         // Number of events to run. Set to 0 to run all events in file.
     private double[] fmtZ;       // z position of the layers in cm (before shifting).
     private double[] fmtAngle;   // strip angle in deg degrees.
     private double[][] shArr;    // 2D array of shifts to be applied.
-    private boolean makeCrosses; // Boolean describing if we should do crossmaking.
     private boolean drawPlots;   // Boolean describing if plots are to be drawn.
     private boolean ypAlign;     // Special setup needed for yaw & pitch alignment.
 
@@ -34,20 +32,17 @@ public class ResolutionAnalysis {
      *                      * [1] : Bottom plots, vertical line at 0.
      *                      * [2] : Bottom plots, horizontal lines at each cable's endpoint.
      *                      * [3] : Bottom plots, horizontal lines separating each FMT "region".
-     * @param dbgInfo     Boolean describing if debugging info should be printed.
      * @param nEvents     Number of events to run. Set to 0 to run all events in file.
      * @param shArr       Array of arrays describing all the shifts applied:
      *                      * [0] :  global [z,x,y,phi] shift.
      *                      * [1] : layer 1 [z,x,y,phi] shift.
      *                      * [2] : layer 2 [z,x,y,phi] shift.
      *                      * [3] : layer 3 [z,x,y,phi] shift.
-     * @param makeCrosses Boolean describing if we should do crossmaking.
      * @param drawPlots   Boolean describing if plots are to be drawn.
      * @param ypAlign     Special setup needed for yaw & pitch alignment.
      */
-    public ResolutionAnalysis(String infile, boolean[] pltLArr, boolean dbgInfo, int nEvents,
-            double[][] shArr, boolean makeCrosses, boolean drawPlots, boolean ypAlign) {
-        this.makeCrosses = makeCrosses;
+    public ResolutionAnalysis(String infile, boolean[] pltLArr, int nEvents,
+            double[][] shArr, boolean drawPlots, boolean ypAlign) {
         this.drawPlots   = drawPlots;
         this.ypAlign     = ypAlign;
 
@@ -67,7 +62,6 @@ public class ResolutionAnalysis {
 
         this.infile    = infile;
         this.pltLArr   = pltLArr;
-        this.debugInfo = dbgInfo;
         this.nEvents   = nEvents;
         this.shArr     = new double[][]{
             {shArr[0][0], shArr[0][1], shArr[0][2], shArr[0][3], shArr[0][4], shArr[0][5]},
@@ -123,16 +117,14 @@ public class ResolutionAnalysis {
         if (func<0 || func>4) return 1;
 
         // Print the shifts applied.
-        if (debugInfo) {
-            System.out.printf("SHIFTS APPLIED:\n");
-            for (int li = 1; li<= Constants.getNumberOfFMTLayers(); ++li) {
-                System.out.printf("[");
-                for (int vi=0; vi<shArr[li].length; ++vi) {
-                    System.out.printf("%6.2f,", shArr[0][vi] + shArr[li][vi]);
-                    if (vi == shArr[li].length-1) System.out.printf("\b");
-                }
-                System.out.printf("]\n");
+        System.out.printf("SHIFTS APPLIED:\n");
+        for (int li = 1; li<= Constants.getNumberOfFMTLayers(); ++li) {
+            System.out.printf("[");
+            for (int vi=0; vi<shArr[li].length; ++vi) {
+                System.out.printf("%6.2f,", shArr[0][vi] + shArr[li][vi]);
+                if (vi == shArr[li].length-1) System.out.printf("\b");
             }
+            System.out.printf("]\n");
         }
 
         int ei = 0; // Event number.
@@ -148,130 +140,63 @@ public class ResolutionAnalysis {
             ei++;
 
             ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(event, swim,
-                    fcuts, fmtZ, fmtAngle, shArr, 3, false);
-            ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, false);
+                    fcuts, fmtZ, fmtAngle, shArr, 3, true);
+            ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, true);
+
             if (trajPoints==null || clusters==null) continue;
 
-            if (makeCrosses) {
-                ArrayList<Cross> crosses = Cross.makeCrosses(trajPoints, clusters, fcuts);
+            ArrayList<Cross> crosses = Cross.makeCrosses(trajPoints, clusters, fcuts);
 
-                // Loop through crosses.
-                for (Cross cross : crosses) {
-                    // Loop through trajectory points, clusters, and residuals in the cross.
-                    for (int ci=0; ci<cross.size(); ++ci) {
-                        // Get necessary data
-                        int li       = cross.getc(ci).get_fmtLyr();
-                        int si       = cross.gett(ci).get_dcSec();
-                        int strip    = cross.getc(ci).get_strip();
-                        double costh = cross.gett(ci).get_cosTh();
+            // Loop through crosses.
+            for (Cross cross : crosses) {
+                // Loop through trajectory points, clusters, and residuals in the cross.
+                for (int ci=0; ci<cross.size(); ++ci) {
+                    // Get necessary data
+                    int li       = cross.getc(ci).get_fmtLyr();
+                    int si       = cross.gett(ci).get_dcSec();
+                    int strip    = cross.getc(ci).get_strip();
+                    double costh = cross.gett(ci).get_cosTh();
 
-                        // Setup plots
-                        int plti = -1;
-                        if (func == 0) plti = opt;
-                        if (func == 1 || func == 2) plti = si;
-                        if (func == 4) plti = 0;
+                    // Setup plots
+                    int plti = -1;
+                    if (func == 0) plti = opt;
+                    if (func == 1 || func == 2) plti = si;
+                    if (func == 4) plti = 0;
 
-                        // Plot per FMT-region residuals.
-                        if (func==3) {
-                            for (int ri = 0; ri<= Constants.getNumberOfFMTRegions(); ++ri) {
-                                if (Constants.getFMTRegionSeparators(ri) + 1 <= strip
-                                        && strip<= Constants.getFMTRegionSeparators(ri + 1)) {
-                                    dgFMT[0].getH2F("hi_cluster_res_strip_l" +
-                                            (Constants.getNumberOfFMTRegions() * li + ri))
-                                            .fill(cross.getr(ci), strip);
-                                }
+                    // Plot per FMT-region residuals.
+                    if (func==3) {
+                        for (int ri = 0; ri<= Constants.getNumberOfFMTRegions(); ++ri) {
+                            if (Constants.getFMTRegionSeparators(ri) + 1 <= strip
+                                    && strip<= Constants.getFMTRegionSeparators(ri + 1)) {
+                                dgFMT[0].getH2F("hi_cluster_res_strip_l" +
+                                        (Constants.getNumberOfFMTRegions() * li + ri))
+                                        .fill(cross.getr(ci), strip);
                             }
-                            continue;
                         }
+                        continue;
+                    }
 
-                        // Plot other types of analysis.
-                        dgFMT[plti].getH1F("hi_cluster_res_l"+(li+1)).fill(cross.getr(ci));
-                        if (func==0 || func==1)
-                            dgFMT[plti].getH2F("hi_cluster_res_strip_l"+(li+1))
-                                    .fill(cross.getr(ci), strip);
-                        if (func==2)
-                            dgFMT[plti].getH2F("hi_cluster_res_theta_l"+(li+1))
-                                    .fill(cross.getr(ci), costh);
-                        if (func==4) {
-                            dgFMT[plti].getH2F("hi_cluster_res_dtmin_l"+(li+1))
-                                    .fill(cross.getr(ci),
-                                    Math.abs(cross.getc(li).get_tMin() -
-                                            cross.getc((li+1)%3).get_tMin()));
-                        }
+                    // Plot other types of analysis.
+                    dgFMT[plti].getH1F("hi_cluster_res_l"+(li+1)).fill(cross.getr(ci));
+                    if (func==0 || func==1)
+                        dgFMT[plti].getH2F("hi_cluster_res_strip_l"+(li+1))
+                                .fill(cross.getr(ci), strip);
+                    if (func==2)
+                        dgFMT[plti].getH2F("hi_cluster_res_theta_l"+(li+1))
+                                .fill(cross.getr(ci), costh);
+                    if (func==4) {
+                        dgFMT[plti].getH2F("hi_cluster_res_dtmin_l"+(li+1))
+                                .fill(cross.getr(ci),
+                                Math.abs(cross.getc(li).get_tMin() -
+                                        cross.getc((li+1)%3).get_tMin()));
                     }
                 }
-            }
-            else {
-                // METHOD 2
-                // Loop through clusters
-                for (int li=0; li<Constants.getNumberOfFMTLayers(); ++li) {
-                    for (Cluster c : clusters[li]) {
-                        if (c.get_trkID() == 0) continue;
-
-                        double res = c.get_cResidual();
-                        int strip  = c.get_strip();
-                        dgFMT[opt].getH1F("hi_cluster_res_l"+(li+1)).fill(res);
-                        dgFMT[opt].getH2F("hi_cluster_res_strip_l"+(li+1)).fill(res, strip);
-                    }
-                }
-
-//                // METHOD 1
-//                // Loop through trajectory points
-//                for (TrajPoint[] tpArr : trajPoints) {
-//                    for (int li=0; li<tpArr.length; ++li) {
-//                        for (Cluster c : clusters[li]) {
-//                            int si       = tpArr[li].get_dcSec();
-//                            int strip    = c.get_strip();
-//                            double costh = tpArr[li].get_cosTh();
-//                            double res   = tpArr[li].get_y() - c.get_y();
-//
-//                            // Setup plots
-//                            int plti = -1;
-//                            if (func == 0) plti = opt;
-//                            if (func == 1 || func == 2) plti = si;
-//                            if (func == 4) plti = 0;
-//
-//                            // Plot per FMT-region residuals
-//                            if (func == 3) {
-//                                for (int ri = 0; ri<= Constants.getNumberOfFMTRegions(); ++ri) {
-//                                    if (Constants.getFMTRegionSeparators(ri)+1<=strip
-//                                            && strip<= Constants.getFMTRegionSeparators(ri + 1)) {
-//                                        dgFMT[0].getH2F("hi_cluster_res_strip_l" +
-//                                                (Constants.getNumberOfFMTRegions() * li + ri))
-//                                                .fill(res, strip);
-//                                    }
-//                                }
-//                                continue;
-//                            }
-//
-//                            // Plot other types of analysis
-//                            double theta_inv = 1/Math.toDegrees(Math.acos(costh));
-//                            if (ypAlign) {
-//                                if (!Double.isFinite(theta_inv)) continue;
-//                                dgFMT[plti].getH1F("hi_cluster_res_l"+(li+1)).fill(res, theta_inv);
-//                            }
-//                            else {
-//                                dgFMT[plti].getH1F("hi_cluster_res_l"+(li+1)).fill(res);
-//                            }
-//                            if (func==0 || func==1)
-//                                dgFMT[plti].getH2F("hi_cluster_res_strip_l"+(li+1))
-//                                        .fill(res, strip);
-//                            if (func==2)
-//                                dgFMT[plti].getH2F("hi_cluster_res_theta_l"+(li+1))
-//                                        .fill(res, costh);
-//                            if (func==4) {
-//                                System.out.printf("Set makeCrosses to true to get this plot!\n");
-//                                System.exit(1);
-//                            }
-//                        }
-//                    }
-//                }
             }
         }
         System.out.format("Analyzed %8d events... Done!\n", ei);
         reader.close();
 
-        if (debugInfo) fcuts.printCutsInfo();
+        fcuts.printCutsInfo(); // Show the lost tracks due to the cuts.
 
         // Fit residual plots
 //        if (func == 0) {
@@ -433,7 +358,7 @@ public class ResolutionAnalysis {
 
         // Run.
         runAnalysis(func, swim, fcuts, dgFMT);
-        if (debugInfo) fcuts.printCutsInfo();
+        fcuts.printCutsInfo();
         if (drawPlots) Data.drawPlots(dgFMT, title);
 
         return 0;
@@ -465,28 +390,28 @@ public class ResolutionAnalysis {
      */
     public int plot1DCount(int var, TrkSwim swim, FiducialCuts fcuts, int r) {
         // Sanitize input.
-        if (var < 0 || var > 8) return 0;
+        if (var < 0 || var > 9) return 0;
 
         String title = null;
-        if (var == 0)                         title = "Tmin count";
-        if (var == 1)                         title = "energy count";
-        if (var == 2 || var == 5 || var == 6) title = "vertex z";
-        if (var == 3)                         title = "delta Tmin";
-        if (var == 4)                         title = "track theta";
-        if (var == 7)                         title = "track status";
-        if (var == 8)                         title = "track chi^2";
+        if (var == 0)                                     title = "Tmin count";
+        if (var == 1)                                     title = "energy count";
+        if (var == 2 || var == 5 || var == 6 || var == 9) title = "vertex z";
+        if (var == 3)                                     title = "delta Tmin";
+        if (var == 4)                                     title = "track theta";
+        if (var == 7)                                     title = "track status";
+        if (var == 8)                                     title = "track chi^2";
 
         DataGroup[] dgFMT = Data.create1DDataGroup(var, Constants.getNumberOfFMTLayers(), r);
+
+        int totalCount = 0;
+        int correctCount = 0;
+
 
         // Run.
         int ei = 0; // Event number.
         HipoDataSource reader = new HipoDataSource();
         reader.open(infile);
         System.out.printf("\nPlotting...\n");
-
-        // Special event counters only used for var==5.
-        int ecDCTB = 0;
-        int ecFMT  = 0;
 
         // Loop through events.
         while (reader.hasEvent()) {
@@ -554,23 +479,39 @@ public class ResolutionAnalysis {
                 }
             }
             else if (var == 5) {
-                // Plot z from FMT track bank.
-                DataBank dctbTracks = Data.getBank(event, "TimeBasedTrkg::TBTracks");
-                DataBank fmtTracks  = Data.getBank(event, "FMTRec::Tracks");
+                // Plot z from DC and FMT track banks.
+                DataBank dcTracks  = Data.getBank(event, "TimeBasedTrkg::TBTracks");
+                DataBank fmtTracks = Data.getBank(event, "FMTRec::Tracks");
+                DataBank recTracks = Data.getBank(event, "REC::Track");
+                DataBank particles = Data.getBank(event, "REC::Particle");
+                if (dcTracks == null || fmtTracks == null || recTracks == null || particles == null) continue;
 
-                // Count events with DCTB tracks without FMT tracks.
-                if (dctbTracks != null) ecDCTB++;
-                if (fmtTracks  != null) ecFMT++;
+                // Filter tracks by number of tracks --- use only events with one track.
+                if (fmtTracks.rows() <= 1) continue;
 
-                if (dctbTracks == null) continue;
-                if (fmtTracks  == null) continue;
-
-                for (int dc_tri = 0; dc_tri < dctbTracks.rows(); ++dc_tri) {
+                for (int dc_tri = 0; dc_tri < dcTracks.rows(); ++dc_tri) {
                     for (int fmt_tri = 0; fmt_tri < fmtTracks.rows(); ++fmt_tri) {
-                        if (dctbTracks.getShort("id", dc_tri) != fmtTracks.getShort("id", fmt_tri)) continue; // Match DC and FMT tracks.
-                        if (fmtTracks.getShort("status", fmt_tri) == 0) continue;
-                        dgFMT[0].getH1F("DCTB tracks").fill((double) dctbTracks.getFloat("Vtx0_z", dc_tri));
-                        dgFMT[0].getH1F("FMT tracks") .fill((double) fmtTracks .getFloat("Vtx0_z", fmt_tri));
+                        // Match DC and FMT tracks.
+                        if (dcTracks.getShort("id", dc_tri) != fmtTracks.getShort("id", fmt_tri)) continue;
+
+                        // Filter by DC sector.
+//                        if ((int) fmtTracks.getByte("sector", fmt_tri) != 1) continue;
+
+                        // Filter by number of FMT measurements.
+                        if (fmtTracks.getShort("status", fmt_tri) != 3) continue;
+
+                        // Filter by PID (Only electrons).
+                        int pid = -1;
+                        for (int rec_tri = 0; rec_tri < recTracks.rows(); ++rec_tri) {
+                            if (fmt_tri != recTracks.getShort("index", rec_tri)) continue;
+                            int pindex = (int) recTracks.getShort("pindex", rec_tri);
+                            pid = particles.getInt("pid", pindex);
+                            break;
+                        }
+                        if (pid != -211) continue;
+
+                        dgFMT[0].getH1F("DCTB tracks").fill((double) dcTracks .getFloat("Vtx0_z", dc_tri));
+                        dgFMT[0].getH1F("FMT tracks") .fill((double) fmtTracks.getFloat("Vtx0_z", fmt_tri));
                     }
                 }
 
@@ -590,21 +531,59 @@ public class ResolutionAnalysis {
             }
             else if (var == 6) {
                 // Plot z from FMT track bank.
-                DataBank fmtTracks  = Data.getBank(event, "FMTRec::Tracks");
-                if (fmtTracks == null) continue;
+                DataBank fmtTracks = Data.getBank(event, "FMT::Tracks");
+                DataBank recTracks = Data.getBank(event, "REC::Track");
+                DataBank particles = Data.getBank(event, "REC::Particle");
+                if (fmtTracks == null || recTracks == null || particles == null) continue;
 
                 for (int tri = 0; tri < fmtTracks.rows(); ++tri) {
-                    // Filter tracks by status.
-                    if ((int) fmtTracks.getShort("status", tri) > 50) continue;
-                    if ((int) fmtTracks.getShort("status", tri) == 0) continue;
+                    // Filter by DC sector.
+                    if ((int) fmtTracks.getByte("sector", tri) != 1) continue;
 
-                    double z_fmt = (double) fmtTracks.getFloat("Vtx0_z", tri);
-                    dgFMT[0].getH1F("FMT tracks").fill(z_fmt);
+                    // Filter tracks by their number of measurements.
+                    if ((int) fmtTracks.getByte("NDF", tri) != 3) continue;
+
+                    // Filter tracks by pid.
+                    int pid = -1;
+                    for (int rtri = 0; rtri < recTracks.rows(); ++rtri) {
+                        if (tri != recTracks.getShort("index", rtri)) continue;
+                        int pindex = (int) recTracks.getShort("pindex", rtri);
+                        pid = particles.getInt("pid", pindex);
+                        break;
+                    }
+                    if (pid !=   11) continue; // e-
+//                    if (pid != 211 && pid != -211) continue; // pi+ & pi-
+
+                    dgFMT[0].getH1F("FMT tracks").fill((double) fmtTracks.getFloat("Vtx0_z", tri));
+
+                    // Apply Raffaella's cut
+//                    int rtindex = -1;
+//                    int pindex  = -1;
+//                    for (int rtri = 0; rtri < recTracks.rows(); ++rtri) {
+//                        if (tri != recTracks.getShort("index", rtri)) continue;
+//                        rtindex = rtri;
+//                        pindex  = (int) recTracks.getShort("pindex", rtri);
+//                        break;
+//                    }
+//
+//                    double chi2 = recTracks.getFloat("chi2", rtindex);
+//                    int dc_ndf  = recTracks.getInt("NDF", rtindex);
+//                    int fmt_ndf = fmtTracks.getInt("NDF", tri);
+//                    int pid     = particles.getInt("pid", pindex);
+//                    int status  = (int) particles.getShort("status", pindex);
+//                    double chi2pid = particles.getFloat("chi2pid",pindex);
+//                    double z_fmt = (double) fmtTracks.getFloat("Vtx0_z", tri);
+//                    status = (int) (Math.abs(status)/1000);
+//
+//                    if (status==2 && Math.abs(chi2pid)<5 && z_fmt<26.0505 && fmt_ndf==3
+//                            && pid==11 && chi2/dc_ndf<15 && recTracks.rows()>=1) {
+//                        dgFMT[0].getH1F("FMT tracks").fill(z_fmt);
+//                    }
                 }
             }
             else if (var == 7) {
                 // Plot the status from the FVT tracks.
-                DataBank fmtTracks = Data.getBank(event, "FMTRec::Tracks");
+                DataBank fmtTracks = Data.getBank(event, "FMT::Tracks");
                 if (fmtTracks == null) continue;
 
                 for (int tri = 0; tri < fmtTracks.rows(); ++tri) {
@@ -624,16 +603,39 @@ public class ResolutionAnalysis {
                     dgFMT[0].getH1F("chi2").fill(chi2);
                 }
             }
+            else if (var == 9) {
+                // Plot z from DC track bank.
+                DataBank dcTracks  = Data.getBank(event, "TimeBasedTrkg::TBTracks");
+                DataBank recTracks = Data.getBank(event, "REC::Track");
+                DataBank particles = Data.getBank(event, "REC::Particle");
+                if (dcTracks == null || recTracks == null || particles == null) continue;
 
-            else System.out.printf("[ResolutionAnalysis] var should be between 0 and 8!\n");
+                for (int tri = 0; tri < dcTracks.rows(); ++tri) {
+                    // Filter by DC sector.
+                    if ((int) dcTracks.getByte("sector", tri) != 1) continue;
+
+                    // Filter tracks by pid.
+                    int pid = -1;
+                    for (int rtri = 0; rtri < recTracks.rows(); ++rtri) {
+                        if (tri != recTracks.getShort("index", rtri)) continue;
+                        int pindex = (int) recTracks.getShort("pindex", rtri);
+                        pid = particles.getInt("pid", pindex);
+                        break;
+                    }
+                    if (pid != 11) continue;
+//                    if (pid != 211 && pid != -211) continue;
+
+                    dgFMT[0].getH1F("DC tracks").fill((double) dcTracks.getFloat("Vtx0_z", tri));
+                }
+            }
+
+            else System.out.printf("[ResolutionAnalysis] var should be between 0 and 9!\n");
         }
 
         System.out.format("Analyzed %8d events... Done!\n", ei);
         reader.close();
 
-        if (var == 5) System.out.printf("FMT event # / DCTB event #\n%11d /%11d\n", ecFMT, ecDCTB);
-
-        if ((var==0 || var==1 || var==4 || var==5 || var==6 || var==7 || var==8) && drawPlots)
+        if ((var==0 || var==1 || var==4 || var==7 || var==8) && drawPlots)
             Data.drawPlots(dgFMT, title);
         if (var == 2) {
             // Apply z shifts and draw plots.
@@ -646,6 +648,24 @@ public class ResolutionAnalysis {
             for (int i = 0; i < 2; ++i)
                 Data.fitRes(dgFMT[0].getH1F("delta_tmin" + i), dgFMT[0].getF1D("f" + i), 40);
             if (drawPlots) Data.drawPlots(dgFMT, title);
+        }
+        if (var == 5 && drawPlots) {
+            // Fit gaussians and draw plots.
+            Data.fitZ(dgFMT[0].getH1F("DCTB tracks"), dgFMT[0].getF1D("twinpeaks0"), -36, -30);
+            Data.fitZ(dgFMT[0].getH1F( "FMT tracks"), dgFMT[0].getF1D("twinpeaks1"), -36, -30);
+            Data.drawPlots(dgFMT, title);
+        }
+        if (var == 6 && drawPlots) {
+            // Fit gaussian and draw plots.
+            Data.fitUpstream(  dgFMT[0].getH1F("FMT tracks"), dgFMT[0].getF1D("upstream fit"), -36, -30);
+//            Data.fitDownstream(dgFMT[0].getH1F("FMT tracks"), dgFMT[0].getF1D("downstream fit"), 20, 26);
+            Data.drawPlots(dgFMT, title);
+        }
+        if (var == 9 && drawPlots) {
+            // Fit gaussian and draw plots.
+            Data.fitUpstream(  dgFMT[0].getH1F("DC tracks"), dgFMT[0].getF1D("upstream fit"), -36, -30);
+            Data.fitDownstream(dgFMT[0].getH1F("DC tracks"), dgFMT[0].getF1D("downstream fit"), 20, 26);
+            Data.drawPlots(dgFMT, title);
         }
 
         return 0;
@@ -707,12 +727,12 @@ public class ResolutionAnalysis {
 
             if (var == 2) {
                 // DataBank tracks  = Data.getBank(event, "TimeBasedTrkg::TBTracks");
-                DataBank tracks = Data.getBank(event, "FMTRec::Tracks");
+                DataBank tracks = Data.getBank(event, "FMT::Tracks");
 
                 if (tracks == null) continue;
 
                 for (int tri = 0; tri < tracks.rows(); ++tri) {
-                    if (tracks.getShort("status", tri) == 0) continue;
+                    if (tracks.getByte("status", tri) == 0) continue;
                     double vz = (double) tracks.getFloat("Vtx0_z", tri);
 
                     double px = (double) tracks.getFloat("p0_x", tri);

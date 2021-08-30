@@ -84,7 +84,7 @@ public class TrajPoint {
 
             // Use only FMT layers 1, 2, and 3.
             if (detector!=DetectorType.FMT.getDetectorId() || li<0
-                    || li> Constants.getNumberOfFMTLayers() -1)
+                    || li>Constants.getNumberOfFMTLayers()-1)
                 continue;
 
             // Bank integrity is assumed from this point onward.
