@@ -439,32 +439,11 @@ public class Data {
         fmtCanvas.getCanvas(title).setAxisFontSize(18);
         fmtCanvas.getCanvas(title).setAxisTitleSize(24);
 
-//        DataLine vline = new DataLine(-32.1, 0, 0, Double.POSITIVE_INFINITY);
-//        vline.setLineColor(2);
-//        vline.setLineWidth(2);
-//        fmtCanvas.getCanvas(title).cd(0).draw(vline);
-//
-//        DataLine vline2 = new DataLine(-34.2, 0, 0, Double.POSITIVE_INFINITY);
-//        vline2.setLineColor(2);
-//        vline2.setLineWidth(2);
-//        fmtCanvas.getCanvas(title).cd(0).draw(vline2);
-
         JFrame frame = new JFrame("FMT");
         frame.setSize(1600, 1000);
         frame.add(fmtCanvas);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-
-//        if (fmtZ != null) {
-//            for (int pi = 0; pi < 3; ++pi) {
-//                for (double lz : fmtZ) {
-//                    vline = new DataLine(lz, lz, 0, Double.POSITIVE_INFINITY);
-//                    vline.setLineColor(2);
-//                    vline.setLineWidth(2);
-//                    fmtCanvas.getCanvas(title).cd(pi).draw(vline);
-//                }
-//            }
-//        }
 
         return 0;
     }
@@ -475,12 +454,9 @@ public class Data {
      * @param dgFMT    Array containing the data groups.
      * @param cn       Number of canvases to be drawn.
      * @param titleArr Array of titles for the plots.
-     * @param pltLArr  Array of boolean defining which lines should be drawn over the plots.
-     *                 Explained in detail in the ResolutionAnalysis class.
      * @return status int.
      */
-    public static int drawResPlots(DataGroup[] dgFMT, int cn, String[] titleArr, boolean[] pltLArr) {
-
+    public static int drawResPlots(DataGroup[] dgFMT, int cn, String[] titleArr) {
         EmbeddedCanvasTabbed fmtCanvas = new EmbeddedCanvasTabbed(titleArr);
         for (int ci = 0; ci < cn; ++ci) {
             fmtCanvas.getCanvas(titleArr[ci]).draw(dgFMT[ci]);
@@ -491,41 +467,18 @@ public class Data {
 
             // Top plots
             for (int pi = 0; pi < 3; ++pi) {
-                if (pltLArr[0]) {
-                    DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
-                    vline.setLineColor(2);
-                    vline.setLineWidth(2);
-                    fmtCanvas.getCanvas(titleArr[ci]).cd(pi).draw(vline);
-                }
+                DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
+                vline.setLineColor(2);
+                vline.setLineWidth(2);
+                fmtCanvas.getCanvas(titleArr[ci]).cd(pi).draw(vline);
             }
 
             // Bottom plots
             for (int pi = 3; pi < 6; ++pi) {
-                if (pltLArr[1]) {
-                    DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
-                    vline.setLineColor(0);
-                    vline.setLineWidth(2);
-                    fmtCanvas.getCanvas(titleArr[ci]).cd(pi).draw(vline);
-                }
-                if (pltLArr[2]) {
-                    for (int j = 0; j < 16; ++j) {
-                        DataLine hline = new DataLine(-30, j * 64 - 1, 30, j * 64 - 1);
-                        hline.setLineColor(0);
-                        hline.setLineWidth(2);
-                        fmtCanvas.getCanvas(titleArr[ci]).cd(pi).draw(hline);
-                    }
-                }
-                if (pltLArr[3]) {
-                    int[] seps = new int[]{Constants.getFMTRegionSeparators(1) + 1,
-                                           Constants.getFMTRegionSeparators(2) + 1,
-                                           Constants.getFMTRegionSeparators(3) + 1};
-                    for (int sep : seps) {
-                        DataLine hline = new DataLine(-30, sep, 30, sep);
-                        hline.setLineColor(0);
-                        hline.setLineWidth(2);
-                        fmtCanvas.getCanvas(titleArr[ci]).cd(pi).draw(hline);
-                    }
-                }
+                DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
+                vline.setLineColor(0);
+                vline.setLineWidth(2);
+                fmtCanvas.getCanvas(titleArr[ci]).cd(pi).draw(vline);
             }
         }
 

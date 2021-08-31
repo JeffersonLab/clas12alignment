@@ -10,16 +10,14 @@ import org.jlab.io.hipo.*;
 import org.jlab.groot.math.F1D;
 import org.clas.cross.Cluster;
 import org.clas.cross.Constants;
-import org.clas.cross.Cross;
 import org.clas.cross.TrajPoint;
 
 public class ResolutionAnalysis {
     // Class variables:
     private String infile;
-    private boolean[] pltLArr;
-    private int nEvents;         // Number of events to run. Set to 0 to run all events in file.
+    private int nEvents;         // Number of events to run.
     private double[] fmtZ;       // z position of the layers in cm (before shifting).
-    private double[] fmtAngle;   // strip angle in deg degrees.
+    private double[] fmtAngle;   // strip angle in degrees.
     private double[][] shArr;    // 2D array of shifts to be applied.
     private boolean drawPlots;   // Boolean describing if plots are to be drawn.
     private boolean ypAlign;     // Special setup needed for yaw & pitch alignment.
@@ -27,11 +25,6 @@ public class ResolutionAnalysis {
     /**
      * Class constructor.
      * @param infile      Input hipo file.
-     * @param pltLArr     Boolean array describing what lines should be drawn in each plot:
-     *                      * [0] : Top plots, vertical line at 0.
-     *                      * [1] : Bottom plots, vertical line at 0.
-     *                      * [2] : Bottom plots, horizontal lines at each cable's endpoint.
-     *                      * [3] : Bottom plots, horizontal lines separating each FMT "region".
      * @param nEvents     Number of events to run. Set to 0 to run all events in file.
      * @param shArr       Array of arrays describing all the shifts applied:
      *                      * [0] :  global [z,x,y,phi] shift.
@@ -41,16 +34,12 @@ public class ResolutionAnalysis {
      * @param drawPlots   Boolean describing if plots are to be drawn.
      * @param ypAlign     Special setup needed for yaw & pitch alignment.
      */
-    public ResolutionAnalysis(String infile, boolean[] pltLArr, int nEvents,
+    public ResolutionAnalysis(String infile, int nEvents,
             double[][] shArr, boolean drawPlots, boolean ypAlign) {
         this.drawPlots   = drawPlots;
         this.ypAlign     = ypAlign;
 
         // Sanitize input.
-        if (pltLArr.length != 4) {
-            System.err.printf("pltLArr should have a size of 4. Read the method's description.\n");
-            System.exit(1);
-        }
         if (shArr.length != 4) {
             System.err.printf("shArr should have a size of 4!\n");
             System.exit(1);
@@ -61,7 +50,6 @@ public class ResolutionAnalysis {
         }
 
         this.infile    = infile;
-        this.pltLArr   = pltLArr;
         this.nEvents   = nEvents;
         this.shArr     = new double[][]{
             {shArr[0][0], shArr[0][1], shArr[0][2], shArr[0][3], shArr[0][4], shArr[0][5]},
@@ -239,12 +227,12 @@ public class ResolutionAnalysis {
         }
 
         // Print alignment data and draw plots.
-        if (var==0) System.out.printf("\nz ");
-        if (var==1) System.out.printf("\nx ");
-        if (var==2) System.out.printf("\ny ");
-        if (var==3) System.out.printf("\nphi ");
-        if (var==4) System.out.printf("\nyaw ");
-        if (var==5) System.out.printf("\npitch ");
+        if (var==0) System.out.printf("\nz_");
+        if (var==1) System.out.printf("\nx_");
+        if (var==2) System.out.printf("\ny_");
+        if (var==3) System.out.printf("\nphi_");
+        if (var==4) System.out.printf("\nyaw_");
+        if (var==5) System.out.printf("\npitch_");
         System.out.printf("shift   = [");
         for (int ci=0; ci<cn; ++ci) System.out.printf("%9.5f, ", inShArr[ci]);
         System.out.printf("\b\b]\n");
@@ -260,7 +248,7 @@ public class ResolutionAnalysis {
             for (int ci=0; ci<cn; ++ci) System.out.printf("%9.2f, ", chiSqArr[li][ci]);
             System.out.printf("\b\b]\n");
         }
-        if (drawPlots) Data.drawResPlots(dgFMT, cn, titleArr, pltLArr);
+        if (drawPlots) Data.drawResPlots(dgFMT, cn, titleArr);
 
         return 0;
     }
@@ -285,7 +273,7 @@ public class ResolutionAnalysis {
         );
         runAnalysis(func, Constants.getNumberOfDCSectors(), swim, fcuts, dgFMT, g);
         if (drawPlots)
-            Data.drawResPlots(dgFMT, Constants.getNumberOfDCSectors(), titleArr, pltLArr);
+            Data.drawResPlots(dgFMT, Constants.getNumberOfDCSectors(), titleArr);
 
         return 0;
     }
@@ -310,7 +298,7 @@ public class ResolutionAnalysis {
         );
         runAnalysis(func, Constants.getNumberOfDCSectors(), swim, fcuts, dgFMT, g);
         if (drawPlots)
-            Data.drawResPlots(dgFMT, Constants.getNumberOfDCSectors(), titleArr, pltLArr);
+            Data.drawResPlots(dgFMT, Constants.getNumberOfDCSectors(), titleArr);
 
         return 0;
     }
@@ -425,24 +413,12 @@ public class ResolutionAnalysis {
                 }
             }
             else if (var == 3) {
-                ArrayList<TrajPoint[]> trajPoints =
-                        TrajPoint.getTrajPoints(event, swim, fcuts, fmtZ, fmtAngle, shArr, 3, true);
-                ArrayList<Cluster>[] clusters = Cluster.getClusters(event, fcuts, true);
-                if (trajPoints == null || clusters == null) continue;
-
-                ArrayList<Cross> crosses = Cross.makeCrosses(trajPoints, clusters, fcuts);
-                if (crosses == null) continue;
-
-                for (Cross c : crosses) {
-                    dgFMT[0].getH1F("delta_tmin0")
-                            .fill(c.getc(1).get_tMin()-c.getc(0).get_tMin());
-                    dgFMT[0].getH1F("delta_tmin1")
-                            .fill(c.getc(2).get_tMin()-c.getc(1).get_tMin());
-                }
+                System.err.printf("Method dropped.\n");
+                System.exit(1);
             }
             else if (var == 4) {
                 ArrayList<TrajPoint[]> trajPoints =
-                        TrajPoint.getTrajPoints(event, swim, fcuts, fmtZ, fmtAngle, shArr, 3, false);
+                        TrajPoint.getTrajPoints(event, swim, fcuts, fmtZ, fmtAngle, shArr, 3,false);
                 if (trajPoints == null) continue;
                 for (TrajPoint[] trjparr : trajPoints) {
                     for (TrajPoint trjp : trjparr) {
@@ -456,7 +432,8 @@ public class ResolutionAnalysis {
                 DataBank fmtTracks = Data.getBank(event, "FMTRec::Tracks");
                 DataBank recTracks = Data.getBank(event, "REC::Track");
                 DataBank particles = Data.getBank(event, "REC::Particle");
-                if (dcTracks == null || fmtTracks == null || recTracks == null || particles == null) continue;
+                if (dcTracks == null || fmtTracks == null || recTracks == null || particles == null)
+                    continue;
 
                 // Filter tracks by number of tracks --- use only events with one track.
                 if (fmtTracks.rows() <= 1) continue;
@@ -464,7 +441,8 @@ public class ResolutionAnalysis {
                 for (int dc_tri = 0; dc_tri < dcTracks.rows(); ++dc_tri) {
                     for (int fmt_tri = 0; fmt_tri < fmtTracks.rows(); ++fmt_tri) {
                         // Match DC and FMT tracks.
-                        if (dcTracks.getShort("id", dc_tri) != fmtTracks.getShort("id", fmt_tri)) continue;
+                        if (dcTracks.getShort("id", dc_tri) != fmtTracks.getShort("id", fmt_tri))
+                            continue;
 
                         // Filter by DC sector.
 //                        if ((int) fmtTracks.getByte("sector", fmt_tri) != 1) continue;
@@ -482,24 +460,12 @@ public class ResolutionAnalysis {
                         }
                         if (pid != -211) continue;
 
-                        dgFMT[0].getH1F("DCTB tracks").fill((double) dcTracks .getFloat("Vtx0_z", dc_tri));
-                        dgFMT[0].getH1F("FMT tracks") .fill((double) fmtTracks.getFloat("Vtx0_z", fmt_tri));
+                        dgFMT[0].getH1F("DCTB tracks").fill((double) dcTracks
+                                .getFloat("Vtx0_z", dc_tri));
+                        dgFMT[0].getH1F("FMT tracks") .fill((double) fmtTracks
+                                .getFloat("Vtx0_z", fmt_tri));
                     }
                 }
-
-                // if (dctbTracks.rows() != 1) continue;
-                // for (int tri = 0; tri < dctbTracks.rows(); ++tri) {
-                //     double z_dctb = (double) dctbTracks.getFloat("Vtx0_z", tri);
-                //     dgFMT[0].getH1F("DCTB tracks").fill(z_dctb);
-                // }
-
-                // Plot FMT tracks.
-                // if (fmtTracks == null) continue;
-                // for (int tri = 0; tri < fmtTracks.rows(); ++tri) {
-                //     if (fmtTracks.getShort("status", tri) == 0) continue;
-                //     double z_fmt  = (double) fmtTracks.getFloat("Vtx0_z", tri);
-                //     dgFMT[0].getH1F("FMT tracks").fill(z_fmt);
-                // }
             }
             else if (var == 6) {
                 // Plot z from FMT track bank.
@@ -524,33 +490,8 @@ public class ResolutionAnalysis {
                         break;
                     }
                     if (pid !=   11) continue; // e-
-//                    if (pid != 211 && pid != -211) continue; // pi+ & pi-
 
                     dgFMT[0].getH1F("FMT tracks").fill((double) fmtTracks.getFloat("Vtx0_z", tri));
-
-                    // Apply Raffaella's cut
-//                    int rtindex = -1;
-//                    int pindex  = -1;
-//                    for (int rtri = 0; rtri < recTracks.rows(); ++rtri) {
-//                        if (tri != recTracks.getShort("index", rtri)) continue;
-//                        rtindex = rtri;
-//                        pindex  = (int) recTracks.getShort("pindex", rtri);
-//                        break;
-//                    }
-//
-//                    double chi2 = recTracks.getFloat("chi2", rtindex);
-//                    int dc_ndf  = recTracks.getInt("NDF", rtindex);
-//                    int fmt_ndf = fmtTracks.getInt("NDF", tri);
-//                    int pid     = particles.getInt("pid", pindex);
-//                    int status  = (int) particles.getShort("status", pindex);
-//                    double chi2pid = particles.getFloat("chi2pid",pindex);
-//                    double z_fmt = (double) fmtTracks.getFloat("Vtx0_z", tri);
-//                    status = (int) (Math.abs(status)/1000);
-//
-//                    if (status==2 && Math.abs(chi2pid)<5 && z_fmt<26.0505 && fmt_ndf==3
-//                            && pid==11 && chi2/dc_ndf<15 && recTracks.rows()>=1) {
-//                        dgFMT[0].getH1F("FMT tracks").fill(z_fmt);
-//                    }
                 }
             }
             else if (var == 7) {
@@ -632,14 +573,15 @@ public class ResolutionAnalysis {
         }
         if (var == 6 && drawPlots) {
             // Fit gaussian and draw plots.
-            Data.fitUpstream(  dgFMT[0].getH1F("FMT tracks"), dgFMT[0].getF1D("upstream fit"), -36, -30);
-//            Data.fitDownstream(dgFMT[0].getH1F("FMT tracks"), dgFMT[0].getF1D("downstream fit"), 20, 26);
+            Data.fitUpstream(dgFMT[0].getH1F("FMT tracks"),dgFMT[0].getF1D("upstream fit"),-36,-30);
             Data.drawPlots(dgFMT, title);
         }
         if (var == 9 && drawPlots) {
             // Fit gaussian and draw plots.
-            Data.fitUpstream(  dgFMT[0].getH1F("DC tracks"), dgFMT[0].getF1D("upstream fit"), -36, -30);
-            Data.fitDownstream(dgFMT[0].getH1F("DC tracks"), dgFMT[0].getF1D("downstream fit"), 20, 26);
+            Data.fitUpstream(dgFMT[0].getH1F("DC tracks"), dgFMT[0].getF1D("upstream fit"),
+                    -36, -30);
+            Data.fitDownstream(dgFMT[0].getH1F("DC tracks"), dgFMT[0].getF1D("downstream fit"),
+                    20, 26);
             Data.drawPlots(dgFMT, title);
         }
 
