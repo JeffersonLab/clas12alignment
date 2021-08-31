@@ -7,26 +7,23 @@ import org.clas.analysis.Data;
 import org.clas.analysis.FiducialCuts;
 
 public class Cluster {
-    // Cluster data:
-    private int id;           // Cluster ID.
-    private int fmtLyr;       // FMT layer.
-    private int strip;        // FMT strip.
-    private double y;         // y position in the layer's local coordinate system.
-    private double tMin;      // Minimum time information among the cluster's hits.
-    private double energy;    // Total energy of the strips in the cluster.
-    private double cResidual; // Centroid residual of the cluster.
+    private int id;        // Cluster ID.
+    private int fmtLyr;    // FMT layer.
+    private int strip;     // FMT strip.
+    private double y;      // y position in the layer's local coordinate system.
+    private double tMin;   // Minimum time information among the cluster's hits.
+    private double energy; // Total energy of the strips in the cluster.
     private int tID;       // Associated track ID.
 
     /** Class constructor. */
     private Cluster(int _id, int _fmtLyr, int _strip, double _y, double _tMin, double _energy,
-            double _cResidual, int _tID) {
+            int _tID) {
         this.id        = _id;
         this.fmtLyr    = _fmtLyr;
         this.strip     = _strip;
         this.y         = _y;
         this.tMin      = _tMin;
         this.energy    = _energy;
-        this.cResidual = _cResidual;
         this.tID       = _tID;
     }
 
@@ -36,7 +33,6 @@ public class Cluster {
     public double get_y() {return y;}
     public double get_tMin() {return tMin;}
     public double get_energy() {return energy;}
-    public double get_cResidual() {return cResidual;}
     public int get_trkID() {return tID;}
 
     /**
@@ -67,25 +63,14 @@ public class Cluster {
             // double tMin   = clBank.getFloat("Tmin", cri); // TODO: Check out what's up with this.
             double tMin   = 100;
             double y      = clBank.getFloat("centroid", cri);
-            double cRes   = clBank.getFloat("centroidError", cri);
             int tID       = clBank.getShort("trackIndex", cri);
 
             // Apply cluster fiducial cuts.
             if (applyCuts && fcuts.checkClusterCuts(strip, size, energy, tMin)) continue;
 
-            clusters[li].add(new Cluster(id, li, strip, y, tMin, energy, cRes, tID));
+            clusters[li].add(new Cluster(id, li, strip, y, tMin, energy, tID));
         }
 
         return clusters;
-    }
-
-    /** Print cluster's info for debugging. */
-    public void printInfo() {
-        System.out.printf("Cluster info:\n");
-        System.out.printf("  FMT layer    : %d\n", get_fmtLyr());
-        System.out.printf("  seed strip   : %d\n", get_strip());
-        System.out.printf("  y            : %.2f\n", get_y());
-        System.out.printf("  t_min        : %.2f\n", get_tMin());
-        System.out.printf("  total energy : %.2f\n", get_energy());
     }
 }

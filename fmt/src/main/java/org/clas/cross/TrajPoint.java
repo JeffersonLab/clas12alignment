@@ -9,7 +9,6 @@ import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.TrkSwim;
 
 public class TrajPoint {
-    // Trajectory point data:
     private int pi;       // Particle index.
     private int id;       // Track index.
     private int fmtLyr;   // FMT layer.
@@ -84,7 +83,7 @@ public class TrajPoint {
 
             // Use only FMT layers 1, 2, and 3.
             if (detector!=DetectorType.FMT.getDetectorId() || li<0
-                    || li>Constants.getNumberOfFMTLayers()-1)
+                    || li>Constants.FMTLAYERS-1)
                 continue;
 
             // Bank integrity is assumed from this point onward.

@@ -4,37 +4,16 @@ import java.util.Arrays;
 import org.clas.cross.Constants;
 
 public class FiducialCuts {
-
     boolean ypAlign = false; // Yaw-Pitch alignment needs less cuts than other types of alignment.
-
-    // Physics cuts:
-    private static final double maxDeltaZ  =   0.05;
-    private static final double maxPzOverP =   0.4;
-    private static final double minTmin    =  50;
-    private static final double maxTmin    = 500;
-    private static final double minEnergy  = 100;
-
-    // Track-Cluster matching constants.
-    private static final double dely    = 20; // Maximum y distance permitted.
-    private static final double deltmin = 60; // Maximum delta Tmin permitted.
-
-    // Class variables.
     int[] trsc = new int[5]; // cut trajectory points counter.
     int[] clsc = new int[5]; // cut clusters counter.
 
     public FiducialCuts() {}
     public void setYPAlign(boolean ypAlign) {this.ypAlign = ypAlign;}
+    public void increaseTrajCount() {trsc[0]++;}
+    public void increaseClusterCount() {clsc[0]++;}
 
-    /** Increase the total number of trajectory points processed by 1. */
-    public void increaseTrajCount() {
-        trsc[0]++;
-    }
-
-    /** Increase the total number of clusters processed by 1. */
-    public void increaseClusterCount() {
-        clsc[0]++;
-    }
-
+    /** Reset trajectory points and clusters counters back to 0. */
     public void resetCounters() {
         Arrays.fill(trsc, 0);
         Arrays.fill(clsc, 0);
@@ -44,7 +23,7 @@ public class FiducialCuts {
      * Check if a track is too far downstream before swimming it.
      * @param trkZ track's z coordinate.
      * @param lyrZ layer's z coordinate.
-     * @return true if track z is downstream the layer z
+     * @return true if track z is downstream the layer z, false otherwise.
      */
     public boolean downstreamTrackCheck(double trkZ, double lyrZ) {
         if (trkZ > lyrZ) {
@@ -65,15 +44,15 @@ public class FiducialCuts {
      * @return true if the track is to be cut, false otherwise.
      */
     public boolean checkTrajCuts(double z, double x, double y, double zRef, double costh) {
-        if (!ypAlign && Math.abs(z - zRef) > maxDeltaZ) {
+        if (!ypAlign && Math.abs(z - zRef) > Constants.MAXDZ) {
             trsc[2]++;
             return true;
         }
-        if (Constants.getInnerRadius() > (x*x + y*y) || (x*x + y*y) > Constants.getOuterRadius()) {
+        if (Constants.FMTINNERRADIUS > (x*x + y*y) || (x*x + y*y) > Constants.FMTOUTERRADIUS) {
             trsc[3]++;
             return true;
         }
-        if (!ypAlign && costh > maxPzOverP) {
+        if (!ypAlign && costh > Constants.MAXPZ) {
             trsc[4]++;
             return true;
         }
@@ -89,15 +68,15 @@ public class FiducialCuts {
      * @return true if the cluster is to be cut, false otherwise.
      */
     public boolean checkClusterCuts(int strip, int size, double E, double Tmin) {
-        if (strip < Constants.getFirstStripNumber() || strip > Constants.getLastStripNumber()) {
+        if (strip < Constants.FMTREGIONSEPARATORS[0]+1 || strip > Constants.FMTREGIONSEPARATORS[4]) {
             clsc[1]++;
             return true;
         }
-        if (Tmin < minTmin || Tmin > maxTmin) {
+        if (Tmin < Constants.MINTMIN || Tmin > Constants.MAXTMIN) {
             clsc[2]++;
             return true;
         }
-        if (size == 1 && E < minEnergy) {
+        if (size == 1 && E < Constants.MINENERGY) {
             clsc[3]++;
             return true;
         }

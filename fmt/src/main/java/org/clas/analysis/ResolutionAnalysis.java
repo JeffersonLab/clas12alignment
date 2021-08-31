@@ -65,10 +65,10 @@ public class ResolutionAnalysis {
         dbProvider.loadTable(fmtTable);
         dbProvider.loadTable(fmtAlignTable);
 
-        fmtZ     = new double[Constants.getNumberOfFMTLayers()]; // z position of the layers in cm.
-        fmtAngle = new double[Constants.getNumberOfFMTLayers()]; // strip angle in deg.
+        fmtZ     = new double[Constants.FMTLAYERS]; // z position of the layers in cm.
+        fmtAngle = new double[Constants.FMTLAYERS]; // strip angle in deg.
 
-        for (int li = 0; li< Constants.getNumberOfFMTLayers(); li++) {
+        for (int li = 0; li< Constants.FMTLAYERS; li++) {
             fmtZ[li]     = dbProvider.getDouble(fmtTable+"/Z",li)/10
                     + dbProvider.getDouble(fmtAlignTable+"/deltaZ",li)/10;
             fmtAngle[li] = dbProvider.getDouble(fmtTable+"/Angle",li)
@@ -106,7 +106,7 @@ public class ResolutionAnalysis {
 
         // Print the shifts applied.
         System.out.printf("SHIFTS APPLIED:\n");
-        for (int li = 1; li<= Constants.getNumberOfFMTLayers(); ++li) {
+        for (int li = 1; li<= Constants.FMTLAYERS; ++li) {
             System.out.printf("[");
             for (int vi=0; vi<shArr[li].length; ++vi) {
                 System.out.printf("%6.2f,", shArr[0][vi] + shArr[li][vi]);
@@ -160,14 +160,14 @@ public class ResolutionAnalysis {
 
         // Fit residual plots
         if (func == 0) {
-            for (int li = 1; li<= Constants.getNumberOfFMTLayers(); ++li) {
+            for (int li = 1; li<= Constants.FMTLAYERS; ++li) {
                 Data.fitRes(dgFMT[opt].getH1F("hi_cluster_res_l"+li),
                         dgFMT[opt].getF1D("f1_res_l"+li), g);
             }
         }
         else if (func == 1 || func == 2) {
             for (int si=0; si<opt; ++si) {
-                for (int li = 1; li<= Constants.getNumberOfFMTLayers(); ++li) {
+                for (int li = 1; li<= Constants.FMTLAYERS; ++li) {
                     Data.fitRes(dgFMT[si].getH1F("hi_cluster_res_l"+li),
                             dgFMT[si].getF1D("f1_res_l"+li), g);
                 }
@@ -201,12 +201,12 @@ public class ResolutionAnalysis {
         String[] titleArr = new String[cn];
         for (int ci=0; ci < cn; ++ci) titleArr[ci] = "shift ["+lyr+","+var+"] : " + inShArr[ci];
 
-        DataGroup[] dgFMT = Data.createResDataGroups(func, Constants.getNumberOfFMTLayers(), cn, r);
+        DataGroup[] dgFMT = Data.createResDataGroups(func, Constants.FMTLAYERS, cn, r);
 
-        double[][] meanArr     = new double[Constants.getNumberOfFMTLayers()][cn];
-        double[][] sigmaArr    = new double[Constants.getNumberOfFMTLayers()][cn];
-        double[][] sigmaErrArr = new double[Constants.getNumberOfFMTLayers()][cn];
-        double[][] chiSqArr    = new double[Constants.getNumberOfFMTLayers()][cn];
+        double[][] meanArr     = new double[Constants.FMTLAYERS][cn];
+        double[][] sigmaArr    = new double[Constants.FMTLAYERS][cn];
+        double[][] sigmaErrArr = new double[Constants.FMTLAYERS][cn];
+        double[][] chiSqArr    = new double[Constants.FMTLAYERS][cn];
 
         // Run.
         double origVal = shArr[lyr][var];
@@ -217,7 +217,7 @@ public class ResolutionAnalysis {
             runAnalysis(func, ci, swim, fcuts, dgFMT, g);
 
             // Get mean and sigma from fit.
-            for (int li = 0; li< Constants.getNumberOfFMTLayers(); ++li) {
+            for (int li = 0; li< Constants.FMTLAYERS; ++li) {
                 F1D gss = dgFMT[ci].getF1D("f1_res_l"+(li+1));
                 meanArr[li][ci]     = gss.getParameter(1);
                 sigmaArr[li][ci]    = gss.getParameter(2);
@@ -236,7 +236,7 @@ public class ResolutionAnalysis {
         System.out.printf("shift   = [");
         for (int ci=0; ci<cn; ++ci) System.out.printf("%9.5f, ", inShArr[ci]);
         System.out.printf("\b\b]\n");
-        for (int li = 0; li< Constants.getNumberOfFMTLayers(); ++li) {
+        for (int li = 0; li< Constants.FMTLAYERS; ++li) {
             System.out.printf("# layer %1d:\n", li+1);
             System.out.printf("mean      = [");
             for (int ci=0; ci<cn; ++ci) System.out.printf("%9.5f, ", meanArr[li][ci]);
@@ -263,17 +263,17 @@ public class ResolutionAnalysis {
      */
     public int dcSectorStripAnalysis(int r, int g, TrkSwim swim, FiducialCuts fcuts) {
         int func = 1;
-        String[] titleArr = new String[Constants.getNumberOfDCSectors()];
-        for (int si = 0; si < Constants.getNumberOfDCSectors(); ++si)
+        String[] titleArr = new String[Constants.DCSECTORS];
+        for (int si = 0; si < Constants.DCSECTORS; ++si)
             titleArr[si] = "DC sector " + (si + 1);
 
         // Run.
         DataGroup[] dgFMT = Data.createResDataGroups(
-                func, Constants.getNumberOfFMTLayers(), Constants.getNumberOfDCSectors(), r
+                func, Constants.FMTLAYERS, Constants.DCSECTORS, r
         );
-        runAnalysis(func, Constants.getNumberOfDCSectors(), swim, fcuts, dgFMT, g);
+        runAnalysis(func, Constants.DCSECTORS, swim, fcuts, dgFMT, g);
         if (drawPlots)
-            Data.drawResPlots(dgFMT, Constants.getNumberOfDCSectors(), titleArr);
+            Data.drawResPlots(dgFMT, Constants.DCSECTORS, titleArr);
 
         return 0;
     }
@@ -288,17 +288,17 @@ public class ResolutionAnalysis {
      */
     public int dcSectorThetaAnalysis(int r, int g, TrkSwim swim, FiducialCuts fcuts) {
         int func = 2;
-        String[] titleArr = new String[Constants.getNumberOfDCSectors()];
-        for (int si = 0; si < Constants.getNumberOfDCSectors(); ++si)
+        String[] titleArr = new String[Constants.DCSECTORS];
+        for (int si = 0; si < Constants.DCSECTORS; ++si)
             titleArr[si] = "DC sector " + (si+1);
 
         // Run.
         DataGroup[] dgFMT = Data.createResDataGroups(
-                func, Constants.getNumberOfFMTLayers(), Constants.getNumberOfDCSectors(), r
+                func, Constants.FMTLAYERS, Constants.DCSECTORS, r
         );
-        runAnalysis(func, Constants.getNumberOfDCSectors(), swim, fcuts, dgFMT, g);
+        runAnalysis(func, Constants.DCSECTORS, swim, fcuts, dgFMT, g);
         if (drawPlots)
-            Data.drawResPlots(dgFMT, Constants.getNumberOfDCSectors(), titleArr);
+            Data.drawResPlots(dgFMT, Constants.DCSECTORS, titleArr);
 
         return 0;
     }
@@ -327,7 +327,7 @@ public class ResolutionAnalysis {
     public int deltaTminAnalysis(int r, TrkSwim swim, FiducialCuts fcuts) {
         int func = 4;
         String title = "delta Tmin";
-        DataGroup[] dgFMT = Data.createResDataGroups(func, Constants.getNumberOfFMTLayers(), 1, r);
+        DataGroup[] dgFMT = Data.createResDataGroups(func, Constants.FMTLAYERS, 1, r);
 
         // Run.
         runAnalysis(func, swim, fcuts, dgFMT);
@@ -361,7 +361,7 @@ public class ResolutionAnalysis {
         if (var == 7)                                     title = "track status";
         if (var == 8)                                     title = "track chi^2";
 
-        DataGroup[] dgFMT = Data.create1DDataGroup(var, Constants.getNumberOfFMTLayers(), r);
+        DataGroup[] dgFMT = Data.create1DDataGroup(var, Constants.FMTLAYERS, r);
 
         int totalCount = 0;
         int correctCount = 0;
@@ -555,7 +555,7 @@ public class ResolutionAnalysis {
             Data.drawPlots(dgFMT, title);
         if (var == 2) {
             // Apply z shifts and draw plots.
-            for (int li = 0; li< Constants.getNumberOfFMTLayers(); ++li)
+            for (int li = 0; li< Constants.FMTLAYERS; ++li)
                 fmtZ[li] += shArr[0][0] + shArr[li+1][0];
             if (drawPlots) Data.drawZPlots(dgFMT, title, fmtZ);
         }
@@ -608,7 +608,7 @@ public class ResolutionAnalysis {
 
         DataGroup[] dgFMT = null;
         if (var == 0 || var == 1)
-            dgFMT = Data.create2DDataGroup(var, Constants.getNumberOfFMTLayers(), r);
+            dgFMT = Data.create2DDataGroup(var, Constants.FMTLAYERS, r);
         if (var == 2)
             dgFMT = Data.create2DDataGroup(var, 1, r);
         if (var == 3)

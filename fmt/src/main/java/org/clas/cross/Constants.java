@@ -1,46 +1,21 @@
 package org.clas.cross;
 
+/** Class containing constants relevant to FMT and DC geometry. */
 public class Constants {
-    // FMT Geometry
-    private static final double innerRadius = 25;
-    private static final double outerRadius = 225;
-    private static final int numberOfFMTLayers = 3;
-    private static final int numberOfFMTRegions = 4;
-    private static final int numberOfDCSectors = 6;
-    private static final int[] FMTRegionSeparators = new int[]{-1, 319, 511, 831, 1023};
+    // Geometry.
+    public static final double FMTINNERRADIUS      = 25;
+    public static final double FMTOUTERRADIUS      = 225;
+    public static final int    FMTLAYERS           = 3;
+    public static final int    FMTREGIONS          = 4;
+    public static final int    DCSECTORS           = 6;
+    public static final int[]  FMTREGIONSEPARATORS = new int[]{-1, 319, 511, 831, 1023};
 
-    public Constants() {
-    }
+    // Physics cuts.
+    public static final double MAXDZ     = 0.05; // Max z distance between cluster and traj point.
+    public static final double MAXPZ     = 0.4;  // Max Pz/P.
+    public static final double MINTMIN   = 50;   // Min Tmin for a cluster.
+    public static final double MAXTMIN   = 500;  // Max Tmin for a cluster.
+    public static final double MINENERGY = 100;  // Min energy for a cluster.
 
-    public static double getInnerRadius() {
-        return innerRadius;
-    }
-
-    public static double getOuterRadius() {
-        return outerRadius;
-    }
-
-    public static int getFirstStripNumber() {
-        return FMTRegionSeparators[0]+1;
-    }
-
-    public static int getLastStripNumber() {
-        return FMTRegionSeparators[4];
-    }
-
-    public static int getNumberOfFMTLayers() {
-        return numberOfFMTLayers;
-    }
-
-    public static int getNumberOfFMTRegions() {
-        return numberOfFMTRegions;
-    }
-
-    public static int getNumberOfDCSectors() {
-        return numberOfDCSectors;
-    }
-
-    public static int getFMTRegionSeparators(int idx) {
-        return FMTRegionSeparators[idx];
-    }
+    public Constants() {}
 }

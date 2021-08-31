@@ -322,18 +322,18 @@ public class Data {
         DataGroup[] dgFMT = new DataGroup[1];
 
         dgFMT[0] = new DataGroup(4, 3);
-        for (int li = 0; li < Constants.getNumberOfFMTLayers(); ++li) {
-            for (int ri = 0; ri < Constants.getNumberOfFMTRegions(); ++ri) {
+        for (int li = 0; li < Constants.FMTLAYERS; ++li) {
+            for (int ri = 0; ri < Constants.FMTREGIONS; ++ri) {
                 H2F hi_cluster_res_strip = new H2F(
-                        "hi_cluster_res_strip_l" + (Constants.getNumberOfFMTRegions() * li + ri),
+                        "hi_cluster_res_strip_l" + (Constants.FMTREGIONS * li + ri),
                         200, -r, r,
-                        Constants.getFMTRegionSeparators(ri+1)-Constants.getFMTRegionSeparators(ri),
-                        Constants.getFMTRegionSeparators(ri)+1,Constants.getFMTRegionSeparators(ri+1)
+                        Constants.FMTREGIONSEPARATORS[ri+1]-Constants.FMTREGIONSEPARATORS[ri],
+                        Constants.FMTREGIONSEPARATORS[ri]+1,Constants.FMTREGIONSEPARATORS[ri+1]
                 );
                 hi_cluster_res_strip.setTitleX("Residual (cm) - L " + (li + 1) + ", R " + (ri + 1));
                 hi_cluster_res_strip.setTitleY("Strips");
 
-                dgFMT[0].addDataSet(hi_cluster_res_strip, Constants.getNumberOfFMTRegions()*li+ri);
+                dgFMT[0].addDataSet(hi_cluster_res_strip, Constants.FMTREGIONS*li+ri);
             }
         }
 
