@@ -1,5 +1,8 @@
 package org.clas.test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jlab.groot.base.GStyle;
 
 import org.clas.analysis.TrkSwim;
@@ -7,36 +10,31 @@ import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.ResolutionAnalysis;
 
 public class Main {
-    /** Print usage. */
-    private static void usage() {
-        System.out.println("Usage: program infile");
-        System.out.println("  * infile: String with the hipo input file.");
-        System.exit(1);
-    }
-
     /** Main. */
     public static void main(String[] args) {
-        // === Process input ===================================================
-        String infile = args[0];
-        if (args.length != 1 || !infile.endsWith(".hipo")) usage();
+        // === Process input =======================================================================
+        Map<Character, String> params = new HashMap<>();
+        if (IOHandler.parse_args(args, params)) System.exit(1);
+
+        String file = params.get('f');
+        int nEvents = params.get('n') == null ? 0 : Integer.parseInt(params.get('n'));
+        boolean drawPlots = params.get('v') == null
+                || (params.get('v').equals("dZ") && params.get('v').equals("rZ")) ? true : false;
 
         GStyle.getH1FAttributes().setOptStat("1111111");
         GStyle.getH2FAttributes().setOptStat("1111111");
 
-        // === Setup ===========================================================
-        boolean[] pltLArr = new boolean[]{true, true, false, false};
+        // === Setup ===============================================================================
         double[] swmSetup = new double[]{-0.75, -1.0, -3.0};
+        int plotRange = 5; // Plotting range.
+        int fitRange  = 4; // Fitting range.
 
-        // TODO: These should come from the program args!!
-        int pltRan           = 5;     // Plotting range.
-        int gssRan           = 4;     // Fitting range.
+        // NOTE. Dunno if we'll keep this tbh.
         boolean analysisType = false; // false for alignment, true for plotting.
-        boolean drawPlots    = true;  // set to true to get plots.
-        int nEvents          = 100000; // Number of events to run.
 
-        // Shifts to be applied (best guess so far).
-        // NOTE: Since the y axis is pointing up, what we call yaw is actually
-        // inverted from what you would expect in aviation standards.
+        // Shifts to be applied.
+        // NOTE. Since the y axis is pointing up, what we call yaw is actually inverted from what
+        //       you would expect in aviation standards.
         double[][] shArr = new double[][]{ // Alignment to be tested.
                 // z     x     y    phi   yaw  pitch
                 { 0.00, 0.00, 0.00, 0.00, 0.00, 0.00}, // Global shifts
@@ -47,71 +45,65 @@ public class Main {
         FiducialCuts fCuts = new FiducialCuts();
         TrkSwim swim = new TrkSwim(swmSetup, shArr[0][4], shArr[0][5]);
 
-        // === Alignment =======================================================
+        // === Alignment ===========================================================================
         if (!analysisType) {
-            // Config: varAlign defines the type of alignment that's to be done.
-            // * varAlign = 0 : no alignment, only check current best results.
-            // * varAlign = 1 : z alignment.
-            // * varAlign = 2 : x & y alignment.
-            // * varAlign = 3 : phi (roll) alignment.
-            // * varALign = 4 : yaw & pitch alignment.
             int varAlign = 0;
 
-            if (varAlign == 0) { // Check current best results.
+            if (params.get('v') == null) { // Check current best results.
                 double[] zShArr = new double[]{0.00};
-                ResolutionAnalysis resAnls = new ResolutionAnalysis(infile,
-                        pltLArr, nEvents, shArr, drawPlots, false);
-                resAnls.shiftAnalysis(0, 0, zShArr, pltRan, gssRan, swmSetup,
-                        fCuts);
+                ResolutionAnalysis resAnls = new ResolutionAnalysis(file, nEvents, shArr,
+                        drawPlots, false);
+                resAnls.shiftAnalysis(0, 0, zShArr, plotRange, fitRange, swmSetup, fCuts);
             }
-            else if (varAlign == 1) { // z alignment.
+            else if (params.get('v').equals("dZ")) {
                 double[] zShArr = new double[]
-                        {-1.0, -0.5, 0.0, 0.5, 1.0};
-                ResolutionAnalysis resAnls = new ResolutionAnalysis(infile,
-                        pltLArr, nEvents, shArr, drawPlots, false);
-                resAnls.shiftAnalysis(0, 0, zShArr, pltRan, gssRan, swmSetup,
-                        fCuts);
+                        {-0.50, -0.45, -0.40, -0.35, -0.30, -0.25, -0.20, -0.15, -0.10, -0.05, 0.00,
+                          0.05,  0.10,  0.15,  0.20,  0.25,  0.30,  0.35,  0.40,  0.45,  0.50};
+                ResolutionAnalysis resAnls = new ResolutionAnalysis(file, nEvents, shArr,
+                        drawPlots, false);
+                resAnls.shiftAnalysis(0, 0, zShArr, plotRange, fitRange, swmSetup, fCuts);
             }
-            else if (varAlign == 2) { // x & y alignment.
+            else if (params.get('v').equals("dXY")) {
                 double[] xShArr = new double[]
-                        {-2.0, -1.0, 0.0, 1.0, 2.0};
+                        {0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15};
                 double[] yShArr = new double[]
-                        {-2.0, -1.0, 0.0, 1.0, 2.0};
+                        {0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15};
                 double orig_x = shArr[0][1];
                 for (int xi = 0; xi < xShArr.length; ++xi) {
                     shArr[0][1] = orig_x + xShArr[xi];
-                    ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr,
-                        nEvents, shArr, false, false);
-                    resAnls.shiftAnalysis(0, 2, yShArr, pltRan, gssRan, swmSetup, fCuts);
+                    ResolutionAnalysis resAnls = new ResolutionAnalysis(file, nEvents,
+                            shArr, false, false);
+                    resAnls.shiftAnalysis(0, 2, yShArr, plotRange, fitRange, swmSetup, fCuts);
                 }
             }
-            else if (varAlign == 3) { // phi (roll) alignment.
+            else if (params.get('v').equals("rZ")) {
                 double[] phiShArr = new double[]
-                        {-0.20, -0.15, -0.10, -0.05, 0.00, 0.05, 0.10, 0.15, 0.20};
-                ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr,
-                        nEvents, shArr, drawPlots, false);
-                resAnls.shiftAnalysis(0, 3, phiShArr, pltRan, gssRan, swmSetup, fCuts);
+                        {-2.0, -1.9, -1.8, -1.7, -1.6, -1.5, -1.4, -1.3, -1.2, -1.1,
+                         -1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1,  0.0};
+                ResolutionAnalysis resAnls = new ResolutionAnalysis(file, nEvents, shArr,
+                        drawPlots, false);
+                resAnls.shiftAnalysis(0, 3, phiShArr, plotRange, fitRange, swmSetup, fCuts);
             }
-            else if (varAlign == 4) { // pitch & yaw alignment.
+            else if (params.get('v').equals("rXY")) {
                 double[] yawShArr = new double[]
-                        {-0.25, -0.20, -0.15, -0.10, -0.05, 0.00, 0.05, 0.10, 0.15, 0.20, 0.25};
+                        {-1.0, -0.5, 0.00, 0.05, 0.5, 1.0};
                 double[] pitchShArr = new double[]
-                        {-0.25, -0.20, -0.15, -0.10, -0.05, 0.00, 0.05, 0.10, 0.15, 0.20, 0.25};
+                        {-1.0, -0.5, 0.00, 0.05, 0.5, 1.0};
                 fCuts.setYPAlign(true);
                 double orig_yaw = shArr[0][4];
                 for (int yi = 0; yi<yawShArr.length; ++yi) {
                     shArr[0][4] = orig_yaw + yawShArr[yi];
-                    ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr,
-                        nEvents, shArr, false, true);
-                    resAnls.shiftAnalysis(0, 5, pitchShArr, pltRan, gssRan, swmSetup, fCuts);
+                    ResolutionAnalysis resAnls = new ResolutionAnalysis(file, nEvents,
+                            shArr, false, true);
+                    resAnls.shiftAnalysis(0, 5, pitchShArr, plotRange, fitRange, swmSetup, fCuts);
                 }
             }
             else {
-                System.err.printf("varAlign should be between 0 and 4!\n");
+                System.err.printf("<var> argument is invalid. Exiting...\n");
                 System.exit(1);
             }
         }
-        // === Variable plots ==================================================
+        // === Variable plots ======================================================================
         // TODO: Clean this boi up, most of these aren't needed for alignment!
         else {
             // Config: plotType defines the type of alignment that's to be done.
@@ -134,13 +126,13 @@ public class Main {
             // * plotType == 16 : Plot DC tracks' vertex z.
             int plotType = 16;
 
-            ResolutionAnalysis resAnls = new ResolutionAnalysis(infile, pltLArr, nEvents,
+            ResolutionAnalysis resAnls = new ResolutionAnalysis(file, nEvents,
                     shArr, drawPlots, false);
 
-            if      (plotType ==  0) resAnls.dcSectorStripAnalysis(pltRan, gssRan, swim, fCuts);
-            else if (plotType ==  1) resAnls.dcSectorThetaAnalysis(pltRan, gssRan, swim, fCuts);
-            else if (plotType ==  2) resAnls.fmtRegionAnalysis(pltRan, swim, fCuts);
-            else if (plotType ==  3) resAnls.deltaTminAnalysis(pltRan, swim, fCuts);
+            if      (plotType ==  0) resAnls.dcSectorStripAnalysis(plotRange, fitRange, swim, fCuts);
+            else if (plotType ==  1) resAnls.dcSectorThetaAnalysis(plotRange, fitRange, swim, fCuts);
+            else if (plotType ==  2) resAnls.fmtRegionAnalysis(plotRange, swim, fCuts);
+            else if (plotType ==  3) resAnls.deltaTminAnalysis(plotRange, swim, fCuts);
             else if (plotType ==  4) resAnls.plot1DCount(0, swim, fCuts, 1000);
             else if (plotType ==  5) resAnls.plot1DCount(1, swim, fCuts, 2000);
             else if (plotType ==  6) resAnls.plot1DCount(2, swim, fCuts, 50);
