@@ -135,6 +135,7 @@ public final class IOHandler {
                         && checkDouble(val)) return usage();
             }
         }
+        if (!((params.get('v') == null) == (params.get('d') == null))) return usage();
 
         return false;
     }
