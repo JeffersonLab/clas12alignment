@@ -9,7 +9,7 @@ COATJAVA="/home/twig/data/code/jsw/coatjava-5.6.8"
 
 # FILE="/home/twig/data/code/jsw/recon_data/out_clas_011983.hipo"
 # FILE="/home/twig/data/code/jsw/recon_data/out_clas_012016.hipo"
-FILE="/home/twig/data/code/jsw/recon_data/out_clas_012439_unaligned.hipo"
+# FILE="/home/twig/data/code/jsw/recon_data/out_clas_012439_unaligned.hipo"
 
 # Don't touch these!
 JAVALOC="$JAVAHOME/bin/java"
@@ -21,7 +21,13 @@ DEXECEXECUTABLE="$JAVALOC"
 PREVARGS="$DEXECARGS $CLASSPATHARG"
 POSTARGS="-Dexec.executable=$DEXECEXECUTABLE process-classes org.codehaus.mojo:exec-maven-plugin:1.2.1:exec"
 
+i="0"
+args=""
+for arg
+    do args="$args $arg"
+done
+
 # Run
 export COAT_MAGFIELD_TORUSMAP="$TORUSMAP"
 export COAT_MAGFIELD_SOLENOIDMAP="$SOLENOIDMAP"
-$MVN "$PREVARGS org.clas.test.Main $FILE -n 100000 -v dZ -i -0.2 -l 0.2 -d 0.1" $POSTARGS # > log.txt
+$MVN "$PREVARGS org.clas.test.Main$args" $POSTARGS # > log.txt
