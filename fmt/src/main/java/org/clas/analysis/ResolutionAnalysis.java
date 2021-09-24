@@ -12,46 +12,43 @@ import org.clas.cross.Cluster;
 import org.clas.cross.Constants;
 import org.clas.cross.TrajPoint;
 
+/** Key class of the program, in charge of alignment. */
 public class ResolutionAnalysis {
     // Class variables:
     private String infile;
-    private int nEvents;         // Number of events to run.
-    private double[] fmtZ;       // z position of the layers in cm (before shifting).
-    private double[] fmtAngle;   // strip angle in degrees.
-    private double[][] shArr;    // 2D array of shifts to be applied.
-    private boolean drawPlots;   // Boolean describing if plots are to be drawn.
-    private boolean ypAlign;     // Special setup needed for yaw & pitch alignment.
+    private int nEvents;       // Number of events to run.
+    private double[] fmtZ;     // z position of the layers in cm (before shifting).
+    private double[] fmtAngle; // strip angle in degrees.
+    private double[][] shArr;  // 2D array of shifts to be applied.
+    private boolean drawPlots; // Boolean describing if plots are to be drawn.
+    private boolean ypAlign;   // Special setup needed for yaw & pitch alignment.
 
     /**
      * Class constructor.
      * @param infile      Input hipo file.
      * @param nEvents     Number of events to run. Set to 0 to run all events in file.
      * @param shArr       Array of arrays describing all the shifts applied:
-     *                      * [0] :  global [z,x,y,phi] shift.
-     *                      * [1] : layer 1 [z,x,y,phi] shift.
-     *                      * [2] : layer 2 [z,x,y,phi] shift.
-     *                      * [3] : layer 3 [z,x,y,phi] shift.
+     *                      * [0] :  global [dZ,dX,dY,rotZ,rotX,rotY] shift.
+     *                      * [1] : layer 1 [dZ,dX,dY,rotZ,rotX,rotY] shift.
+     *                      * [2] : layer 2 [dZ,dX,dY,rotZ,rotX,rotY] shift.
+     *                      * [3] : layer 3 [dZ,dX,dY,rotZ,rotX,rotY] shift.
      * @param drawPlots   Boolean describing if plots are to be drawn.
      * @param ypAlign     Special setup needed for yaw & pitch alignment.
      */
-    public ResolutionAnalysis(String infile, int nEvents,
-            double[][] shArr, boolean drawPlots, boolean ypAlign) {
-        this.drawPlots   = drawPlots;
-        this.ypAlign     = ypAlign;
+    public ResolutionAnalysis(String infile, int nEvents, double[][] shArr, boolean drawPlots,
+            boolean ypAlign) {
+        this.drawPlots = drawPlots;
+        this.ypAlign   = ypAlign;
 
         // Sanitize input.
-        if (shArr.length != 4) {
-            System.err.printf("shArr should have a size of 4!\n");
-            System.exit(1);
-        }
-        if (shArr[0].length != 6) {
-            System.err.printf("Each array inside shArr should have a size of 6!\n");
+        if (shArr.length != 4 || shArr[0].length != 6) {
+            System.err.printf("[ERROR] shArr is malformed!\n");
             System.exit(1);
         }
 
-        this.infile    = infile;
-        this.nEvents   = nEvents;
-        this.shArr     = new double[][]{
+        this.infile  = infile;
+        this.nEvents = nEvents;
+        this.shArr   = new double[][]{
             {shArr[0][0], shArr[0][1], shArr[0][2], shArr[0][3], shArr[0][4], shArr[0][5]},
             {shArr[1][0], shArr[1][1], shArr[1][2], shArr[1][3], shArr[1][4], shArr[1][5]},
             {shArr[2][0], shArr[2][1], shArr[2][2], shArr[2][3], shArr[2][4], shArr[2][5]},
@@ -61,18 +58,14 @@ public class ResolutionAnalysis {
         // Set geometry parameters by reading from database.
         DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, "rgf_spring2020");
         String fmtTable = "/geometry/fmt/fmt_layer_noshim";
-        String fmtAlignTable = "/geometry/fmt/alignment";
         dbProvider.loadTable(fmtTable);
-        dbProvider.loadTable(fmtAlignTable);
 
         fmtZ     = new double[Constants.FMTLAYERS]; // z position of the layers in cm.
         fmtAngle = new double[Constants.FMTLAYERS]; // strip angle in deg.
 
-        for (int li = 0; li< Constants.FMTLAYERS; li++) {
-            fmtZ[li]     = dbProvider.getDouble(fmtTable+"/Z",li)/10
-                    + dbProvider.getDouble(fmtAlignTable+"/deltaZ",li)/10;
-            fmtAngle[li] = dbProvider.getDouble(fmtTable+"/Angle",li)
-                    + dbProvider.getDouble(fmtAlignTable+"/rotZ",li);
+        for (int li = 0; li < Constants.FMTLAYERS; li++) {
+            fmtZ[li]     = dbProvider.getDouble(fmtTable+"/Z",li)/10;
+            fmtAngle[li] = dbProvider.getDouble(fmtTable+"/Angle",li);
         }
     }
 
