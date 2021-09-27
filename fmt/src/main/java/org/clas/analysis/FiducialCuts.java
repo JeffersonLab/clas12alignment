@@ -4,12 +4,12 @@ import java.util.Arrays;
 import org.clas.cross.Constants;
 
 public class FiducialCuts {
-    boolean ypAlign = false; // Yaw-Pitch alignment needs less cuts than other types of alignment.
-    int[] trsc = new int[5]; // cut trajectory points counter.
-    int[] clsc = new int[5]; // cut clusters counter.
+    boolean rotXYAlign = false; // Yaw-Pitch alignment needs less cuts than other types of alignment.
+    int[] trsc = new int[5];    // cut trajectory points counter.
+    int[] clsc = new int[5];    // cut clusters counter.
 
     public FiducialCuts() {}
-    public void setYPAlign(boolean ypAlign) {this.ypAlign = ypAlign;}
+    public void setRotXYAlign(boolean rotXYAlign) {this.rotXYAlign = rotXYAlign;}
     public void increaseTrajCount() {trsc[0]++;}
     public void increaseClusterCount() {clsc[0]++;}
 
@@ -44,7 +44,7 @@ public class FiducialCuts {
      * @return true if the track is to be cut, false otherwise.
      */
     public boolean checkTrajCuts(double z, double x, double y, double zRef, double costh) {
-        if (!ypAlign && Math.abs(z - zRef) > Constants.MAXDZ) {
+        if (!rotXYAlign && Math.abs(z - zRef) > Constants.MAXDZ) {
             trsc[2]++;
             return true;
         }
@@ -52,7 +52,7 @@ public class FiducialCuts {
             trsc[3]++;
             return true;
         }
-        if (!ypAlign && costh > Constants.MAXPZ) {
+        if (!rotXYAlign && costh > Constants.MAXPZ) {
             trsc[4]++;
             return true;
         }
@@ -80,7 +80,7 @@ public class FiducialCuts {
             clsc[3]++;
             return true;
         }
-        if (!ypAlign && size >= 5) {
+        if (!rotXYAlign && size >= 5) {
             clsc[4]++;
             return true;
         }
@@ -89,6 +89,7 @@ public class FiducialCuts {
 
     /** Print applied cuts information. */
     public void printCutsInfo() {
+        // TODO. Print this into file.
         int trscsum = trsc[1] + trsc[2] + trsc[3] + trsc[4];
         int clscsum = clsc[1] + clsc[2] + clsc[3] + clsc[4];
         System.out.printf("\n");

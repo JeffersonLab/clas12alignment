@@ -122,6 +122,7 @@ public final class IOHandler {
         // Check that args are of correct type.
         if (params.get('f') == null) return usage();
         if (!params.get('f').get(0).endsWith(".hipo")) return usage();
+        // NOTE. Maybe we should check if 'f' exists.
         for (Map.Entry<Character, List<String>> entry : params.entrySet()) {
             Character    key = entry.getKey();
             List<String> vals = entry.getValue();

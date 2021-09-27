@@ -12,7 +12,6 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 
 public class Data {
-
     /**
      * Get data bank.
      * @param event hipo event from which the bank is to be taken.
@@ -47,59 +46,41 @@ public class Data {
     /**
      * Create a set of data groups for residuals analysis.
      *
-     * @param type Type of plot, explained in ResolutionAnalysis.runAnalysis.
      * @param ln   Number of FMT layers.
      * @param zn   Number of z shifts to try.
      * @param r    Plot range.
      * @return array of data groups.
      */
-    public static DataGroup[] createResDataGroups(int type, int ln, int zn, int r) {
-        DataGroup[] dgFMT = new DataGroup[zn];
+    public static DataGroup[][] createResDataGroups(int ln, int tn1, int tn2, int r) {
+        DataGroup[][] dgFMT = new DataGroup[tn1][tn2];
 
-        for (int zi = 0; zi < zn; ++zi) {
-            dgFMT[zi] = new DataGroup(3, 2);
-            for (int li = 1; li <= ln; ++li) {
-                H1F hi_cluster_res = new H1F("hi_cluster_res_l" + li, "", 200, -r, r);
-                hi_cluster_res.setTitleX("Residual (cm) - Layer " + li);
-                hi_cluster_res.setFillColor(4);
-                dgFMT[zi].addDataSet(hi_cluster_res, li - 1);
+        for (int ti1 = 0; ti1 < tn1; ++ti1) {
+            for (int ti2 = 0; ti2 < tn2; ++ti2) {
+                dgFMT[ti1][ti2] = new DataGroup(ln, 2);
+                for (int li = 1; li <= ln; ++li) {
+                    H1F hi1D = new H1F("hi_l" + li, "", 200, -r, r);
+                    hi1D.setTitleX("Residual (cm) - Layer " + li);
+                    hi1D.setFillColor(4);
+                    dgFMT[ti1][ti2].addDataSet(hi1D, li - 1);
 
-                F1D f1_res = new F1D("f1_res_l" + li,
-                        "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", -r, r);
-                f1_res.setParameter(0, 0);
-                f1_res.setParameter(1, 0);
-                f1_res.setParameter(2, 1.0);
-                f1_res.setParameter(3, 0);
-                f1_res.setParameter(4, 0);
-                f1_res.setParameter(5, 0);
-                f1_res.setLineWidth(2);
-                f1_res.setLineColor(2);
-                f1_res.setOptStat("1111");
-                dgFMT[zi].addDataSet(f1_res, li - 1);
+                    String RESFIT = "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x";
+                    F1D fit = new F1D("fit_l" + li, RESFIT, -r, r);
+                    fit.setParameter(0, 0);
+                    fit.setParameter(1, 0);
+                    fit.setParameter(2, 1.0);
+                    fit.setParameter(3, 0);
+                    fit.setParameter(4, 0);
+                    fit.setParameter(5, 0);
+                    fit.setLineWidth(2);
+                    fit.setLineColor(2);
+                    fit.setOptStat("1111");
+                    dgFMT[ti1][ti2].addDataSet(fit, li - 1);
 
-                if (type == 0 || type == 1) {
-                    H2F hi_cluster_res_strip = new H2F("hi_cluster_res_strip_l" + li,
-                            200, -r, r, 200, 0, 1024);
-                    hi_cluster_res_strip.setTitleX("Residual (cm) - Layer " + li);
-                    hi_cluster_res_strip.setTitleY("Strip - Layer " + li);
-                    dgFMT[zi].addDataSet(hi_cluster_res_strip, li - 1 + ln);
+                    H2F hi2D = new H2F("hi_strip_l" + li, 200, -r, r, 200, 0, 1024);
+                    hi2D.setTitleX("Residual (cm) - Layer " + li);
+                    hi2D.setTitleY("Strip - Layer " + li);
+                    dgFMT[ti1][ti2].addDataSet(hi2D, ln + li - 1);
                 }
-                else if (type == 2) {
-                    H2F hi_cluster_res_theta = new H2F("hi_cluster_res_theta_l" + li,
-                            200, -r, r, 200, 0, 1);
-                    hi_cluster_res_theta.setTitleX("Residual - Layer " + li);
-                    hi_cluster_res_theta.setTitleY("Theta - Layer " + li);
-                    dgFMT[zi].addDataSet(hi_cluster_res_theta, li - 1 + ln);
-                }
-                else if (type == 4) {
-                    H2F hi_cluster_res_dtmin = new H2F("hi_cluster_res_dtmin_l" + li,
-                            200, -r, r, 200, 0, 200);
-                    hi_cluster_res_dtmin.setTitleX("Residual - Layer " + li);
-                    hi_cluster_res_dtmin.setTitleY("dTmin - Layer " + li);
-                    dgFMT[zi].addDataSet(hi_cluster_res_dtmin, li - 1 + ln);
-                }
-                else if (type != 3)
-                    System.out.printf("[Data] type variable should be between 0 and 4!\n");
             }
         }
 
@@ -114,30 +95,28 @@ public class Data {
      * @param titleArr Array of titles for the plots.
      * @return status int.
      */
-    public static int drawResPlots(DataGroup[] dgFMT, int cn, String[] titleArr) {
-        EmbeddedCanvasTabbed fmtCanvas = new EmbeddedCanvasTabbed(titleArr);
-        for (int ci = 0; ci < cn; ++ci) {
-            fmtCanvas.getCanvas(titleArr[ci]).draw(dgFMT[ci]);
-            fmtCanvas.getCanvas(titleArr[ci]).setGridX(false);
-            fmtCanvas.getCanvas(titleArr[ci]).setGridY(false);
-            fmtCanvas.getCanvas(titleArr[ci]).setAxisFontSize(18);
-            fmtCanvas.getCanvas(titleArr[ci]).setAxisTitleSize(24);
+    public static int drawResPlot(DataGroup dgFMT, String title) {
+        EmbeddedCanvasTabbed fmtCanvas = new EmbeddedCanvasTabbed(title);
+        fmtCanvas.getCanvas(title).draw(dgFMT);
+        fmtCanvas.getCanvas(title).setGridX(false);
+        fmtCanvas.getCanvas(title).setGridY(false);
+        fmtCanvas.getCanvas(title).setAxisFontSize(18);
+        fmtCanvas.getCanvas(title).setAxisTitleSize(24);
 
-            // Top plots
-            for (int pi = 0; pi < 3; ++pi) {
-                DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
-                vline.setLineColor(2);
-                vline.setLineWidth(2);
-                fmtCanvas.getCanvas(titleArr[ci]).cd(pi).draw(vline);
-            }
+        // Top plots
+        for (int pi = 0; pi < 3; ++pi) {
+            DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
+            vline.setLineColor(2);
+            vline.setLineWidth(2);
+            fmtCanvas.getCanvas(title).cd(pi).draw(vline);
+        }
 
-            // Bottom plots
-            for (int pi = 3; pi < 6; ++pi) {
-                DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
-                vline.setLineColor(0);
-                vline.setLineWidth(2);
-                fmtCanvas.getCanvas(titleArr[ci]).cd(pi).draw(vline);
-            }
+        // Bottom plots
+        for (int pi = 3; pi < 6; ++pi) {
+            DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
+            vline.setLineColor(0);
+            vline.setLineWidth(2);
+            fmtCanvas.getCanvas(title).cd(pi).draw(vline);
         }
 
         JFrame frame = new JFrame("FMT");

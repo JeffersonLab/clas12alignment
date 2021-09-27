@@ -97,8 +97,8 @@ public class TrajPoint {
             }
 
             // Get FMT layer's z coordinate and strips angle.
-            double zRef = fmtZ[li] + shArr[0][0] + shArr[li+1][0];
-            double phiRef = fmtAngle[li] - (shArr[0][3]+shArr[li+1][3]); // Apply phi shift.
+            double zRef   = fmtZ[li]     + shArr[li][2]; // Apply z shift.
+            double phiRef = fmtAngle[li] - shArr[li][5]; // Apply phi shift.
 
             // Get particle's kinematics.
             double x  = (double) ptcBank.getFloat("vx", pi);
@@ -112,8 +112,8 @@ public class TrajPoint {
             if (applyCuts && fcuts.downstreamTrackCheck(z, zRef)) continue;
             double[] V = swim.swimToPlane(x,y,z,px,py,pz,q,zRef);
 
-            x  = V[0] - (shArr[0][1]+shArr[li+1][1]); // Apply global x shift.
-            y  = V[1] - (shArr[0][2]+shArr[li+1][2]); // Apply global y shift.
+            x  = V[0] - shArr[li][1]; // Apply x shift.
+            y  = V[1] - shArr[li][2]; // Apply y shift.
             z  = V[2];
             px = V[3];
             py = V[4];
@@ -126,10 +126,10 @@ public class TrajPoint {
             if (applyCuts && fcuts.checkTrajCuts(z, x, y, zRef, costh)) continue;
 
             // Rotate (x,y) to FMT's local coordinate system.
-            double xLoc = x * Math.cos(Math.toRadians(phiRef))
-                    + y * Math.sin(Math.toRadians(phiRef));
-            double yLoc = y * Math.cos(Math.toRadians(phiRef))
-                    - x * Math.sin(Math.toRadians(phiRef));
+            double xLoc =
+                    x * Math.cos(Math.toRadians(phiRef)) + y * Math.sin(Math.toRadians(phiRef));
+            double yLoc =
+                    y * Math.cos(Math.toRadians(phiRef)) - x * Math.sin(Math.toRadians(phiRef));
 
             trajPoints.get(trajPoints.size()-1)[li] =
                     new TrajPoint(pi, id, li, si, z, xLoc, yLoc, costh);
