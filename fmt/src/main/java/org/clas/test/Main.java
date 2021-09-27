@@ -24,7 +24,8 @@ public class Main {
 
         // === Setup ===============================================================================
         setupGroot();
-        double[] swmSetup = new double[]{-0.75, -1.0, -3.0}; // TODO. Explain this in the README.
+        // TODO. Add swim setup via terminal.
+        double[] swmSetup = new double[]{-0.75, -1.0, -3.0}; // swim setup.
         int plotRan = 5; // Plotting range.
         int fitRan  = 4; // Fitting range.
 

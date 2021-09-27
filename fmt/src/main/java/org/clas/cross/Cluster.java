@@ -48,7 +48,7 @@ public class Cluster {
         DataBank clBank  = Data.getBank(event, "FMT::Clusters");
         if (clBank==null) return null;
 
-        // NOTE: Here it's assumed that there are 3 FMT layers. Needs to be fixed if working with
+        // NOTE. Here it's assumed that there are 3 FMT layers. Needs to be fixed if working with
         //       the full detector.
         ArrayList[] clusters = new ArrayList[]{
                 new ArrayList<Cluster>(), new ArrayList<Cluster>(), new ArrayList<Cluster>()};
@@ -60,7 +60,9 @@ public class Cluster {
             int strip     = clBank.getInt("seedStrip", cri);
             int size      = clBank.getShort("size", cri);
             double energy = clBank.getFloat("energy", cri);
-            // double tMin   = clBank.getFloat("Tmin", cri); // TODO: Check out what's up with this.
+            // NOTE. tMin is used in a cut, but currently the measurement has issues so it's ignored
+            //       for the time being.
+            // double tMin   = clBank.getFloat("Tmin", cri);
             double tMin   = 100;
             double y      = clBank.getFloat("centroid", cri);
             int tID       = clBank.getShort("trackIndex", cri);

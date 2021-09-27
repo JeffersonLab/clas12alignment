@@ -11,7 +11,7 @@ import org.clas.cross.Cluster;
 import org.clas.cross.Constants;
 import org.clas.cross.TrajPoint;
 
-/** Key class of the program, in charge of alignment. */
+/** Key class of the program, in charge of all alignment tests. */
 public class ResolutionAnalysis {
     private String infile;      // Input hipo file.
     private int nEvents;        // Number of events to run.
@@ -27,7 +27,7 @@ public class ResolutionAnalysis {
      * @param f      Input hipo file.
      * @param n      Number of events to run. Set to 0 to run all events in file.
      * @param shArr  Array of arrays describing all the shifts applied.
-     * @param fCuts    FiducialCuts class instance.
+     * @param fCuts  FiducialCuts class instance.
      */
     public ResolutionAnalysis(String f, int n, double[][] shArr, FiducialCuts fCuts) {
         // Sanitize input.
@@ -87,10 +87,8 @@ public class ResolutionAnalysis {
 
         DataGroup[][] dgFMT = Data.createResDataGroups(Constants.FMTLAYERS, cn1, cn2, r);
 
-        double[][][] meanArr     = new double[Constants.FMTLAYERS][cn1][cn2];
-        double[][][] sigmaArr    = new double[Constants.FMTLAYERS][cn1][cn2];
-        double[][][] sigmaErrArr = new double[Constants.FMTLAYERS][cn1][cn2];
-        double[][][] chiSqArr    = new double[Constants.FMTLAYERS][cn1][cn2];
+        // 4 Params for each layer and tested shift: mean, sigma, sigma error, and chi^2.
+        double[][][][] fitParamsArr = new double[4][Constants.FMTLAYERS][cn1][cn2];
 
         // Run.
         double[][] origArr = new double[Constants.FMTLAYERS][6]; // No arr deep copy in java.
@@ -119,10 +117,10 @@ public class ResolutionAnalysis {
                 // Get fit quality assessment.
                 for (int li = 0; li < Constants.FMTLAYERS; ++li) {
                     F1D gss = dgFMT[ci1][ci2].getF1D("fit_l"+(li+1));
-                    meanArr    [li][ci1][ci2] = gss.getParameter(1);
-                    sigmaArr   [li][ci1][ci2] = gss.getParameter(2);
-                    sigmaErrArr[li][ci1][ci2] = gss.parameter(2).error();
-                    chiSqArr   [li][ci1][ci2] = gss.getParameter(3);
+                    fitParamsArr[0][li][ci1][ci2] = gss.getParameter(1);
+                    fitParamsArr[1][li][ci1][ci2] = gss.getParameter(2);
+                    fitParamsArr[2][li][ci1][ci2] = gss.parameter(2).error();
+                    fitParamsArr[3][li][ci1][ci2] = gss.getParameter(3);
                 }
 
                 // Print cuts data to stdout.
@@ -137,44 +135,32 @@ public class ResolutionAnalysis {
             }
         }
 
-        // Print alignment data and draw plots.
+        // Print alignment data and draw plots. TODO. Print into file instead of stdout.
         System.out.printf("\nshifts = [");
         for (int ci = 0; ci < cn1; ++ci) System.out.printf(" %5.2f,", tShArr.get(ci));
-        System.out.printf("\b]\n");
+        System.out.printf("]\n");
         for (int li = 0; li < Constants.FMTLAYERS; ++li) {
             System.out.printf("# LAYER %1d\n", li+1);
-            // TODO. Change String for StringBuilder for efficiency.
-            String meanStr     = "lyr" + (li+1) + "_mean = np.array([";
-            String sigmaStr    = "lyr" + (li+1) + "_sigma = np.array([";
-            String sigmaerrStr = "lyr" + (li+1) + "_sigmaerr = np.array([";
-            String chi2Str     = "lyr" + (li+1) + "_chi2 = np.array([";
+            StringBuilder[] fitStr = new StringBuilder[4];
+            fitStr[0] = new StringBuilder();
+            fitStr[1] = new StringBuilder();
+            fitStr[2] = new StringBuilder();
+            fitStr[3] = new StringBuilder();
+            fitStr[0].append("lyr" + (li+1) + "_mean = np.array([");
+            fitStr[1].append("lyr" + (li+1) + "_sigma = np.array([");
+            fitStr[2].append("lyr" + (li+1) + "_sigmaerr = np.array([");
+            fitStr[3].append("lyr" + (li+1) + "_chi2 = np.array([");
 
-            for (int ci1 = 0; ci1 < cn1; ++ci1) {
-                meanStr     += "\n        [";
-                sigmaStr    += "\n        [";
-                sigmaerrStr += "\n        [";
-                chi2Str     += "\n        [";
-                for (int ci2 = 0; ci2 < cn2; ++ci2) {
-                    meanStr     += String.format("%9.5f, ", meanArr    [li][ci1][ci2]);
-                    sigmaStr    += String.format("%9.5f, ", sigmaArr   [li][ci1][ci2]);
-                    sigmaerrStr += String.format("%9.5f, ", sigmaErrArr[li][ci1][ci2]);
-                    chi2Str     += String.format("%9.5f, ", chiSqArr   [li][ci1][ci2]);
+            for (int fi = 0; fi < 4; ++fi) {
+                for (int ci1 = 0; ci1 < cn1; ++ci1) {
+                    fitStr[fi].append("\n        [");
+                    for (int ci2 = 0; ci2 < cn2; ++ci2)
+                        fitStr[fi].append(String.format("%9.5f, ", fitParamsArr[fi][li][ci1][ci2]));
+                    fitStr[fi].append("],");
                 }
-                meanStr     += "\b\b],";
-                sigmaStr    += "\b\b],";
-                sigmaerrStr += "\b\b],";
-                chi2Str     += "\b\b],";
+                fitStr[fi].append("\n])\n");
+                System.out.printf("%s", fitStr[fi].toString());
             }
-            meanStr     += "\n])\n";
-            sigmaStr    += "\n])\n";
-            sigmaerrStr += "\n])\n";
-            chi2Str     += "\n])\n";
-
-            // TODO. Print this into a file.
-            System.out.printf("%s", meanStr);
-            System.out.printf("%s", sigmaStr);
-            System.out.printf("%s", sigmaerrStr);
-            System.out.printf("%s", chi2Str);
         }
         if (var == null) Data.drawResPlot(dgFMT[0][0], "Residuals");
 
