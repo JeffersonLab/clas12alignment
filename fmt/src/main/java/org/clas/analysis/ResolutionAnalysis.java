@@ -198,7 +198,7 @@ public class ResolutionAnalysis {
      */
     private int runAnalysis(HipoDataSource reader, DataGroup dg, int f) {
         int ei = 0; // Event number.
-        reader.reset();
+        reader.gotoEvent(0);
 
         // Loop through events.
         while (reader.hasEvent()) {
