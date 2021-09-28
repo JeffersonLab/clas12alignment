@@ -79,12 +79,11 @@ public class TrajPoint {
             int id = trjBank.getShort("index", trji);
             int li = trjBank.getByte("layer", trji)-1;
             int pi = trjBank.getShort("pindex", trji);
-            int si = -1; // DC sector.
+            int si = -1;       // DC sector.
             double costh = -1; // track theta.
 
             // Use only FMT layers 1, 2, and 3.
-            if (detector!=DetectorType.FMT.getDetectorId() || li<0
-                    || li>Constants.FMTLAYERS-1)
+            if (detector!=DetectorType.FMT.getDetectorId() || li<0 || li>Constants.FMTLAYERS-1)
                 continue;
 
             // Bank integrity is assumed from this point onward.
@@ -127,10 +126,8 @@ public class TrajPoint {
             if (applyCuts && fcuts.checkTrajCuts(z, x, y, zRef, costh)) continue;
 
             // Rotate (x,y) to FMT's local coordinate system.
-            double xLoc =
-                    x * Math.cos(Math.toRadians(phiRef)) + y * Math.sin(Math.toRadians(phiRef));
-            double yLoc =
-                    y * Math.cos(Math.toRadians(phiRef)) - x * Math.sin(Math.toRadians(phiRef));
+            double xLoc = x*Math.cos(Math.toRadians(phiRef)) + y*Math.sin(Math.toRadians(phiRef));
+            double yLoc = y*Math.cos(Math.toRadians(phiRef)) - x*Math.sin(Math.toRadians(phiRef));
 
             trajPoints.get(trajPoints.size()-1)[li] =
                     new TrajPoint(pi, id, li, si, z, xLoc, yLoc, costh);

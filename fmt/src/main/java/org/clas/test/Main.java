@@ -28,7 +28,7 @@ public class Main {
         int plotRan = 5; // Plotting range.
         int fitRan  = 4; // Fitting range.
 
-        double[][] shArr = new double[Constants.FMTLAYERS][6];
+        double[][] shArr = new double[Constants.FMTLAYERS][Constants.NVARS];
         // Update shArr based on alignment info given by user.
         for (int i = 0; i < shArr.length; ++i) {
             if (params.get('x') != null) shArr[i][0] = Double.parseDouble(params.get('x').get(i));

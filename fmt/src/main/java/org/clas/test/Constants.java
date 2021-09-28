@@ -1,12 +1,18 @@
 package org.clas.test;
 
-/** Class containing constants relevant to FMT and DC geometry. */
+/** Class containing constants relevant geometry, cuts, and the program in general. */
 public class Constants {
+    // Generic.
+    public static final int    NVARS   = 6;   // Number of variables to be aligned.
+    public static final int    NPLOTS  = 6;   // Number of plots to be drawn. Should be a factor of 2.
+    public static final int    PLOTRES = 200; // Resolution of 1D and 2D plots.
+
     // Geometry.
     public static final double FMTINNERRADIUS      = 25;
     public static final double FMTOUTERRADIUS      = 225;
     public static final int    FMTLAYERS           = 3;
     public static final int    FMTREGIONS          = 4;
+    public static final int    FMTNSTRIPS          = 1024;
     public static final int    DCSECTORS           = 6;
     public static final int[]  FMTREGIONSEPARATORS = new int[]{-1, 319, 511, 831, 1023};
 

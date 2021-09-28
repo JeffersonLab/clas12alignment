@@ -58,13 +58,13 @@ public class HipoHandler {
             for (int ti2 = 0; ti2 < tn2; ++ti2) {
                 dgFMT[ti1][ti2] = new DataGroup(ln, 2);
                 for (int li = 1; li <= ln; ++li) {
-                    H1F hi1D = new H1F("hi_l" + li, "", 200, -r, r);
+                    H1F hi1D = new H1F("hi_l" + li, "", Constants.PLOTRES, -r, r);
                     hi1D.setTitleX("Residual (cm) - Layer " + li);
                     hi1D.setFillColor(4);
                     dgFMT[ti1][ti2].addDataSet(hi1D, li - 1);
 
-                    String RESFIT = "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x";
-                    F1D fit = new F1D("fit_l" + li, RESFIT, -r, r);
+                    String resfit = "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x";
+                    F1D fit = new F1D("fit_l" + li, resfit, -r, r);
                     fit.setParameter(0, 0);
                     fit.setParameter(1, 0);
                     fit.setParameter(2, 1.0);
@@ -76,7 +76,8 @@ public class HipoHandler {
                     fit.setOptStat("1111");
                     dgFMT[ti1][ti2].addDataSet(fit, li - 1);
 
-                    H2F hi2D = new H2F("hi_strip_l" + li, 200, -r, r, 200, 0, 1024);
+                    H2F hi2D = new H2F("hi_strip_l" + li, Constants.PLOTRES, -r, r,
+                            Constants.PLOTRES, 0, Constants.FMTNSTRIPS);
                     hi2D.setTitleX("Residual (cm) - Layer " + li);
                     hi2D.setTitleY("Strip - Layer " + li);
                     dgFMT[ti1][ti2].addDataSet(hi2D, ln + li - 1);
@@ -104,7 +105,7 @@ public class HipoHandler {
         fmtCanvas.getCanvas(title).setAxisTitleSize(24);
 
         // Top plots
-        for (int pi = 0; pi < 3; ++pi) {
+        for (int pi = 0; pi < Constants.NPLOTS/2; ++pi) {
             DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
             vline.setLineColor(2);
             vline.setLineWidth(2);
@@ -112,7 +113,7 @@ public class HipoHandler {
         }
 
         // Bottom plots
-        for (int pi = 3; pi < 6; ++pi) {
+        for (int pi = Constants.NPLOTS/2; pi < Constants.NPLOTS; ++pi) {
             DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
             vline.setLineColor(0);
             vline.setLineWidth(2);

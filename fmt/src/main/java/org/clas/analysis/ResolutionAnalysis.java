@@ -32,7 +32,7 @@ public class ResolutionAnalysis {
      */
     public ResolutionAnalysis(String f, int n, double[][] shArr, FiducialCuts fCuts) {
         // Sanitize input.
-        if (shArr.length != Constants.FMTLAYERS || shArr[0].length != 6) {
+        if (shArr.length != Constants.FMTLAYERS || shArr[0].length != Constants.NVARS) {
             System.err.printf("[ERROR] shArr is malformed!\n");
             System.exit(1);
         }
@@ -92,7 +92,7 @@ public class ResolutionAnalysis {
         double[][][][] fitParamsArr = new double[4][Constants.FMTLAYERS][cn1][cn2];
 
         // Run.
-        double[][] origArr = new double[Constants.FMTLAYERS][6]; // No arr deep copy in java.
+        double[][] origArr = new double[Constants.FMTLAYERS][Constants.NVARS];
         for (int i = 0; i < shArr.length; ++i) {
             for (int j = 0; j < shArr[0].length; ++j) {
                 origArr[i][j] = shArr[i][j];
