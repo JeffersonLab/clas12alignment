@@ -87,9 +87,19 @@ public class FiducialCuts {
         return false;
     }
 
-    /** Print applied cuts information. */
-    public void printCutsInfo() {
-        // TODO. Print this into a file instead o stdout.
+    private double calcSum(int[] arr) {
+        return (double) arr[1] + arr[2] + arr[3] + arr[4];
+    }
+
+    /** Print basic cuts information */
+    public int printCutsInfo() {
+        System.out.printf("  Trajs lost    : %5.2f%%\n", 100 * calcSum(trsc)/trsc[0]);
+        System.out.printf("  Clusters lost : %5.2f%%\n", 100 * calcSum(clsc)/clsc[0]);
+        return 0;
+    }
+
+    /** Print detailed applied cuts information. */
+    public int printDetailedCutsInfo() {
         int trscsum = trsc[1] + trsc[2] + trsc[3] + trsc[4];
         int clscsum = clsc[1] + clsc[2] + clsc[3] + clsc[4];
         System.out.printf("\n");
@@ -119,5 +129,6 @@ public class FiducialCuts {
         System.out.printf("                               %% │ %5.2f%%              │\n",
                 100 * ((double) clscsum) / clsc[0]);
         System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
+        return 0;
     }
 }

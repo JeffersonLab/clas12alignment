@@ -19,6 +19,7 @@ public class ResolutionAnalysis {
     private double[] fmtZ;      // z position of the layers in cm (before shifting).
     private double[] fmtAngle;  // strip angle in degrees.
     private double[][] shArr;   // 2D array of shifts to be applied.
+    private double[][] origShArr; // Copy of shArr.
     private boolean rotXYAlign; // Special setup needed for yaw & pitch alignment.
     private FiducialCuts fCuts; // FiducialCuts class instance.
     private TrkSwim swim;       // TrkSwim class instance.
@@ -37,14 +38,17 @@ public class ResolutionAnalysis {
             System.exit(1);
         }
 
-        this.fCuts   = fCuts;
-        this.infile  = f;
-        this.nEvents = n;
-        this.shArr   = new double[][]{
-                {shArr[0][0], shArr[0][1], shArr[0][2], shArr[0][3], shArr[0][4], shArr[0][5]},
-                {shArr[1][0], shArr[1][1], shArr[1][2], shArr[1][3], shArr[1][4], shArr[1][5]},
-                {shArr[2][0], shArr[2][1], shArr[2][2], shArr[2][3], shArr[2][4], shArr[2][5]}
-        };
+        this.fCuts     = fCuts;
+        this.infile    = f;
+        this.nEvents   = n;
+        this.shArr     = new double[Constants.FMTLAYERS][Constants.NVARS];
+        this.origShArr = new double[Constants.FMTLAYERS][Constants.NVARS];
+        for (int li = 0; li < Constants.FMTLAYERS; ++li) {
+            for (int vi = 0; vi < Constants.NVARS; ++vi) {
+                this.shArr[li][vi]     = shArr[li][vi];
+                this.origShArr[li][vi] = shArr[li][vi];
+            }
+        }
 
         // Set geometry parameters by reading from database.
         DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, "rgf_spring2020");
@@ -58,6 +62,21 @@ public class ResolutionAnalysis {
             fmtZ[li]     = dbProvider.getDouble(fmtTable+"/Z",    li)/10;
             fmtAngle[li] = dbProvider.getDouble(fmtTable+"/Angle",li);
         }
+    }
+
+    /** Setup and initialize TrkSwim class. */
+    private int setupSwim(double[] swmSetup) {
+        double[] avgRotXY = new double[]{0.0, 0.0};
+        for (int lyr = 0; lyr < Constants.FMTLAYERS; ++lyr) {
+            avgRotXY[0] += this.shArr[lyr][3];
+            avgRotXY[1] += this.shArr[lyr][4];
+        }
+        avgRotXY[0] /= Constants.FMTLAYERS;
+        avgRotXY[1] /= Constants.FMTLAYERS;
+
+        this.swim = new TrkSwim(swmSetup, avgRotXY[0], avgRotXY[1]);
+
+        return 0;
     }
 
     /**
@@ -91,29 +110,36 @@ public class ResolutionAnalysis {
         // 4 Params for each layer and tested shift: mean, sigma, sigma error, and chi^2.
         double[][][][] fitParamsArr = new double[4][Constants.FMTLAYERS][cn1][cn2];
 
+        if (!this.rotXYAlign) setupSwim(swmSetup);
+
         // Run.
-        double[][] origArr = new double[Constants.FMTLAYERS][Constants.NVARS];
-        for (int i = 0; i < shArr.length; ++i) {
-            for (int j = 0; j < shArr[0].length; ++j) {
-                origArr[i][j] = shArr[i][j];
-            }
-        }
+        HipoDataSource reader = new HipoDataSource();
+        reader.open(infile);
 
         for (int ci1 = 0; ci1 < cn1; ++ci1) {
             for (int ci2 = 0; ci2 < cn2; ++ci2) {
-                double[] avgRotXY = new double[]{0.0, 0.0};
-                for (int lyr = 0; lyr < Constants.FMTLAYERS; ++lyr) {
-                    if (pos[0] != -1) shArr[lyr][pos[0]] = origArr[lyr][pos[0]] + tShArr.get(ci1);
-                    if (pos[1] != -1) shArr[lyr][pos[1]] = origArr[lyr][pos[1]] + tShArr.get(ci2);
-                    avgRotXY[0] += shArr[lyr][3];
-                    avgRotXY[1] += shArr[lyr][4];
+                // Setup.
+                for (int li = 0; li < Constants.FMTLAYERS; ++li) {
+                    if (pos[0]!=-1) this.shArr[li][pos[0]] =
+                            this.origShArr[li][pos[0]]+tShArr.get(ci1);
+                    if (pos[1]!=-1) this.shArr[li][pos[1]] =
+                            this.origShArr[li][pos[1]]+tShArr.get(ci2);
                 }
                 this.fCuts.resetCounters();
-                avgRotXY[0] /= Constants.FMTLAYERS;
-                avgRotXY[1] /= Constants.FMTLAYERS;
+                if (this.rotXYAlign) setupSwim(swmSetup);
 
-                this.swim = new TrkSwim(swmSetup, avgRotXY[0], avgRotXY[1]);
-                runAnalysis(dgFMT[ci1][ci2], f);
+                // Print run data.
+                System.out.printf("\nRUN %3d/%3d:\n", ci1*cn2+ci2+1, cn1*cn2);
+                System.out.printf("             dX    dY    dZ    rotX  rotY  rotZ");
+                for (int li = 0; li < Constants.FMTLAYERS; ++li) {
+                    System.out.printf("\n  layer %1d :", li+1);
+                    for (int vi = 0; vi < this.shArr[0].length; ++vi)
+                        System.out.printf(" %5.2f", this.shArr[li][vi]);
+                }
+                System.out.printf("\n");
+
+                // Execute run.
+                runAnalysis(reader, dgFMT[ci1][ci2], f);
 
                 // Get fit quality assessment.
                 for (int li = 0; li < Constants.FMTLAYERS; ++li) {
@@ -125,16 +151,10 @@ public class ResolutionAnalysis {
                 }
 
                 // Print cuts data to stdout.
-                System.out.printf("FMT POSITION:\n             dX    dY    dZ    rotX  rotY  rotZ");
-                for (int i = 0; i < shArr.length; ++i) {
-                    System.out.printf("\n  layer %1d :", i+1);
-                    for (int j = 0; j < shArr[0].length; ++j)
-                        System.out.printf(" %5.2f", shArr[i][j]);
-                }
-                System.out.printf("\n");
-                this.fCuts.printCutsInfo();
+                this.fCuts.printCutsInfo(); // NOTE. Change to printDetailedCutsInfo for details.
             }
         }
+        reader.close();
 
         // Print alignment data and draw plots. TODO. Print into file instead of stdout.
         System.out.printf("\nshifts = [");
@@ -171,25 +191,23 @@ public class ResolutionAnalysis {
 
     /**
      * Generic function for running analysis, called by all others.
+     * @param reader HipoDataSource to stream events from source hipo file.
      * @param dg     DataGroup where analysis data is stored.
      * @param f      Range for the gaussian fit.
      * @return status int.
      */
-    private int runAnalysis(DataGroup dg, int f) {
+    private int runAnalysis(HipoDataSource reader, DataGroup dg, int f) {
         int ei = 0; // Event number.
-        HipoDataSource reader = new HipoDataSource();
-        reader.open(infile);
-        System.out.printf("\nRunning analysis...\n");
+        reader.reset();
 
         // Loop through events.
         while (reader.hasEvent()) {
             if (nEvents != 0 && ei >= nEvents) break;
-            if (ei % 50000 == 0) System.out.format("Analyzed %8d events...\n", ei);
             DataEvent event = reader.getNextEvent();
             ei++;
 
             ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(
-                    event, this.swim, this.fCuts, fmtZ, fmtAngle, shArr, 3, true);
+                    event, this.swim, this.fCuts, this.fmtZ, this.fmtAngle, this.shArr, 3, true);
             ArrayList<Cluster>[] clusters = Cluster.getClusters(event, this.fCuts, true);
 
             if (trajPoints == null || clusters == null) continue;
@@ -214,8 +232,6 @@ public class ResolutionAnalysis {
                 }
             }
         }
-        System.out.format("Analyzed %8d events... Done!\n", ei);
-        reader.close();
 
         // Fit residual plots
         for (int li = 1; li<= Constants.FMTLAYERS; ++li) {
