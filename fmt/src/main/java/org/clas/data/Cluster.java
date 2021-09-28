@@ -1,10 +1,10 @@
-package org.clas.cross;
+package org.clas.data;
 
 import java.util.ArrayList;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.clas.analysis.Data;
 import org.clas.analysis.FiducialCuts;
+import org.clas.test.HipoHandler;
 
 public class Cluster {
     private int id;        // Cluster ID.
@@ -45,7 +45,7 @@ public class Cluster {
     public static ArrayList<Cluster>[] getClusters(DataEvent event, FiducialCuts fcuts,
             boolean applyCuts) {
         // Get data bank.
-        DataBank clBank  = Data.getBank(event, "FMT::Clusters");
+        DataBank clBank  = HipoHandler.getBank(event, "FMT::Clusters");
         if (clBank==null) return null;
 
         // NOTE. Here it's assumed that there are 3 FMT layers. Needs to be fixed if working with

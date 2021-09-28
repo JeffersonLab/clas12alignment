@@ -7,9 +7,10 @@ import org.jlab.groot.group.DataGroup;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.hipo.*;
 import org.jlab.groot.math.F1D;
-import org.clas.cross.Cluster;
-import org.clas.cross.Constants;
-import org.clas.cross.TrajPoint;
+import org.clas.data.Cluster;
+import org.clas.data.TrajPoint;
+import org.clas.test.Constants;
+import org.clas.test.HipoHandler;
 
 /** Key class of the program, in charge of all alignment tests. */
 public class ResolutionAnalysis {
@@ -85,7 +86,7 @@ public class ResolutionAnalysis {
         else if (var.equals("rXY")) {pos[0] = 3; pos[1] = 4;}
         else if (var.equals("rZ" )) {pos[0] = 5;}
 
-        DataGroup[][] dgFMT = Data.createResDataGroups(Constants.FMTLAYERS, cn1, cn2, r);
+        DataGroup[][] dgFMT = HipoHandler.createResDataGroups(Constants.FMTLAYERS, cn1, cn2, r);
 
         // 4 Params for each layer and tested shift: mean, sigma, sigma error, and chi^2.
         double[][][][] fitParamsArr = new double[4][Constants.FMTLAYERS][cn1][cn2];
@@ -160,9 +161,10 @@ public class ResolutionAnalysis {
                 }
                 fitStr[fi].append("\n])\n");
                 System.out.printf("%s", fitStr[fi].toString());
+                // TODO. Figure out where the wrong reference to the actual fit parameters is.
             }
         }
-        if (var == null) Data.drawResPlot(dgFMT[0][0], "Residuals");
+        if (var == null) HipoHandler.drawResPlot(dgFMT[0][0], "Residuals");
 
         return 0;
     }
@@ -217,7 +219,7 @@ public class ResolutionAnalysis {
 
         // Fit residual plots
         for (int li = 1; li<= Constants.FMTLAYERS; ++li) {
-            Data.fitRes(dg.getH1F("hi_l"+li), dg.getF1D("fit_l"+li), f);
+            HipoHandler.fitRes(dg.getH1F("hi_l"+li), dg.getF1D("fit_l"+li), f);
         }
 
         return 0;

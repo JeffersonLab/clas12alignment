@@ -1,4 +1,4 @@
-package org.clas.cross;
+package org.clas.test;
 
 /** Class containing constants relevant to FMT and DC geometry. */
 public class Constants {

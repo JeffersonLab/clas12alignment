@@ -1,12 +1,13 @@
-package org.clas.cross;
+package org.clas.data;
 
 import java.util.ArrayList;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.clas.analysis.Data;
 import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.TrkSwim;
+import org.clas.test.Constants;
+import org.clas.test.HipoHandler;
 
 public class TrajPoint {
     private int pi;       // Particle index.
@@ -63,9 +64,9 @@ public class TrajPoint {
         }
 
         // Get data banks.
-        DataBank trjBank = Data.getBank(event, "REC::Traj");
-        DataBank ptcBank = Data.getBank(event, "REC::Particle");
-        DataBank trkBank = Data.getBank(event, "REC::Track");
+        DataBank trjBank = HipoHandler.getBank(event, "REC::Traj");
+        DataBank ptcBank = HipoHandler.getBank(event, "REC::Particle");
+        DataBank trkBank = HipoHandler.getBank(event, "REC::Track");
 
         if (trjBank==null || ptcBank==null || trkBank==null) return null;
 

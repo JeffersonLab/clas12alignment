@@ -1,10 +1,10 @@
 package org.clas.analysis;
 
 import java.util.Arrays;
-import org.clas.cross.Constants;
+import org.clas.test.Constants;
 
 public class FiducialCuts {
-    boolean rotXYAlign = false; // Yaw-Pitch alignment needs less cuts than other types of alignment.
+    boolean rotXYAlign = false; // rotXY alignment needs less cuts than other types of alignment.
     int[] trsc = new int[5];    // cut trajectory points counter.
     int[] clsc = new int[5];    // cut clusters counter.
 
@@ -89,7 +89,7 @@ public class FiducialCuts {
 
     /** Print applied cuts information. */
     public void printCutsInfo() {
-        // TODO. Print this into file.
+        // TODO. Print this into a file instead o stdout.
         int trscsum = trsc[1] + trsc[2] + trsc[3] + trsc[4];
         int clscsum = clsc[1] + clsc[2] + clsc[3] + clsc[4];
         System.out.printf("\n");

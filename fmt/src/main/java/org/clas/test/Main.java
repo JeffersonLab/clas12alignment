@@ -10,7 +10,6 @@ import org.jlab.groot.base.GStyle;
 import org.clas.analysis.TrkSwim;
 import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.ResolutionAnalysis;
-import org.clas.cross.Constants;
 
 public class Main {
     /** Main. */

@@ -1,4 +1,4 @@
-package org.clas.analysis;
+package org.clas.test;
 
 import javax.swing.*;
 import org.jlab.groot.data.DataLine;
@@ -11,7 +11,7 @@ import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 
-public class Data {
+public class HipoHandler {
     /**
      * Get data bank.
      * @param event hipo event from which the bank is to be taken.
