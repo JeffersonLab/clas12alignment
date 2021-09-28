@@ -12,19 +12,25 @@ public final class IOHandler {
     // No global static classes are allowed in java so this is the closest second...
     private IOHandler() {}
 
-    private static Set<Character> ARGNAMES = Set.of('n', 'v', 'd', 'x', 'y', 'z', 'X', 'Y', 'Z');
-    private static Set<Character> L1ARGS   = Set.of('n', 'v'                                   );
-    private static Set<Character> L2ARGS   = Set.of(          'd'                              );
-    private static Set<Character> L3ARGS   = Set.of(               'x', 'y', 'z', 'X', 'Y', 'Z');
+    private static Set<Character> L1ARGS = Set.of('n', 'v');
+    private static Set<Character> L2ARGS = Set.of('d');
+    private static Set<Character> L3ARGS = Set.of('s', 'x', 'y', 'z', 'X', 'Y', 'Z');
     private static Map<String, Character> argmap;
 
     /** Associate char-indexed args with String-indexed args. */
     private static boolean initArgmap() {
-    argmap = new HashMap<>();
-        for (char argname : ARGNAMES) {
+        argmap = new HashMap<>();
+        for (char argname : L1ARGS) {
             if      (argname == 'n') argmap.put("--nevents", 'n');
             else if (argname == 'v') argmap.put("--var",     'v');
-            else if (argname == 'd') argmap.put("--delta",   'd');
+            else return true; // Programmer error.
+        }
+        for (char argname : L2ARGS) {
+            if      (argname == 'd') argmap.put("--delta",   'd');
+            else return true; // Programmer error.
+        }
+        for (char argname : L3ARGS) {
+            if      (argname == 's') argmap.put("--swim",    's');
             else if (argname == 'x') argmap.put("--dx",      'x');
             else if (argname == 'y') argmap.put("--dy",      'y');
             else if (argname == 'z') argmap.put("--dz",      'z');
@@ -40,6 +46,7 @@ public final class IOHandler {
     private static boolean usage() {
         System.out.printf("\n");
         System.out.printf("Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]\n");
+        System.out.printf("                        [-s --swim]\n");
         System.out.printf("                        [-x --dx] [-y --dy] [-z --dz]\n");
         System.out.printf("                        [-X --rx] [-Y --ry] [-Z --rz]\n");
         System.out.printf("  * file      : hipo input file.\n");
@@ -50,6 +57,11 @@ public final class IOHandler {
         System.out.printf("                    be tested.\n");
         System.out.printf("                [1] interval for each tested value between\n");
         System.out.printf("                    <nominal - delta> and <nominal + delta>.\n");
+        System.out.printf("  * swim  (3) : Setup for the Swim class. If unspecified, uses\n");
+        System.out.printf("                default from RG-F data (-0.75, -1.0, 3.0).\n");
+        System.out.printf("                [0] Solenoid magnet scale.\n");
+        System.out.printf("                [1] Torus magnet scale.\n");
+        System.out.printf("                [2] Torus magnet shift.\n");
         System.out.printf("  * dx    (3) : x shift for each FMT layer.\n");
         System.out.printf("  * dy    (3) : y shift for each FMT layer.\n");
         System.out.printf("  * dz    (3) : z shift for each FMT layer.\n");
@@ -90,7 +102,7 @@ public final class IOHandler {
         if (args.length < 1) return usage();
 
         // Get args. Can't believe that Java doesn't have a standard method for this.
-        for (int i=0; i<args.length; ++i) {
+        for (int i = 0; i < args.length; ++i) {
             final String argS = args[i];
             char argC;
             if (argS.charAt(0) == '-') {

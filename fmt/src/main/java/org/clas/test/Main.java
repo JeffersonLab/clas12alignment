@@ -23,8 +23,15 @@ public class Main {
 
         // === Setup ===============================================================================
         setupGroot();
-        // TODO. Add swim setup via terminal.
-        double[] swmSetup = new double[]{-0.75, -1.0, -3.0}; // swim setup.
+        double[] swmSetup = new double[3];
+        if (params.get('s') == null) {
+            swmSetup[0] = -0.75;
+            swmSetup[1] = -1.00;
+            swmSetup[2] =  3.00;
+        }
+        else {
+            for (int i = 0; i < 3; ++i) swmSetup[i] = Double.parseDouble(params.get('s').get(i));
+        }
         int plotRan = 5; // Plotting range.
         int fitRan  = 4; // Fitting range.
 

@@ -7,6 +7,7 @@ Some setting up is required to run the program. The `run.sh` file handles the ge
 ### Usage
 ```
 Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]
+                        [-s --swim]
                         [-x --dx] [-y --dy] [-z --dz]
                         [-X --rx] [-Y --ry] [-Z --rz]
   * file      : hipo input file.
@@ -16,6 +17,11 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]
   * delta (2) : [0] delta between nominal position and position to be tested.
                 [1] interval for each tested value between <nominal - delta>
                     and <nominal + delta>.
+  * swim  (3) : Setup for the Swim class. If unspecified, uses default from
+                    RG-F data (-0.75, -1.0, 3.0).
+                [0] Solenoid magnet scale.
+                [1] Torus magnet scale.
+                [2] Torus magnet shift.
   * dx    (3) : x shift for each FMT layer.
   * dy    (3) : y shift for each FMT layer.
   * dz    (3) : z shift for each FMT layer.

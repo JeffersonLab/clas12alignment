@@ -18,11 +18,6 @@ public class TrkSwim {
      * @return Swim instance.
      */
     public TrkSwim(double[] swmSetup, double yaw, double pitch) {
-        if (swmSetup.length != 3) {
-            System.out.printf("swmSetup should have a size of 3. Read the method's description!\n");
-            return;
-        }
-
         MagFieldsEngine mf = new MagFieldsEngine();
         mf.initializeMagneticFields();
         Swimmer.setMagneticFieldsScales(swmSetup[0], swmSetup[1], swmSetup[2]);

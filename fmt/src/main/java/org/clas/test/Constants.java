@@ -16,6 +16,11 @@ public class Constants {
     public static final int    DCSECTORS           = 6;
     public static final int[]  FMTREGIONSEPARATORS = new int[]{-1, 319, 511, 831, 1023};
 
+    // Default swim parameters.
+    public static final double SOLMAGSCALE         = -0.75;
+    public static final double TORMAGSCALE         = -1.00;
+    public static final double TORMAGSHIFT         =  3.00;
+
     // Physics cuts.
     public static final double MAXDZ     = 0.05; // Max z distance between cluster and traj point.
     public static final double MAXPZ     = 0.4;  // Max Pz/P.
