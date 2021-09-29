@@ -34,16 +34,16 @@ public class FiducialCuts {
     }
 
     /**
-     * Check if a track needs to be cut by z, x, y, or its theta angle. Tracks that need to be cut
+     * Check if a track needs to be cut by x, y, z, or its theta angle. Tracks that need to be cut
      * due to the delta Tmin between clusters are processed by another method due to its complexity.
-     * @param z     track's z coordinate at FMT layer.
      * @param x     track's x coordinate at FMT layer.
      * @param y     track's y coordinate at FMT layer
+     * @param z     track's z coordinate at FMT layer.
      * @param zRef  FMT layer's z coordinate.
      * @param costh cosine of track's theta angle (pz/p).
      * @return true if the track is to be cut, false otherwise.
      */
-    public boolean checkTrajCuts(double z, double x, double y, double zRef, double costh) {
+    public boolean checkTrajCuts(double x, double y, double z, double zRef, double costh) {
         if (!rotXYAlign && Math.abs(z - zRef) > Constants.MAXDZ) {
             trsc[2]++;
             return true;

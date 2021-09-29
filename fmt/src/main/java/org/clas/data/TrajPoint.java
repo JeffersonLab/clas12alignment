@@ -112,8 +112,8 @@ public class TrajPoint {
             if (applyCuts && fcuts.downstreamTrackCheck(z, zRef)) continue;
             double[] V = swim.swimToPlane(x,y,z,px,py,pz,q,zRef);
 
-            x  = V[0] - shArr[li][1]; // Apply x shift.
-            y  = V[1] - shArr[li][2]; // Apply y shift.
+            x  = V[0] - shArr[li][0]; // Apply x shift.
+            y  = V[1] - shArr[li][1]; // Apply y shift.
             z  = V[2];
             px = V[3];
             py = V[4];
@@ -123,7 +123,7 @@ public class TrajPoint {
             costh = Math.acos(pz/Math.sqrt(px*px+py*py+pz*pz));
 
             // Apply track fiducial cuts.
-            if (applyCuts && fcuts.checkTrajCuts(z, x, y, zRef, costh)) continue;
+            if (applyCuts && fcuts.checkTrajCuts(x, y, z, zRef, costh)) continue;
 
             // Rotate (x,y) to FMT's local coordinate system.
             double xLoc = x*Math.cos(Math.toRadians(phiRef)) + y*Math.sin(Math.toRadians(phiRef));
