@@ -5,6 +5,7 @@ import org.jlab.clas.swimtools.MagFieldsEngine;
 import org.jlab.clas.swimtools.Swim;
 import org.jlab.clas.swimtools.Swimmer;
 
+/** Class in charge of all the swimming through the magnetic field. */
 public class TrkSwim {
     Swim swim;
     Vector3D dir;
@@ -15,7 +16,6 @@ public class TrkSwim {
      *                   * [0] : solenoid magnet scale.
      *                   * [1] : torus magnet scale.
      *                   * [2] : torus magnet shift.
-     * @return Swim instance.
      */
     public TrkSwim(double[] swmSetup, double yaw, double pitch) {
         MagFieldsEngine mf = new MagFieldsEngine();
@@ -26,14 +26,12 @@ public class TrkSwim {
         double x = -Math.sin(Math.toRadians(yaw));
         double y = Math.sin(Math.toRadians(pitch));
         double z = Math.cos(Math.toRadians(yaw))*Math.cos(Math.toRadians(pitch));
-        dir = new Vector3D(x,y,z);
-
-        swim = new Swim();
+        this.dir = new Vector3D(x,y,z);
+        this.swim = new Swim();
     }
 
     /**
      * Translate trajectory using swimmer.
-     * @param swimmer        Swim instance.
      * @param x,y,z,px,py,pz Kinematics to setup swimmer.
      * @param q              Particle's charge.
      * @param zTarget        z plane where to swim.
@@ -41,7 +39,7 @@ public class TrkSwim {
      */
     public double[] swimToPlane(double x, double y, double z, double px, double py, double pz,
             int q, double zTarget) {
-        swim.SetSwimParameters(x,y,z,px,py,pz,q);
-        return swim.SwimToPlaneBoundary(zTarget, dir, 1);
+        swim.SetSwimParameters(x, y, z, px, py, pz, q);
+        return swim.SwimToPlaneBoundary(zTarget, this.dir, 1);
     }
 }

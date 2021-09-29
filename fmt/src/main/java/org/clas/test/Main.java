@@ -4,25 +4,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.jlab.groot.base.GStyle;
-
-import org.clas.analysis.TrkSwim;
 import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.ResolutionAnalysis;
 
+// TODO. FINAL CHECKLIST BEFORE PULL REQUEST.
+//          6 CHECK THAT EVERYTHING IS WELL DOCUMENTED FOLLOWING THE JAVADOC STANDARD.
+//          7 ADD MISSING STUFF FROM ARGUMENTS (CHECK TODOs).
+//          8 MAKE TrajPoint AGNOSTIC TO NUMBER OF FMT LAYERS.
+//          9 PRINT RESULTS INTO FILE INSTEAD OF STDOUT.
+//         10 STANDARDIZE mean_sigma_vs_shifts.ipynb A BIT. EVENTUALLY WE WANT THIS TO BE FROM GROOT.
+//         11 RUN ONE FINAL CHECK ON THE README JUST IN CASE.
+//         12 DELETE fvt-vertexplot BRANCH AND PULL REQUEST fmt-analysis TO master.
+
+/** Main. */
 public class Main {
-    /** Main. */
     public static void main(String[] args) {
-        // === Process input =======================================================================
+        // Process input.
         Map<Character, List<String>> params = new HashMap<>();
         if (IOHandler.parseArgs(args, params)) System.exit(1);
 
         String file = params.get('f').get(0);
         int nEvents = params.get('n') == null ? 0 : Integer.parseInt(params.get('n').get(0));
 
-        // === Setup ===============================================================================
-        setupGroot();
+        // Setup.
+        if (params.get('v') == null) setupGroot();
         double[] swmSetup = new double[3];
         if (params.get('s') == null) {
             swmSetup[0] = Constants.SOLMAGSCALE;
@@ -32,12 +38,10 @@ public class Main {
         else {
             for (int i = 0; i < 3; ++i) swmSetup[i] = Double.parseDouble(params.get('s').get(i));
         }
-        int plotRan = 5; // Plotting range.
-        int fitRan  = 4; // Fitting range.
 
         double[][] shArr = new double[Constants.FMTLAYERS][Constants.NVARS];
         // Update shArr based on alignment info given by user.
-        for (int i = 0; i < shArr.length; ++i) {
+        for (int i = 0; i < Constants.FMTLAYERS; ++i) {
             if (params.get('x') != null) shArr[i][0] = Double.parseDouble(params.get('x').get(i));
             if (params.get('y') != null) shArr[i][1] = Double.parseDouble(params.get('y').get(i));
             if (params.get('z') != null) shArr[i][2] = Double.parseDouble(params.get('z').get(i));
@@ -46,9 +50,8 @@ public class Main {
             if (params.get('Z') != null) shArr[i][5] = Double.parseDouble(params.get('Z').get(i));
         }
         FiducialCuts fCuts = new FiducialCuts();
-        TrkSwim swim = new TrkSwim(swmSetup, shArr[0][4], shArr[0][5]);
 
-        // === Alignment ===========================================================================
+        // Alignment.
         List<Double> testShArr = new ArrayList<Double>();
         if (params.get('d') != null) {
             double inter = Double.parseDouble(params.get('d').get(0));
@@ -62,17 +65,15 @@ public class Main {
         // Print test shifts.
         if (var != null) {
             System.out.printf("SHIFTS TO BE TESTED:\n     %4s :", var);
-            for (int i = 0; i < testShArr.size(); ++i) {
-                System.out.printf(" %5.2f", testShArr.get(i));
-            }
+            for (int i=0; i<testShArr.size(); ++i) System.out.printf(" %5.2f", testShArr.get(i));
             System.out.printf("\n\n");
         }
 
         ResolutionAnalysis resAnls = new ResolutionAnalysis(file, nEvents, shArr, fCuts);
-        resAnls.shiftAnalysis(var, testShArr, plotRan, fitRan, swmSetup);
+        resAnls.shiftAnalysis(var, testShArr, swmSetup);
     }
 
-    /** Do basic groot setup to get fancy plots. */
+    /** Perform a basic groot setup to get fancy plots. */
     public static boolean setupGroot() {
         GStyle.getAxisAttributesX().setTitleFontSize(24);
         GStyle.getAxisAttributesX().setLabelFontSize(18);
@@ -88,7 +89,6 @@ public class Main {
         GStyle.setGraphicsFrameLineWidth(1);
         GStyle.getH1FAttributes().setLineWidth(2);
         GStyle.getH1FAttributes().setOptStat("1111");
-
         return false;
     }
 }

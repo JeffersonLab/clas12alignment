@@ -3,23 +3,26 @@ package org.clas.test;
 /** Class containing constants relevant geometry, cuts, and the program in general. */
 public class Constants {
     // Generic.
+    public static final String DEFVARIATION = "rgf_spring2020"; // Default ccdb variation.
     public static final int    NVARS   = 6;   // Number of variables to be aligned.
     public static final int    NPLOTS  = 6;   // Number of plots to be drawn. Should be a factor of 2.
     public static final int    PLOTRES = 200; // Resolution of 1D and 2D plots.
+    public static final int    PLOTRNG = 5;   // Range for plots in cm.
+    public static final int    FITRNG  = 4;   // Range for the residuals fit in cm.
 
     // Geometry.
-    public static final double FMTINNERRADIUS      = 25;
-    public static final double FMTOUTERRADIUS      = 225;
-    public static final int    FMTLAYERS           = 3;
-    public static final int    FMTREGIONS          = 4;
-    public static final int    FMTNSTRIPS          = 1024;
-    public static final int    DCSECTORS           = 6;
+    public static final double FMTINNERRADIUS      = 25;   // Squared inner radius of each FMT layer.
+    public static final double FMTOUTERRADIUS      = 225;  // Squared outer radius of each FMT layer.
+    public static final int    FMTLAYERS           = 3;    // Number of FMT layers.
+    public static final int    FMTREGIONS          = 4;    // Number of FMT regions.
+    public static final int    FMTNSTRIPS          = 1024; // Number of FMT strips.
     public static final int[]  FMTREGIONSEPARATORS = new int[]{-1, 319, 511, 831, 1023};
+    public static final int    DCSECTORS           = 6;    // Number of DC sectors.
 
     // Default swim parameters.
-    public static final double SOLMAGSCALE         = -0.75;
-    public static final double TORMAGSCALE         = -1.00;
-    public static final double TORMAGSHIFT         =  3.00;
+    public static final double SOLMAGSCALE         = -0.75; // Default solenoid magnet scale.
+    public static final double TORMAGSCALE         = -1.00; // Default torus magnet scale.
+    public static final double TORMAGSHIFT         =  3.00; // Default torus magnet shift.
 
     // Physics cuts.
     public static final double MAXDZ     = 0.05; // Max z distance between cluster and traj point.

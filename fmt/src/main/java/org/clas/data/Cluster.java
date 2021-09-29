@@ -7,6 +7,7 @@ import org.clas.analysis.FiducialCuts;
 import org.clas.test.Constants;
 import org.clas.test.HipoHandler;
 
+/** Class in charge of the Cluster objects and importing clusters from the corresponding bank. */
 public class Cluster {
     private int id;        // Cluster ID.
     private int fmtLyr;    // FMT layer.
@@ -41,7 +42,7 @@ public class Cluster {
      * @param event     Event in question.
      * @param fcuts     FiducialCuts class instance.
      * @param applyCuts Boolean to decide if fiducial cuts should be applied or not.
-     * @return an arraylist of clusters for each FMT layer.
+     * @return An arraylist of clusters for each FMT layer.
      */
     public static ArrayList<Cluster>[] getClusters(DataEvent event, FiducialCuts fcuts,
             boolean applyCuts) {
@@ -49,8 +50,6 @@ public class Cluster {
         DataBank clBank = HipoHandler.getBank(event, "FMT::Clusters");
         if (clBank == null) return null;
 
-        // NOTE. Here it's assumed that there are 3 FMT layers. Needs to be fixed if working with
-        //       the full detector.
         ArrayList[] clusters = new ArrayList[Constants.FMTLAYERS];
         for (int li = 0; li < Constants.FMTLAYERS; ++li) clusters[li] = new ArrayList<Cluster>();
 

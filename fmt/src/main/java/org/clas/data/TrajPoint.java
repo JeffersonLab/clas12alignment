@@ -9,6 +9,7 @@ import org.clas.analysis.TrkSwim;
 import org.clas.test.Constants;
 import org.clas.test.HipoHandler;
 
+/** Class in charge of the Trajectory Point objects and importing them from their hipo bank. */
 public class TrajPoint {
     private int pi;       // Particle index.
     private int id;       // Track index.
@@ -52,7 +53,7 @@ public class TrajPoint {
      * @param minTrjPoints Parameter defining the minimum number of trajectory points to define a
      *                     group. Can be 1, 2, or 3.
      * @param applyCuts    Boolean defining if fiducial cuts should be applied or not.
-     * @return ArrayList of a trio of trajectory points, each on a different layer.
+     * @return ArrayList of an array of trajectory points, each on a different layer.
      */
     public static ArrayList<TrajPoint[]> getTrajPoints(DataEvent event, TrkSwim swim,
             FiducialCuts fcuts, double[] fmtZ, double[] fmtAngle, double[][] shArr,
@@ -82,11 +83,12 @@ public class TrajPoint {
             int si = -1;       // DC sector.
             double costh = -1; // track theta.
 
-            // Use only FMT layers 1, 2, and 3.
+            // Use only FMT detector and valid FMT layers.
             if (detector!=DetectorType.FMT.getDetectorId() || li<0 || li>Constants.FMTLAYERS-1)
                 continue;
 
             // Bank integrity is assumed from this point onward.
+            // TODO. This assumes there are three FMT layers. Fix.
             if (li == 0) trajPoints.add(new TrajPoint[]{null, null, null});
 
             fcuts.increaseTrajCount();
@@ -134,6 +136,7 @@ public class TrajPoint {
         }
 
         // Clean trios.
+        // TODO. This assumes there are three FMT layers. Fix.
         for (int arri=trajPoints.size()-1; arri>=0; --arri) {
             if (minTrjPoints==1) {
                 if (trajPoints.get(arri)[0]!=null) continue;

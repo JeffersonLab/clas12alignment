@@ -14,15 +14,15 @@ import org.clas.test.HipoHandler;
 
 /** Key class of the program, in charge of all alignment tests. */
 public class ResolutionAnalysis {
-    private String infile;      // Input hipo file.
-    private int nEvents;        // Number of events to run.
-    private double[] fmtZ;      // z position of the layers in cm (before shifting).
-    private double[] fmtAngle;  // strip angle in degrees.
-    private double[][] shArr;   // 2D array of shifts to be applied.
-    private double[][] origShArr; // Copy of shArr.
-    private boolean rotXYAlign; // Special setup needed for yaw & pitch alignment.
-    private FiducialCuts fCuts; // FiducialCuts class instance.
-    private TrkSwim swim;       // TrkSwim class instance.
+    private String infile;        // Input hipo file.
+    private int nEvents;          // Number of events to run.
+    private double[] fmtZ;        // z position of the layers in cm (before shifting).
+    private double[] fmtAngle;    // strip angle in degrees.
+    private double[][] shArr;     // 2D array of shifts to be applied.
+    private double[][] origShArr; // Copy of shArr, not supposed to change.
+    private boolean rotXYAlign;   // Special setup needed for yaw & pitch alignment.
+    private FiducialCuts fCuts;   // FiducialCuts class instance.
+    private TrkSwim swim;         // TrkSwim class instance.
 
     /**
      * Class constructor.
@@ -51,7 +51,9 @@ public class ResolutionAnalysis {
         }
 
         // Set geometry parameters by reading from database.
-        DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, "rgf_spring2020");
+        // NOTE. We purposefully don't grab data from the FMT alignment table to avoid confusion.
+        String variation = Constants.DEFVARIATION; // TODO. This should come from program's args.
+        DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, variation);
         String fmtTable = "/geometry/fmt/fmt_layer_noshim";
         dbProvider.loadTable(fmtTable);
 
@@ -73,9 +75,7 @@ public class ResolutionAnalysis {
         }
         avgRotXY[0] /= Constants.FMTLAYERS;
         avgRotXY[1] /= Constants.FMTLAYERS;
-
         this.swim = new TrkSwim(swmSetup, avgRotXY[0], avgRotXY[1]);
-
         return 0;
     }
 
@@ -83,12 +83,10 @@ public class ResolutionAnalysis {
      * Run perturbatory shifts analysis.
      * @param var      Variable to which shifts are applied.
      * @param tShArr   List of shifts to try.
-     * @param r        Plot range.
-     * @param f        Gaussian fit range.
      * @param swmSetup Setup for initializing the TrkSwim class.
-     * @return status int.
+     * @return Status int.
      */
-    public int shiftAnalysis(String var, List<Double> tShArr, int r, int f, double[] swmSetup) {
+    public int shiftAnalysis(String var, List<Double> tShArr, double[] swmSetup) {
         if (var != null && var.equals("rXY")) {
             this.rotXYAlign = true;
             this.fCuts.setRotXYAlign(true);
@@ -99,17 +97,16 @@ public class ResolutionAnalysis {
         int cn2 = (var == null || var.equals("dZ") || var.equals("rZ")) ? 1 : cn1;
 
         int[] pos = new int[]{-1, -1};
-        if      (var == null)       {}
+        if      (var == null)       {} // Not a mistake! --- just making sure var exists.
         else if (var.equals("dXY")) {pos[0] = 0; pos[1] = 1;}
         else if (var.equals("dZ" )) {pos[0] = 2;}
         else if (var.equals("rXY")) {pos[0] = 3; pos[1] = 4;}
         else if (var.equals("rZ" )) {pos[0] = 5;}
 
-        DataGroup[][] dgFMT = HipoHandler.createResDataGroups(Constants.FMTLAYERS, cn1, cn2, r);
+        DataGroup[][] dgFMT = HipoHandler.createResDataGroups(cn1, cn2);
 
         // 4 Params for each layer and tested shift: mean, sigma, sigma error, and chi^2.
         double[][][][] fitParamsArr = new double[4][Constants.FMTLAYERS][cn1][cn2];
-
         if (!this.rotXYAlign) setupSwim(swmSetup);
 
         // Run.
@@ -118,7 +115,7 @@ public class ResolutionAnalysis {
 
         for (int ci1 = 0; ci1 < cn1; ++ci1) {
             for (int ci2 = 0; ci2 < cn2; ++ci2) {
-                // Setup.
+                // Run setup.
                 for (int li = 0; li < Constants.FMTLAYERS; ++li) {
                     if (pos[0]!=-1) this.shArr[li][pos[0]] =
                             this.origShArr[li][pos[0]]+tShArr.get(ci1);
@@ -139,7 +136,7 @@ public class ResolutionAnalysis {
                 System.out.printf("\n");
 
                 // Execute run.
-                runAnalysis(reader, dgFMT[ci1][ci2], f);
+                runAnalysis(reader, dgFMT[ci1][ci2]);
 
                 // Get fit quality assessment.
                 for (int li = 0; li < Constants.FMTLAYERS; ++li) {
@@ -151,6 +148,7 @@ public class ResolutionAnalysis {
                 }
 
                 // Print cuts data to stdout.
+                // TODO. This should come from program's args.
                 this.fCuts.printCutsInfo(); // NOTE. Change to printDetailedCutsInfo for details.
             }
         }
@@ -181,7 +179,6 @@ public class ResolutionAnalysis {
                 }
                 fitStr[fi].append("\n])\n");
                 System.out.printf("%s", fitStr[fi].toString());
-                // TODO. Figure out where the wrong reference to the actual fit parameters is.
             }
         }
         if (var == null) HipoHandler.drawResPlot(dgFMT[0][0], "Residuals");
@@ -193,12 +190,11 @@ public class ResolutionAnalysis {
      * Generic function for running analysis, called by all others.
      * @param reader HipoDataSource to stream events from source hipo file.
      * @param dg     DataGroup where analysis data is stored.
-     * @param f      Range for the gaussian fit.
-     * @return status int.
+     * @return Status int.
      */
-    private int runAnalysis(HipoDataSource reader, DataGroup dg, int f) {
-        int ei = 0; // Event number.
-        reader.gotoEvent(0);
+    private int runAnalysis(HipoDataSource reader, DataGroup dg) {
+        int ei = 0;          // Event number.
+        reader.gotoEvent(0); // Reset reader counter.
 
         // Loop through events.
         while (reader.hasEvent()) {
@@ -235,7 +231,7 @@ public class ResolutionAnalysis {
 
         // Fit residual plots
         for (int li = 1; li<= Constants.FMTLAYERS; ++li) {
-            HipoHandler.fitRes(dg.getH1F("hi_l"+li), dg.getF1D("fit_l"+li), f);
+            HipoHandler.fitRes(dg.getH1F("hi_l"+li), dg.getF1D("fit_l"+li));
         }
 
         return 0;

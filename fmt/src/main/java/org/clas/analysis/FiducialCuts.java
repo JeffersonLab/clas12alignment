@@ -3,6 +3,7 @@ package org.clas.analysis;
 import java.util.Arrays;
 import org.clas.test.Constants;
 
+/** Class in charge of applying fiducial cuts and counting cuts made. */
 public class FiducialCuts {
     boolean rotXYAlign = false; // rotXY alignment needs less cuts than other types of alignment.
     int[] trsc = new int[5];    // cut trajectory points counter.
@@ -87,11 +88,12 @@ public class FiducialCuts {
         return false;
     }
 
+    /** Compute sum of array to avoid extra notation. */
     private double calcSum(int[] arr) {
         return (double) arr[1] + arr[2] + arr[3] + arr[4];
     }
 
-    /** Print basic cuts information */
+    /** Print basic cuts information. */
     public int printCutsInfo() {
         System.out.printf("  Trajs lost    : %5.2f%%\n", 100 * calcSum(trsc)/trsc[0]);
         System.out.printf("  Clusters lost : %5.2f%%\n", 100 * calcSum(clsc)/clsc[0]);
@@ -100,8 +102,7 @@ public class FiducialCuts {
 
     /** Print detailed applied cuts information. */
     public int printDetailedCutsInfo() {
-        int trscsum = trsc[1] + trsc[2] + trsc[3] + trsc[4];
-        int clscsum = clsc[1] + clsc[2] + clsc[3] + clsc[4];
+        double trscsum = calcSum(trsc);
         System.out.printf("\n");
         System.out.printf("            trajs too downstream │ %8d (%5.2f%%)   │\n",
                 trsc[1], 100 * ((double) trsc[1]) / trsc[0]);
@@ -114,7 +115,9 @@ public class FiducialCuts {
         System.out.printf("             TOTAL TRAJS DROPPED │ %8d / %8d │\n",
                 trscsum, trsc[0]);
         System.out.printf("                               %% │ %5.2f%%              │\n",
-                100 * ((double) trscsum) / trsc[0]);
+                100 * trscsum / trsc[0]);
+
+        double clscsum = calcSum(clsc);
         System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
         System.out.printf("clusters with wrong strip number │ %8d (%5.2f%%)   │\n",
                 clsc[1], 100 * ((double) clsc[1]) / clsc[0]);
@@ -127,8 +130,9 @@ public class FiducialCuts {
         System.out.printf("          TOTAL CLUSTERS DROPPED │ %8d / %8d │\n",
                 clscsum, clsc[0]);
         System.out.printf("                               %% │ %5.2f%%              │\n",
-                100 * ((double) clscsum) / clsc[0]);
+                100 * clscsum / clsc[0]);
         System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
+
         return 0;
     }
 }
