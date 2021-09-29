@@ -10,6 +10,7 @@ import org.jlab.groot.math.F1D;
 import org.clas.data.Cluster;
 import org.clas.data.TrajPoint;
 import org.clas.test.Constants;
+import org.clas.test.IOHandler; // NOTE. It would be cleaner to keep this class exlusive to Main.
 import org.clas.test.HipoHandler;
 
 /** Key class of the program, in charge of all alignment tests. */
@@ -156,33 +157,8 @@ public class ResolutionAnalysis {
         }
         reader.close();
 
-        // Print alignment data and draw plots. TODO. Print into file instead of stdout.
-        System.out.printf("\nshifts = [");
-        for (int ci = 0; ci < cn1; ++ci) System.out.printf(" %5.2f,", tShArr.get(ci));
-        System.out.printf("]\n");
-        for (int li = 0; li < Constants.FMTLAYERS; ++li) {
-            System.out.printf("# LAYER %1d\n", li+1);
-            StringBuilder[] fitStr = new StringBuilder[4];
-            fitStr[0] = new StringBuilder();
-            fitStr[1] = new StringBuilder();
-            fitStr[2] = new StringBuilder();
-            fitStr[3] = new StringBuilder();
-            fitStr[0].append("lyr" + (li+1) + "_mean = np.array([");
-            fitStr[1].append("lyr" + (li+1) + "_sigma = np.array([");
-            fitStr[2].append("lyr" + (li+1) + "_sigmaerr = np.array([");
-            fitStr[3].append("lyr" + (li+1) + "_chi2 = np.array([");
-
-            for (int fi = 0; fi < 4; ++fi) {
-                for (int ci1 = 0; ci1 < cn1; ++ci1) {
-                    fitStr[fi].append("\n        [");
-                    for (int ci2 = 0; ci2 < cn2; ++ci2)
-                        fitStr[fi].append(String.format("%9.5f, ", fitParamsArr[fi][li][ci1][ci2]));
-                    fitStr[fi].append("],");
-                }
-                fitStr[fi].append("\n])\n");
-                System.out.printf("%s", fitStr[fi].toString());
-            }
-        }
+        // Print alignment data and draw plots.
+        if (IOHandler.printAlignmentData(tShArr, fitParamsArr, cn1, cn2)) return 1;
         if (var == null) HipoHandler.drawResPlot(dgFMT[0][0], "Residuals");
 
         return 0;

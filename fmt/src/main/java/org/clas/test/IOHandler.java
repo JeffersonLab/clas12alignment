@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 
 /** Handler of all input-output of the program. */
 public final class IOHandler {
@@ -159,6 +163,48 @@ public final class IOHandler {
 
         return false;
     }
+
+    /** Print final alignment information to output file. */
+    public static boolean printAlignmentData(List<Double> tShArr, double[][][][] params,
+            int cn1, int cn2) {
+        // Create and write into file. NOTE. Ovewrites file if it already exists.
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream("out.txt"), "utf-8"))) {
+            writer.write("shifts = [");
+            for (int ci = 0; ci < cn1; ++ci)
+                writer.write(String.format(" %5.2f,", tShArr.get(ci)));
+            writer.write("]\n");
+            for (int li = 0; li < Constants.FMTLAYERS; ++li) {
+                writer.write(String.format("# LAYER %1d\n", li+1));
+                StringBuilder[] fitStr = new StringBuilder[4];
+                for (int fi = 0; fi < 4; ++ fi) fitStr[fi] = new StringBuilder();
+                fitStr[0].append("lyr" + (li+1) + "_mean = np.array([");
+                fitStr[1].append("lyr" + (li+1) + "_sigma = np.array([");
+                fitStr[2].append("lyr" + (li+1) + "_sigmaerr = np.array([");
+                fitStr[3].append("lyr" + (li+1) + "_chi2 = np.array([");
+
+                for (int fi = 0; fi < 4; ++fi) {
+                    for (int ci1 = 0; ci1 < cn1; ++ci1) {
+                        fitStr[fi].append("\n        [");
+                        for (int ci2 = 0; ci2 < cn2; ++ci2)
+                            fitStr[fi].append(String.format("%9.5f, ", params[fi][li][ci1][ci2]));
+                        fitStr[fi].append("],");
+                    }
+                    fitStr[fi].append("\n])\n");
+                    writer.write(fitStr[fi].toString());
+                }
+            }
+        }
+        catch (Exception e) {
+            // NOTE. This is super dirty and should be improved upon but I'm no expert on file
+            //       handling on java. Pull requests are welcome!
+            System.err.printf("Caught exception while writing output file!\n");
+            return true;
+        }
+
+        return false;
+    }
+
 
     /** Prints all parameters. Useful for debugging. */
     private int printParams(Map<Character, List<String>> params) {
