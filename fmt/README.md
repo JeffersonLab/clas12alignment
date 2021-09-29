@@ -1,10 +1,17 @@
 # FMT Analysis
 Code used for the FMT detector alignment using residual analysis. A residual is the distance between an FMT cluster of hits and a DC track.
 
-### Setup
-Some setting up is required to run the program. The `run.sh` file handles the general setup, including the torus and solenoid maps to be used, the location of maven, of coatjava, etc. After this initial setup is done, simply run the script without giving it any parameters to get the programs' usage and continue from there.
+## Setup
+Some setting up is required to run the program. The `run.sh` file requires some tuning, which includes
+* Name of the torus and solenoid maps to be used.
+* Location in disk of maven and coatjava.
+After this initial setup is done, simply run the script without giving it any parameters to get the programs' usage and continue from there.
 
-### Usage
+After successfully running, the file `out.txt` should have been generated in the root folder (`fmt`). The residuals distribution means, sigmas, sigma errors, and chi^2 are written into this file. To quickly compare results with different shifts, copy the contents of this file into the `ipython` notebook contained in the root folder (`plot_results.ipynb`) in its respective location and execute to get a fancy plot which you can use to select the centered mean (for the case of *dXY* and *rXY* alignment) or the minimum sigma (for the case of *dZ* and *rZ*).
+
+Note that per-layer XY alignment of FMT is impossible with the current conditions, so the notebook gets the mean of the three layers distribution.
+
+## Usage
 ```
 Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]
                         [-s --swim]
@@ -13,7 +20,7 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]
   * file      : hipo input file.
   * nevents   : number of events to run. If unspecified, runs all events in
                 input file.
-  * var       : variable to be aligned. Can be dXY, dZ, rXY, or rZ.
+  * var       : variable to be aligned. Can be *dXY*, *dZ*, *rXY*, or *rZ*.
   * delta (2) : [0] delta between nominal position and position to be tested.
                 [1] interval for each tested value between <nominal - delta>
                     and <nominal + delta>.
@@ -32,7 +39,7 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]
   * ry    (3) : y rotation for each FMT layer.
   * rz    (3) : z rotation for each FMT layer.
 
-For example, if <var> == 'dZ', <delta> == '0.2 0.1', and <dz> == 0.5, then the
+For example, if <var> == '*dZ*', <delta> == '0.2 0.1', and <dz> == 0.5, then the
 values tested for z are:
 
         (0.3, 0.4, 0.5, 0.6, 0.7).
@@ -43,23 +50,23 @@ layers. If no argument is specified, a plot showing the residuals is shown.
 NOTE. All measurements are in cm, while the ccdb works in mm.
 ```
 
-### Useful Information
-###### Reconstruction:
+## Useful Information
+### Reconstruction:
 * Currently, the FMT engine handles FMT data.
 * The engine grabs the DC tracks and reconstructs them, updating them with the FMT cluster data.
 * Reconstruction works in a similar fashion to the DC's:
     * Clusters are made from the hits via a simple Cluster Finding algorithm.
     * Crosses are constructed by grouping clusters from the six different FMT layers.
-        * **NOTE**. This is not implemented for the RG-F run, where only three FMT layers were installed.
     * The DC track is updated with these crosses via a Kalman Filter algorithm.
 
-###### Plotting Residuals:
+**NOTE**. Crosses are not implemented for the RG-F run, where only three FMT layers were installed.
+
+### Plotting Residuals:
 * Residuals are the difference between the DC track and the FMT clusters in y in the FMT layer's local coordinate system.
 * Looking at the residuals gives us an idea of how to fix misalignments in the geometry.
 
-###### Comparing results:
-* For deltaZ and rotZ alignment, it is ideal to use the sigma of the residuals distribution, fixing as much as sigmaError allows.
-* For deltaXY and rotXY alignment, the mean of the residuals distribution can be used, fixing as much as sigma allows.
-* To visually compare the mean or sigma of different shifts, a jupyter notebook file is provided in `/jnotebook_plots/mean_sigma_vs_shifts.ipynb`. The file should be easy to understand and run, it simply provides two functions to do 1D scatter plots and 2D heatmaps to see where the minimum of the distributions lie.
+### Comparing results:
+* For *dZ* and *rZ* alignment, it is ideal to use the sigma of the residuals distribution, fixing as much as sigmaError allows.
+* For *dXY* and *rXY* alignment, the mean of the residuals distribution can be used, fixing as much as sigma allows.
 
 **NOTE**. This program was designed to work with Coatjava 6.5.8. Different versions may cause errors or weird behavior.

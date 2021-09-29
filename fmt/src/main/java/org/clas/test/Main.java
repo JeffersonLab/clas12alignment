@@ -9,8 +9,8 @@ import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.ResolutionAnalysis;
 
 // TODO. FINAL CHECKLIST BEFORE PULL REQUEST.
-//         11 RUN ONE FINAL CHECK ON THE README JUST IN CASE.
-//         12 DELETE fvt-vertexplot BRANCH AND PULL REQUEST fmt-analysis TO master.
+//         12 MAKE THE IPYTHON NOTEBOOK AGNOSTIC TO NUMBER OF FMT LAYERS.
+//         13 DELETE fvt-vertexplot BRANCH AND PULL REQUEST fmt-analysis TO master.
 
 /** Main. */
 public class Main {
