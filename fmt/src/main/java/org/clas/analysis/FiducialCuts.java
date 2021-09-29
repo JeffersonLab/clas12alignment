@@ -89,20 +89,20 @@ public class FiducialCuts {
     }
 
     /** Compute sum of array to avoid extra notation. */
-    private double calcSum(int[] arr) {
-        return (double) arr[1] + arr[2] + arr[3] + arr[4];
+    private int calcSum(int[] arr) {
+        return arr[1] + arr[2] + arr[3] + arr[4];
     }
 
     /** Print basic cuts information. */
     public int printCutsInfo() {
-        System.out.printf("  Trajs lost    : %5.2f%%\n", 100 * calcSum(trsc)/trsc[0]);
-        System.out.printf("  Clusters lost : %5.2f%%\n", 100 * calcSum(clsc)/clsc[0]);
+        System.out.printf("  Trajs lost    : %5.2f%%\n", 100 * ((double) calcSum(trsc))/trsc[0]);
+        System.out.printf("  Clusters lost : %5.2f%%\n", 100 * ((double) calcSum(clsc))/clsc[0]);
         return 0;
     }
 
     /** Print detailed applied cuts information. */
     public int printDetailedCutsInfo() {
-        double trscsum = calcSum(trsc);
+        int trscsum = calcSum(trsc);
         System.out.printf("\n");
         System.out.printf("            trajs too downstream │ %8d (%5.2f%%)   │\n",
                 trsc[1], 100 * ((double) trsc[1]) / trsc[0]);
@@ -115,9 +115,9 @@ public class FiducialCuts {
         System.out.printf("             TOTAL TRAJS DROPPED │ %8d / %8d │\n",
                 trscsum, trsc[0]);
         System.out.printf("                               %% │ %5.2f%%              │\n",
-                100 * trscsum / trsc[0]);
+                100 * ((double) trscsum) / trsc[0]);
 
-        double clscsum = calcSum(clsc);
+        int clscsum = calcSum(clsc);
         System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
         System.out.printf("clusters with wrong strip number │ %8d (%5.2f%%)   │\n",
                 clsc[1], 100 * ((double) clsc[1]) / clsc[0]);
@@ -130,7 +130,7 @@ public class FiducialCuts {
         System.out.printf("          TOTAL CLUSTERS DROPPED │ %8d / %8d │\n",
                 clscsum, clsc[0]);
         System.out.printf("                               %% │ %5.2f%%              │\n",
-                100 * clscsum / clsc[0]);
+                100 * ((double) clscsum) / clsc[0]);
         System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
 
         return 0;

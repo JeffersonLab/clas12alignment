@@ -16,6 +16,7 @@ import org.clas.test.HipoHandler;
 public class ResolutionAnalysis {
     private String infile;        // Input hipo file.
     private int nEvents;          // Number of events to run.
+    private int cutsInfo;         // Int describing how much info on the cuts should be printed.
     private double[] fmtZ;        // z position of the layers in cm (before shifting).
     private double[] fmtAngle;    // strip angle in degrees.
     private double[][] shArr;     // 2D array of shifts to be applied.
@@ -28,41 +29,42 @@ public class ResolutionAnalysis {
      * Class constructor.
      * @param f      Input hipo file.
      * @param n      Number of events to run. Set to 0 to run all events in file.
+     * @param c      Amount of information on the applied cuts that should be printed.
      * @param shArr  Array of arrays describing all the shifts applied.
      * @param fCuts  FiducialCuts class instance.
+     * @param var    CCDB variation to be used.
      */
-    public ResolutionAnalysis(String f, int n, double[][] shArr, FiducialCuts fCuts) {
+    public ResolutionAnalysis(String f, int n, int c, double[][] shArr, FiducialCuts fCuts,
+            String var) {
         // Sanitize input.
         if (shArr.length != Constants.FMTLAYERS || shArr[0].length != Constants.NVARS) {
             System.err.printf("[ERROR] shArr is malformed!\n");
             System.exit(1);
         }
 
-        this.fCuts     = fCuts;
         this.infile    = f;
         this.nEvents   = n;
-        this.shArr     = new double[Constants.FMTLAYERS][Constants.NVARS];
+        this.cutsInfo  = c;
+        this.fCuts     = fCuts;
         this.origShArr = new double[Constants.FMTLAYERS][Constants.NVARS];
+        this.shArr     = new double[Constants.FMTLAYERS][Constants.NVARS];
         for (int li = 0; li < Constants.FMTLAYERS; ++li) {
             for (int vi = 0; vi < Constants.NVARS; ++vi) {
-                this.shArr[li][vi]     = shArr[li][vi];
                 this.origShArr[li][vi] = shArr[li][vi];
+                this.shArr[li][vi]     = shArr[li][vi];
             }
         }
 
         // Set geometry parameters by reading from database.
         // NOTE. We purposefully don't grab data from the FMT alignment table to avoid confusion.
-        String variation = Constants.DEFVARIATION; // TODO. This should come from program's args.
-        DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, variation);
-        String fmtTable = "/geometry/fmt/fmt_layer_noshim";
-        dbProvider.loadTable(fmtTable);
-
         fmtZ     = new double[Constants.FMTLAYERS]; // z position of the layers in cm.
         fmtAngle = new double[Constants.FMTLAYERS]; // strip angle in deg.
 
+        DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, var);
+        dbProvider.loadTable(Constants.FMTTABLELOC);
         for (int li = 0; li < Constants.FMTLAYERS; li++) {
-            fmtZ[li]     = dbProvider.getDouble(fmtTable+"/Z",    li)/10;
-            fmtAngle[li] = dbProvider.getDouble(fmtTable+"/Angle",li);
+            fmtZ[li]     = dbProvider.getDouble(Constants.FMTTABLELOC+"/Z",    li)/10;
+            fmtAngle[li] = dbProvider.getDouble(Constants.FMTTABLELOC+"/Angle",li);
         }
     }
 
@@ -105,7 +107,7 @@ public class ResolutionAnalysis {
 
         DataGroup[][] dgFMT = HipoHandler.createResDataGroups(cn1, cn2);
 
-        // 4 Params for each layer and tested shift: mean, sigma, sigma error, and chi^2.
+        // Four params for each layer and tested shift: mean, sigma, sigma error, and chi^2.
         double[][][][] fitParamsArr = new double[4][Constants.FMTLAYERS][cn1][cn2];
         if (!this.rotXYAlign) setupSwim(swmSetup);
 
@@ -148,8 +150,8 @@ public class ResolutionAnalysis {
                 }
 
                 // Print cuts data to stdout.
-                // TODO. This should come from program's args.
-                this.fCuts.printCutsInfo(); // NOTE. Change to printDetailedCutsInfo for details.
+                if      (this.cutsInfo == 1) this.fCuts.printCutsInfo();
+                else if (this.cutsInfo == 2) this.fCuts.printDetailedCutsInfo();
             }
         }
         reader.close();

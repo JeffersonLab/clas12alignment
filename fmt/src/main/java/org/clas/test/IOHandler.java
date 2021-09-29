@@ -12,7 +12,7 @@ public final class IOHandler {
     // No global static classes are allowed in java so this is the closest second...
     private IOHandler() {}
 
-    private static Set<Character> L1ARGS = Set.of('n', 'v');
+    private static Set<Character> L1ARGS = Set.of('c', 'n', 'v', 'V');
     private static Set<Character> L2ARGS = Set.of('d');
     private static Set<Character> L3ARGS = Set.of('s', 'x', 'y', 'z', 'X', 'Y', 'Z');
     private static Map<String, Character> argmap;
@@ -21,8 +21,10 @@ public final class IOHandler {
     private static boolean initArgmap() {
         argmap = new HashMap<>();
         for (char argname : L1ARGS) {
-            if      (argname == 'n') argmap.put("--nevents", 'n');
-            else if (argname == 'v') argmap.put("--var",     'v');
+            if      (argname == 'c') argmap.put("--cutsinfo",  'c');
+            else if (argname == 'n') argmap.put("--nevents",   'n');
+            else if (argname == 'v') argmap.put("--var",       'v');
+            else if (argname == 'V') argmap.put("--variation", 'V');
             else return true; // Programmer error.
         }
         for (char argname : L2ARGS) {
@@ -46,7 +48,7 @@ public final class IOHandler {
     private static boolean usage() {
         System.out.printf("\n");
         System.out.printf("Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]\n");
-        System.out.printf("                        [-s --swim]\n");
+        System.out.printf("                        [-s --swim] [-c --cutsinfo] [-V --variation]\n");
         System.out.printf("                        [-x --dx] [-y --dy] [-z --dz]\n");
         System.out.printf("                        [-X --rx] [-Y --ry] [-Z --rz]\n");
         System.out.printf("  * file      : hipo input file.\n");
@@ -62,6 +64,11 @@ public final class IOHandler {
         System.out.printf("                [0] Solenoid magnet scale.\n");
         System.out.printf("                [1] Torus magnet scale.\n");
         System.out.printf("                [2] Torus magnet shift.\n");
+        System.out.printf("  * cutsinfo  : int describing how much info on the cuts should be\n");
+        System.out.printf("                printed. 0 is no info, 1 is minimal, 2 is detailed.\n");
+        System.out.printf("                Default is 1.\n");
+        System.out.printf("  * variation : CCDB variation to be used. Default is\n");
+        System.out.printf("                ``rgf_spring2020''.\n");
         System.out.printf("  * dx    (3) : x shift for each FMT layer.\n");
         System.out.printf("  * dy    (3) : y shift for each FMT layer.\n");
         System.out.printf("  * dz    (3) : z shift for each FMT layer.\n");
@@ -97,7 +104,7 @@ public final class IOHandler {
 
     /** Arguments parser. Arguments are detailed in usage(). */
     public static boolean parseArgs(String[] args, Map<Character, List<String>> params) {
-        // NOTE. Better error messages here would be cool, but not necessary atm.
+        // NOTE. Better error messages here would be cool, but not strictly necessary at the moment.
         if (initArgmap()) return true;
         if (args.length < 1) return usage();
 
@@ -134,13 +141,13 @@ public final class IOHandler {
         // Check that args are of correct type.
         if (params.get('f') == null) return usage();
         if (!params.get('f').get(0).endsWith(".hipo")) return usage();
-        // NOTE. Maybe we should check if 'f' exists.
         for (Map.Entry<Character, List<String>> entry : params.entrySet()) {
             Character    key = entry.getKey();
             List<String> vals = entry.getValue();
             if (vals.size() == 0) return usage();
             for (String val : vals) {
                 if (val == null) return usage();
+                if (key.equals('c') && checkInt(val)) return usage();
                 if (key.equals('n') && checkInt(val)) return usage();
                 if (key.equals('v') && (!val.equals("dXY") && !val.equals("dZ")
                                      && !val.equals("rXY") && !val.equals("rZ"))) return usage();

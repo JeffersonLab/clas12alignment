@@ -9,11 +9,9 @@ import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.ResolutionAnalysis;
 
 // TODO. FINAL CHECKLIST BEFORE PULL REQUEST.
-//          6 CHECK THAT EVERYTHING IS WELL DOCUMENTED FOLLOWING THE JAVADOC STANDARD.
-//          7 ADD MISSING STUFF FROM ARGUMENTS (CHECK TODOs).
 //          8 MAKE TrajPoint AGNOSTIC TO NUMBER OF FMT LAYERS.
 //          9 PRINT RESULTS INTO FILE INSTEAD OF STDOUT.
-//         10 STANDARDIZE mean_sigma_vs_shifts.ipynb A BIT. EVENTUALLY WE WANT THIS TO BE FROM GROOT.
+//         10 STANDARDIZE mean_sigma_vs_shifts.ipynb A BIT AND UPDATE README TO EXPLAIN IT.
 //         11 RUN ONE FINAL CHECK ON THE README JUST IN CASE.
 //         12 DELETE fvt-vertexplot BRANCH AND PULL REQUEST fmt-analysis TO master.
 
@@ -28,6 +26,7 @@ public class Main {
         int nEvents = params.get('n') == null ? 0 : Integer.parseInt(params.get('n').get(0));
 
         // Setup.
+        String var = params.get('v') == null ? null : params.get('v').get(0);
         if (params.get('v') == null) setupGroot();
         double[] swmSetup = new double[3];
         if (params.get('s') == null) {
@@ -38,6 +37,8 @@ public class Main {
         else {
             for (int i = 0; i < 3; ++i) swmSetup[i] = Double.parseDouble(params.get('s').get(i));
         }
+        String ccdbVar = params.get('V') == null ? Constants.DEFVARIATION : params.get('V').get(0);
+        int cutsInfo   = params.get('c') == null ? 1 : Integer.parseInt(params.get('c').get(0));
 
         double[][] shArr = new double[Constants.FMTLAYERS][Constants.NVARS];
         // Update shArr based on alignment info given by user.
@@ -60,8 +61,6 @@ public class Main {
         }
         else testShArr.add(0.0);
 
-        String var = params.get('v') == null ? null : params.get('v').get(0);
-
         // Print test shifts.
         if (var != null) {
             System.out.printf("SHIFTS TO BE TESTED:\n     %4s :", var);
@@ -69,7 +68,8 @@ public class Main {
             System.out.printf("\n\n");
         }
 
-        ResolutionAnalysis resAnls = new ResolutionAnalysis(file, nEvents, shArr, fCuts);
+        ResolutionAnalysis resAnls =
+                new ResolutionAnalysis(file, nEvents, cutsInfo, shArr, fCuts, ccdbVar);
         resAnls.shiftAnalysis(var, testShArr, swmSetup);
     }
 

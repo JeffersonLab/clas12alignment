@@ -4,6 +4,7 @@ package org.clas.test;
 public class Constants {
     // Generic.
     public static final String DEFVARIATION = "rgf_spring2020"; // Default ccdb variation.
+    public static final String FMTTABLELOC  = "/geometry/fmt/fmt_layer_noshim";
     public static final int    NVARS   = 6;   // Number of variables to be aligned.
     public static final int    NPLOTS  = 6;   // Number of plots to be drawn. Should be a factor of 2.
     public static final int    PLOTRES = 200; // Resolution of 1D and 2D plots.

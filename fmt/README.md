@@ -22,6 +22,9 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]
                 [0] Solenoid magnet scale.
                 [1] Torus magnet scale.
                 [2] Torus magnet shift.
+  * cutsinfo  : int describing how much info on the cuts should be printed. 0
+                is no info, 1 is minimal, 2 is detailed. Default is 1.
+  * variation : CCDB variation to be used. Default is ``rgf_spring2020''.
   * dx    (3) : x shift for each FMT layer.
   * dy    (3) : y shift for each FMT layer.
   * dz    (3) : z shift for each FMT layer.
