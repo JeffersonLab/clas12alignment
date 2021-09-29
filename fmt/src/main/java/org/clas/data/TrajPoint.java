@@ -74,22 +74,25 @@ public class TrajPoint {
         ArrayList<TrajPoint[]> trajPoints = new ArrayList<TrajPoint[]>();
 
         // Loop through trajectory points.
-        for (int trji=0; trji<trjBank.rows(); trji++) {
+        for (int trji=0; trji<trjBank.rows(); ++trji) {
             // Load trajectory variables.
             int detector = trjBank.getByte("detector", trji);
-            int id = trjBank.getShort("index", trji);
-            int li = trjBank.getByte("layer", trji)-1;
-            int pi = trjBank.getShort("pindex", trji);
-            int si = -1;       // DC sector.
+            int id  = trjBank.getShort("index", trji);
+            int lyr = trjBank.getByte("layer", trji)-1;
+            int pi  = trjBank.getShort("pindex", trji);
+            int si  = -1;       // DC sector.
             double costh = -1; // track theta.
 
             // Use only FMT detector and valid FMT layers.
-            if (detector!=DetectorType.FMT.getDetectorId() || li<0 || li>Constants.FMTLAYERS-1)
+            if (detector!=DetectorType.FMT.getDetectorId() || lyr<0 || lyr>Constants.FMTLAYERS-1)
                 continue;
 
             // Bank integrity is assumed from this point onward.
-            // TODO. This assumes there are three FMT layers. Fix.
-            if (li == 0) trajPoints.add(new TrajPoint[]{null, null, null});
+            if (lyr == 0) {
+                trajPoints.add(new TrajPoint[Constants.FMTLAYERS]);
+                for (int li = 0; li < Constants.FMTLAYERS; ++li)
+                    trajPoints.get(trajPoints.size()-1)[li] = null;
+            }
 
             fcuts.increaseTrajCount();
 
@@ -99,8 +102,8 @@ public class TrajPoint {
             }
 
             // Get FMT layer's z coordinate and strips angle.
-            double zRef   = fmtZ[li]     + shArr[li][2]; // Apply z shift.
-            double phiRef = fmtAngle[li] - shArr[li][5]; // Apply phi shift.
+            double zRef   = fmtZ[lyr]     + shArr[lyr][2]; // Apply z shift.
+            double phiRef = fmtAngle[lyr] - shArr[lyr][5]; // Apply phi shift.
 
             // Get particle's kinematics.
             double x  = (double) ptcBank.getFloat("vx", pi);
@@ -114,8 +117,8 @@ public class TrajPoint {
             if (applyCuts && fcuts.downstreamTrackCheck(z, zRef)) continue;
             double[] V = swim.swimToPlane(x,y,z,px,py,pz,q,zRef);
 
-            x  = V[0] - shArr[li][0]; // Apply x shift.
-            y  = V[1] - shArr[li][1]; // Apply y shift.
+            x  = V[0] - shArr[lyr][0]; // Apply x shift.
+            y  = V[1] - shArr[lyr][1]; // Apply y shift.
             z  = V[2];
             px = V[3];
             py = V[4];
@@ -131,30 +134,16 @@ public class TrajPoint {
             double xLoc = x*Math.cos(Math.toRadians(phiRef)) + y*Math.sin(Math.toRadians(phiRef));
             double yLoc = y*Math.cos(Math.toRadians(phiRef)) - x*Math.sin(Math.toRadians(phiRef));
 
-            trajPoints.get(trajPoints.size()-1)[li] =
-                    new TrajPoint(pi, id, li, si, z, xLoc, yLoc, costh);
+            trajPoints.get(trajPoints.size()-1)[lyr] =
+                    new TrajPoint(pi, id, lyr, si, z, xLoc, yLoc, costh);
         }
 
         // Clean trios.
-        // TODO. This assumes there are three FMT layers. Fix.
-        for (int arri=trajPoints.size()-1; arri>=0; --arri) {
-            if (minTrjPoints==1) {
-                if (trajPoints.get(arri)[0]!=null) continue;
-                if (trajPoints.get(arri)[1]!=null) continue;
-                if (trajPoints.get(arri)[2]!=null) continue;
-            }
-            else if (minTrjPoints==2) {
-                if (trajPoints.get(arri)[0]!=null && trajPoints.get(arri)[1]!=null) continue;
-                if (trajPoints.get(arri)[1]!=null && trajPoints.get(arri)[2]!=null) continue;
-                if (trajPoints.get(arri)[2]!=null && trajPoints.get(arri)[0]!=null) continue;
-            }
-            else if (minTrjPoints==3) {
-                if (trajPoints.get(arri)[0]!=null
-                        && trajPoints.get(arri)[1]!=null
-                        && trajPoints.get(arri)[2]!=null)
-                    continue;
-            }
-
+        for (int arri = trajPoints.size()-1; arri >= 0; --arri) {
+            int count = 0;
+            for (int li = 0; li < Constants.FMTLAYERS; ++li)
+                if (trajPoints.get(arri)[li] != null) count++;
+            if (count >= minTrjPoints) continue;
             trajPoints.remove(arri);
         }
 
