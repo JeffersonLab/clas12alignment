@@ -174,20 +174,20 @@ public final class IOHandler {
             for (int ci = 0; ci < cn1; ++ci)
                 writer.write(String.format(" %5.2f,", tShArr.get(ci)));
             writer.write("]\n");
-            for (int li = 0; li < Constants.FMTLAYERS; ++li) {
-                writer.write(String.format("# LAYER %1d\n", li+1));
+            for (int li = 1; li <= Constants.FMTLAYERS; ++li) {
+                writer.write(String.format("# LAYER %1d\n", li));
                 StringBuilder[] fitStr = new StringBuilder[4];
                 for (int fi = 0; fi < 4; ++ fi) fitStr[fi] = new StringBuilder();
-                fitStr[0].append("lyr" + (li+1) + "_mean = np.array([");
-                fitStr[1].append("lyr" + (li+1) + "_sigma = np.array([");
-                fitStr[2].append("lyr" + (li+1) + "_sigmaerr = np.array([");
-                fitStr[3].append("lyr" + (li+1) + "_chi2 = np.array([");
+                fitStr[0].append("mean["     + (li-1) + "] = np.array([");
+                fitStr[1].append("sigma["    + (li-1) + "] = np.array([");
+                fitStr[2].append("sigmaerr[" + (li-1) + "] = np.array([");
+                fitStr[3].append("chi2["     + (li-1) + "] = np.array([");
 
                 for (int fi = 0; fi < 4; ++fi) {
                     for (int ci1 = 0; ci1 < cn1; ++ci1) {
                         fitStr[fi].append("\n        [");
                         for (int ci2 = 0; ci2 < cn2; ++ci2)
-                            fitStr[fi].append(String.format("%9.5f, ", params[fi][li][ci1][ci2]));
+                            fitStr[fi].append(String.format("%9.5f, ", params[fi][li-1][ci1][ci2]));
                         fitStr[fi].append("],");
                     }
                     fitStr[fi].append("\n])\n");

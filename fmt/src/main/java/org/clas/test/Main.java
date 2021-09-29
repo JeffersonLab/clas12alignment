@@ -8,10 +8,6 @@ import org.jlab.groot.base.GStyle;
 import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.ResolutionAnalysis;
 
-// TODO. FINAL CHECKLIST BEFORE PULL REQUEST.
-//         12 MAKE THE IPYTHON NOTEBOOK AGNOSTIC TO NUMBER OF FMT LAYERS.
-//         13 DELETE fvt-vertexplot BRANCH AND PULL REQUEST fmt-analysis TO master.
-
 /** Main. */
 public class Main {
     public static void main(String[] args) {
@@ -65,6 +61,7 @@ public class Main {
             System.out.printf("\n\n");
         }
 
+        // Run shift analysis.
         ResolutionAnalysis resAnls =
                 new ResolutionAnalysis(file, nEvents, cutsInfo, shArr, fCuts, ccdbVar);
         resAnls.shiftAnalysis(var, testShArr, swmSetup);
