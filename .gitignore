@@ -1,5 +1,6 @@
 target/
 fmt/.ipynb_checkpoints/
 fmt/log.txt
+fmt/out.txt
 *.class
 *.jar

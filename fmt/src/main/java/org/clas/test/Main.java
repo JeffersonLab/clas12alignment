@@ -9,7 +9,6 @@ import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.ResolutionAnalysis;
 
 // TODO. FINAL CHECKLIST BEFORE PULL REQUEST.
-//         10 STANDARDIZE mean_sigma_vs_shifts.ipynb A BIT AND UPDATE README TO EXPLAIN IT.
 //         11 RUN ONE FINAL CHECK ON THE README JUST IN CASE.
 //         12 DELETE fvt-vertexplot BRANCH AND PULL REQUEST fmt-analysis TO master.
 
