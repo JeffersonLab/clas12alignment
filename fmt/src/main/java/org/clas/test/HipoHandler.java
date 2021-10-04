@@ -147,13 +147,7 @@ public class HipoHandler {
         else return 1;
     }
 
-    /*
-    fitParamsArr:
-    [0]          : variable - 0 mean, 1 sigma, 2 sigmaerr, 3 chi2.
-    [0][0]       : FMT layer - 0, 1 or 2.
-    [0][0][0]    : z alignment tested.
-    [0][0][0][0] : nothing (for 1D alignment).
-    */
+    /** Draw a 1D alignment plot. */
     private static int draw1DAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
         // Setup.
         EmbeddedCanvas canvas = new EmbeddedCanvas();
@@ -163,7 +157,8 @@ public class HipoHandler {
         for (int li = 0; li < Constants.FMTLAYERS; ++li) {
             // Create graphs.
             graphs[li] = new GraphErrors();
-            graphs[li].setTitleX("shift [cm] - layer " + (li+1));
+            if (var.equals("dZ")) graphs[li].setTitleX("shift [cm] - layer "  + (li+1));
+            else                  graphs[li].setTitleX("angle [deg] - layer " + (li+1));
             graphs[li].setTitleY("#sigma [cm]");
 
             // Fill.
@@ -173,9 +168,9 @@ public class HipoHandler {
             // Add to dataset.
             dg.addDataSet(graphs[li], li);
         }
-        canvas.draw(dg);
 
         // Show plots.
+        canvas.draw(dg);
         String title = "" + var + " Alignment";
         JFrame frame = new JFrame(title);
         frame.setSize(1600, 1000);
@@ -186,7 +181,58 @@ public class HipoHandler {
         return 0;
     }
 
+    /** Draw a 2D alignment plot. */
     private static int draw2DAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
-        return 1;
+        // Setup.
+        EmbeddedCanvas canvas = new EmbeddedCanvas();
+        int size = shArr.size();
+        H2F hi = new H2F("hi", size, shArr.get(0), shArr.get(size-1),
+                               size, shArr.get(0), shArr.get(size-1));
+        if (var.equals("dXY")) {
+            hi.setTitleX("x shift [cm]");
+            hi.setTitleY("y shift [cm]");
+        }
+        else {
+            hi.setTitleX("x angle [deg]");
+            hi.setTitleY("y angle [deg]");
+        }
+
+        // Fill.
+        double[] min = new double[Constants.FMTLAYERS];
+        double[] max = new double[Constants.FMTLAYERS];
+        for (int li = 0; li < Constants.FMTLAYERS; ++li) {
+            min[li] = Double.POSITIVE_INFINITY;
+            max[li] = Double.NEGATIVE_INFINITY;
+
+            for (int i = 0; i < parArr[0][li].length; ++i) {
+                for (int j = 0; j < parArr[0][li][i].length; ++j) {
+                    double absMean = Math.abs(parArr[0][li][i][j]);
+                    if (absMean < min[li]) min[li] = absMean;
+                    if (absMean > max[li]) max[li] = absMean;
+                }
+            }
+        }
+
+        for (int i = 0; i < parArr[0][0].length; ++i) {
+            for (int j = 0; j < parArr[0][0][i].length; ++j) {
+                double normalizedMean = 0.0;
+                for (int li = 0; li < Constants.FMTLAYERS; ++li) {
+                    double absMean = Math.abs(parArr[0][li][i][j]);
+                    normalizedMean += (absMean - min[li])/(max[li] - min[li]);
+                }
+                hi.fill(shArr.get(i), shArr.get(j), normalizedMean);
+            }
+        }
+
+        // Show plots.
+        canvas.draw(hi);
+        JFrame frame = new JFrame("" + var + " Alignment");
+        frame.setSize(1600, 1000);
+        frame.add(canvas);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+
+        return 0;
+
     }
 }
