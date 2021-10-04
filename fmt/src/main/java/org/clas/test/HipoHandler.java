@@ -1,10 +1,13 @@
 package org.clas.test;
 
+import java.util.List;
 import javax.swing.*;
 import org.jlab.groot.data.DataLine;
+import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.fitter.DataFitter;
+import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
@@ -98,19 +101,15 @@ public class HipoHandler {
     /**
      * Render plots for a data group related to residuals analysis.
      * @param dgFMT Data group.
-     * @param title Title for the plots.
      * @return Status int.
      */
-    public static int drawResPlot(DataGroup dgFMT, String title) {
+    public static int drawResPlot(DataGroup dgFMT) {
+        String title = "Residuals";
         EmbeddedCanvasTabbed fmtCanvas = new EmbeddedCanvasTabbed(title);
         fmtCanvas.getCanvas(title).draw(dgFMT);
-        fmtCanvas.getCanvas(title).setGridX(false);
-        fmtCanvas.getCanvas(title).setGridY(false);
-        fmtCanvas.getCanvas(title).setAxisFontSize(18);
-        fmtCanvas.getCanvas(title).setAxisTitleSize(24);
 
         // Top plots.
-        for (int pi = 0; pi < Constants.NPLOTS/2; ++pi) {
+        for (int pi = 0; pi < Constants.FMTLAYERS; ++pi) {
             DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
             vline.setLineColor(2);
             vline.setLineWidth(2);
@@ -118,7 +117,7 @@ public class HipoHandler {
         }
 
         // Bottom plots.
-        for (int pi = Constants.NPLOTS/2; pi < Constants.NPLOTS; ++pi) {
+        for (int pi = Constants.FMTLAYERS; pi < 2*Constants.FMTLAYERS; ++pi) {
             DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
             vline.setLineColor(0);
             vline.setLineWidth(2);
@@ -132,5 +131,62 @@ public class HipoHandler {
         frame.setVisible(true);
 
         return 0;
+    }
+
+    /**
+     * Master method for drawing alignment plots.
+     * @param var          String containing variable tested.
+     * @param fitParamsArr 4D array containing 4 fit parameters for each FMT layer, for each shift
+     *                     tested.
+     * @param shArr        List of shifts tested.
+     * @return Status int.
+     */
+    public static int drawAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
+        if      (var.equals("dZ")  || var.equals("rZ"))  return draw1DAlignPlot(var, parArr, shArr);
+        else if (var.equals("dXY") || var.equals("rXY")) return draw2DAlignPlot(var, parArr, shArr);
+        else return 1;
+    }
+
+    /*
+    fitParamsArr:
+    [0]          : variable - 0 mean, 1 sigma, 2 sigmaerr, 3 chi2.
+    [0][0]       : FMT layer - 0, 1 or 2.
+    [0][0][0]    : z alignment tested.
+    [0][0][0][0] : nothing (for 1D alignment).
+    */
+    private static int draw1DAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
+        // Setup.
+        EmbeddedCanvas canvas = new EmbeddedCanvas();
+        DataGroup dg = new DataGroup(3, 1);
+        GraphErrors[] graphs = new GraphErrors[Constants.FMTLAYERS];
+
+        for (int li = 0; li < Constants.FMTLAYERS; ++li) {
+            // Create graphs.
+            graphs[li] = new GraphErrors();
+            graphs[li].setTitleX("shift [cm] - layer " + (li+1));
+            graphs[li].setTitleY("#sigma [cm]");
+
+            // Fill.
+            for (int i = 0; i < shArr.size(); ++i)
+                graphs[li].addPoint(shArr.get(i), parArr[1][li][i][0], 0, parArr[2][li][i][0]);
+
+            // Add to dataset.
+            dg.addDataSet(graphs[li], li);
+        }
+        canvas.draw(dg);
+
+        // Show plots.
+        String title = "" + var + " Alignment";
+        JFrame frame = new JFrame(title);
+        frame.setSize(1600, 1000);
+        frame.add(canvas);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+
+        return 0;
+    }
+
+    private static int draw2DAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
+        return 1;
     }
 }

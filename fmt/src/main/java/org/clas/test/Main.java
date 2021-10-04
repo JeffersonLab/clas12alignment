@@ -20,7 +20,7 @@ public class Main {
 
         // Setup.
         String var = params.get('v') == null ? null : params.get('v').get(0);
-        if (params.get('v') == null) setupGroot();
+        setupGroot();
         double[] swmSetup = new double[3];
         if (params.get('s') == null) {
             swmSetup[0] = Constants.SOLMAGSCALE;
@@ -83,6 +83,10 @@ public class Main {
         GStyle.setGraphicsFrameLineWidth(1);
         GStyle.getH1FAttributes().setLineWidth(2);
         GStyle.getH1FAttributes().setOptStat("1111");
+        GStyle.getGraphErrorsAttributes().setMarkerColor(2);
+        GStyle.getGraphErrorsAttributes().setLineColor(2);
+        GStyle.getGraphErrorsAttributes().setMarkerStyle(0);
+        GStyle.getGraphErrorsAttributes().setMarkerSize(7);
         return false;
     }
 }

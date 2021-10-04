@@ -157,9 +157,9 @@ public class ResolutionAnalysis {
         }
         reader.close();
 
-        // Print alignment data and draw plots.
-        if (IOHandler.printAlignmentData(tShArr, fitParamsArr, cn1, cn2)) return 1;
-        if (var == null) HipoHandler.drawResPlot(dgFMT[0][0], "Residuals");
+        // Draw plots.
+        if (var != null) HipoHandler.drawAlignPlot(var, fitParamsArr, tShArr);
+        else             HipoHandler.drawResPlot(dgFMT[0][0]);
 
         return 0;
     }

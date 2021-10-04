@@ -7,7 +7,7 @@ Some setting up is required to run the program. The `run.sh` file requires some 
 * Location in disk of maven and coatjava.
 After this initial setup is done, simply run the script without giving it any parameters to get the programs' usage and continue from there.
 
-After successfully running, the file `out.txt` should have been generated in the root folder (`fmt`). The residuals distribution means, sigmas, sigma errors, and chi^2 are written into this file. To quickly compare results with different shifts, copy the contents of this file into the `ipython` notebook contained in the root folder (`plot_results.ipynb`) in its respective location and execute to get a fancy plot which you can use to select the centered mean (for the case of *dXY* and *rXY* alignment) or the minimum sigma (for the case of *dZ* and *rZ*).
+After successfully running, a plot of shifts versus sigma (for dZ or rZ alignment) or mean (for dXY and rXY alignment) will be shown. The best shift is the one with the mean and sigma closest to 0.
 
 Note that per-layer XY alignment of FMT is impossible with the current conditions, so the notebook gets the mean of the three layers distribution.
 

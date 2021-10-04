@@ -6,10 +6,9 @@ public class Constants {
     public static final String DEFVARIATION = "rgf_spring2020"; // Default ccdb variation.
     public static final String FMTTABLELOC  = "/geometry/fmt/fmt_layer_noshim";
     public static final int    NVARS   = 6;   // Number of variables to be aligned.
-    public static final int    NPLOTS  = 6;   // Number of plots to be drawn. Should be a factor of 2.
-    public static final int    PLOTRES = 200; // Resolution of 1D and 2D plots.
-    public static final int    PLOTRNG = 5;   // Range for plots in cm.
-    public static final int    FITRNG  = 4;   // Range for the residuals fit in cm.
+    public static final int    PLOTRES = 200; // Resolution of Residuals plots.
+    public static final int    PLOTRNG = 5;   // Range for residuals plots in cm.
+    public static final int    FITRNG  = 4;   // Range for residuals fit in cm.
 
     // Geometry.
     public static final double FMTINNERRADIUS      = 25;   // Squared inner radius of each FMT layer.
@@ -21,9 +20,9 @@ public class Constants {
     public static final int    DCSECTORS           = 6;    // Number of DC sectors.
 
     // Default swim parameters.
-    public static final double SOLMAGSCALE         = -0.75; // Default solenoid magnet scale.
-    public static final double TORMAGSCALE         = -1.00; // Default torus magnet scale.
-    public static final double TORMAGSHIFT         =  3.00; // Default torus magnet shift.
+    public static final double SOLMAGSCALE = -0.75; // Default solenoid magnet scale.
+    public static final double TORMAGSCALE = -1.00; // Default torus magnet scale.
+    public static final double TORMAGSHIFT =  3.00; // Default torus magnet shift.
 
     // Physics cuts.
     public static final double MAXDZ     = 0.05; // Max z distance between cluster and traj point.
