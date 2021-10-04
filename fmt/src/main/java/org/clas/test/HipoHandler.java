@@ -54,7 +54,7 @@ public class HipoHandler {
 
         for (int ti1 = 0; ti1 < tn1; ++ti1) {
             for (int ti2 = 0; ti2 < tn2; ++ti2) {
-                dgFMT[ti1][ti2] = new DataGroup(Constants.FMTLAYERS, 2);
+                dgFMT[ti1][ti2] = new DataGroup(Constants.FMTLAYERS, 3);
                 for (int li = 1; li <= Constants.FMTLAYERS; ++li) {
                     H1F hi1D = new H1F("hi_l" + li, "", Constants.PLOTRES,
                             -Constants.PLOTRNG, Constants.PLOTRNG);
@@ -75,12 +75,19 @@ public class HipoHandler {
                     fit.setOptStat("1111");
                     dgFMT[ti1][ti2].addDataSet(fit, li - 1);
 
-                    H2F hi2D = new H2F("hi_strip_l" + li,
+                    H2F hi2D = new H2F("hi_strip2D_l" + li,
                             Constants.PLOTRES, -Constants.PLOTRNG, Constants.PLOTRNG,
-                            Constants.PLOTRES, 0, Constants.FMTNSTRIPS);
+                            Constants.FMTNSTRIPS, 0, Constants.FMTNSTRIPS);
                     hi2D.setTitleX("Residual (cm) - Layer " + li);
                     hi2D.setTitleY("Strip - Layer " + li);
                     dgFMT[ti1][ti2].addDataSet(hi2D, Constants.FMTLAYERS + li - 1);
+
+                    H1F hi1Dstrip = new H1F("hi_strip1D_l" + li, Constants.FMTNSTRIPS, 0,
+                            Constants.FMTNSTRIPS);
+                    hi1Dstrip.setTitleX("Strip - Layer" + li);
+                    hi1Dstrip.setFillColor(43);
+                    hi1Dstrip.setLineWidth(1);
+                    dgFMT[ti1][ti2].addDataSet(hi1Dstrip, 2*Constants.FMTLAYERS + li - 1);
                 }
             }
         }

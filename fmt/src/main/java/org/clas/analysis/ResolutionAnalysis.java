@@ -201,7 +201,8 @@ public class ResolutionAnalysis {
                         else {
                             dg.getH1F("hi_l"+(layer+1)).fill(res);
                         }
-                        dg.getH2F("hi_strip_l"+(layer+1)).fill(res, strip);
+                        dg.getH2F("hi_strip2D_l"+(layer+1)).fill(res, strip);
+                        dg.getH1F("hi_strip1D_l"+(layer+1)).fill(strip);
                     }
                 }
             }
