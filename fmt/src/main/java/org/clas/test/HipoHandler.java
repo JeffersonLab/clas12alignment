@@ -29,9 +29,9 @@ public class HipoHandler {
      * Fit residuals plot using a function given by f1res. Assumed to be a gaussian.
      * @param hires 1-dimensional residuals distribution.
      * @param f1res functions to use for fitting.
-     * @return status int.
+     * @return status boolean.
      */
-    public static int fitRes(H1F hires, F1D f1res) {
+    public static boolean fitRes(H1F hires, F1D f1res) {
         // Fit the data.
         double mean = hires.getDataX(hires.getMaximumBin());
         double amp = hires.getBinContent(hires.getMaximumBin());
@@ -42,7 +42,7 @@ public class HipoHandler {
         DataFitter.fit(f1res, hires, "Q");
         hires.setFunction(null);
 
-        return 0;
+        return false;
     }
 
     /**

@@ -94,14 +94,14 @@ public class FiducialCuts {
     }
 
     /** Print basic cuts information. */
-    public int printCutsInfo() {
+    public boolean printCutsInfo() {
         System.out.printf("  Trajs lost    : %5.2f%%\n", 100 * ((double) calcSum(trsc))/trsc[0]);
         System.out.printf("  Clusters lost : %5.2f%%\n", 100 * ((double) calcSum(clsc))/clsc[0]);
-        return 0;
+        return false;
     }
 
     /** Print detailed applied cuts information. */
-    public int printDetailedCutsInfo() {
+    public boolean printDetailedCutsInfo() {
         int trscsum = calcSum(trsc);
         System.out.printf("\n");
         System.out.printf("            trajs too downstream │ %8d (%5.2f%%)   │\n",
@@ -133,6 +133,6 @@ public class FiducialCuts {
                 100 * ((double) clscsum) / clsc[0]);
         System.out.printf("─────────────────────────────────┼─────────────────────┤\n");
 
-        return 0;
+        return false;
     }
 }

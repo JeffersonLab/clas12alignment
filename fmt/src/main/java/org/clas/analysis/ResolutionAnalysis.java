@@ -126,7 +126,7 @@ public class ResolutionAnalysis {
                             this.origShArr[li][pos[1]]+tShArr.get(ci2);
                 }
                 this.fCuts.resetCounters();
-                if (this.rotXYAlign) if (setupSwim(swmSetup)) return true;
+                if (this.rotXYAlign) setupSwim(swmSetup);
 
                 // Print run data.
                 System.out.printf("\nRUN %3d/%3d:\n", ci1*cn2+ci2+1, cn1*cn2);
@@ -158,8 +158,8 @@ public class ResolutionAnalysis {
         reader.close();
 
         // Draw plots.
-        if (var != null) if (HipoHandler.drawAlignPlot(var, fitParamsArr, tShArr)) return true;
-        else             if (HipoHandler.drawResPlot(dgFMT[0][0])) return true;;
+        if (var != null) HipoHandler.drawAlignPlot(var, fitParamsArr, tShArr);
+        else             HipoHandler.drawResPlot(dgFMT[0][0]);
 
         return false;
     }
@@ -209,9 +209,8 @@ public class ResolutionAnalysis {
         }
 
         // Fit residual plots
-        for (int li = 1; li<= Constants.FMTLAYERS; ++li) {
-            HipoHandler.fitRes(dg.getH1F("hi_l"+li), dg.getF1D("fit_l"+li));
-        }
+        for (int li = 1; li<= Constants.FMTLAYERS; ++li)
+            if (HipoHandler.fitRes(dg.getH1F("hi_l"+li), dg.getF1D("fit_l"+li))) return true;
 
         return false;
     }
