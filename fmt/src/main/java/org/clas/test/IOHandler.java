@@ -2,19 +2,23 @@ package org.clas.test;
 
 import java.lang.NumberFormatException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /** Handler of all input-output of the program. */
 public final class IOHandler {
-    // No global static classes are allowed in java so this is the closest second...
     private IOHandler() {}
 
-    private static Set<Character> L1ARGS = Set.of('c', 'n', 'v', 'V');
-    private static Set<Character> L2ARGS = Set.of('d');
-    private static Set<Character> L3ARGS = Set.of('s', 'x', 'y', 'z', 'X', 'Y', 'Z');
+    private static Set<Character> L1ARGS =
+            new HashSet<>(Arrays.asList('c', 'n', 'v', 'V'));
+    private static Set<Character> L2ARGS =
+            new HashSet<>(Arrays.asList('d'));
+    private static Set<Character> L3ARGS =
+            new HashSet<>(Arrays.asList('s', 'x', 'y', 'z', 'X', 'Y', 'Z'));
     private static Map<String, Character> argmap;
 
     /** Associate char-indexed args with String-indexed args. */
