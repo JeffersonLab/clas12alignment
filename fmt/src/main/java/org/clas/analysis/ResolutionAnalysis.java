@@ -70,7 +70,7 @@ public class ResolutionAnalysis {
     }
 
     /** Setup and initialize TrkSwim class. */
-    private int setupSwim(double[] swmSetup) {
+    private boolean setupSwim(double[] swmSetup) {
         double[] avgRotXY = new double[]{0.0, 0.0};
         for (int lyr = 0; lyr < Constants.FMTLAYERS; ++lyr) {
             avgRotXY[0] += this.shArr[lyr][3];
@@ -79,7 +79,7 @@ public class ResolutionAnalysis {
         avgRotXY[0] /= Constants.FMTLAYERS;
         avgRotXY[1] /= Constants.FMTLAYERS;
         this.swim = new TrkSwim(swmSetup, avgRotXY[0], avgRotXY[1]);
-        return 0;
+        return false;
     }
 
     /**
@@ -87,9 +87,9 @@ public class ResolutionAnalysis {
      * @param var      Variable to which shifts are applied.
      * @param tShArr   List of shifts to try.
      * @param swmSetup Setup for initializing the TrkSwim class.
-     * @return Status int.
+     * @return Status boolean.
      */
-    public int shiftAnalysis(String var, List<Double> tShArr, double[] swmSetup) {
+    public boolean shiftAnalysis(String var, List<Double> tShArr, double[] swmSetup) {
         if (var != null && var.equals("rXY")) {
             this.rotXYAlign = true;
             this.fCuts.setRotXYAlign(true);
@@ -126,7 +126,7 @@ public class ResolutionAnalysis {
                             this.origShArr[li][pos[1]]+tShArr.get(ci2);
                 }
                 this.fCuts.resetCounters();
-                if (this.rotXYAlign) setupSwim(swmSetup);
+                if (this.rotXYAlign) if (setupSwim(swmSetup)) return true;
 
                 // Print run data.
                 System.out.printf("\nRUN %3d/%3d:\n", ci1*cn2+ci2+1, cn1*cn2);
@@ -139,7 +139,7 @@ public class ResolutionAnalysis {
                 System.out.printf("\n");
 
                 // Execute run.
-                runAnalysis(reader, dgFMT[ci1][ci2]);
+                if (runAnalysis(reader, dgFMT[ci1][ci2])) return true;
 
                 // Get fit quality assessment.
                 for (int li = 0; li < Constants.FMTLAYERS; ++li) {
@@ -158,19 +158,19 @@ public class ResolutionAnalysis {
         reader.close();
 
         // Draw plots.
-        if (var != null) HipoHandler.drawAlignPlot(var, fitParamsArr, tShArr);
-        else             HipoHandler.drawResPlot(dgFMT[0][0]);
+        if (var != null) if (HipoHandler.drawAlignPlot(var, fitParamsArr, tShArr)) return true;
+        else             if (HipoHandler.drawResPlot(dgFMT[0][0])) return true;;
 
-        return 0;
+        return false;
     }
 
     /**
      * Generic function for running analysis, called by all others.
      * @param reader HipoDataSource to stream events from source hipo file.
      * @param dg     DataGroup where analysis data is stored.
-     * @return Status int.
+     * @return Status boolean.
      */
-    private int runAnalysis(HipoDataSource reader, DataGroup dg) {
+    private boolean runAnalysis(HipoDataSource reader, DataGroup dg) {
         int ei = 0;          // Event number.
         reader.gotoEvent(0); // Reset reader counter.
 
@@ -213,6 +213,6 @@ public class ResolutionAnalysis {
             HipoHandler.fitRes(dg.getH1F("hi_l"+li), dg.getF1D("fit_l"+li));
         }
 
-        return 0;
+        return false;
     }
 }

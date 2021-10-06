@@ -165,7 +165,7 @@ public final class IOHandler {
     }
 
     /** Prints all parameters. Useful for debugging. */
-    private int printParams(Map<Character, List<String>> params) {
+    private boolean printParams(Map<Character, List<String>> params) {
         System.out.printf("\n");
         for (Character key : params.keySet()) {
             System.out.printf("\n%c :", key);
@@ -173,6 +173,6 @@ public final class IOHandler {
         }
         System.out.printf("\n\n");
 
-        return 0;
+        return false;
     }
 }

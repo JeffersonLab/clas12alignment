@@ -24,4 +24,4 @@ for arg; do args="$args $arg"; done
 # Run
 export COAT_MAGFIELD_TORUSMAP="$TORUSMAP"
 export COAT_MAGFIELD_SOLENOIDMAP="$SOLENOIDMAP"
-$MVN "$PREVARGS org.clas.test.Main$args" $POSTARGS # > log.txt
+$MVN "$PREVARGS org.clas.test.Main$args" $POSTARGS

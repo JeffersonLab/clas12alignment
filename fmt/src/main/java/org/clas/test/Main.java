@@ -64,7 +64,9 @@ public class Main {
         // Run shift analysis.
         ResolutionAnalysis resAnls =
                 new ResolutionAnalysis(file, nEvents, cutsInfo, shArr, fCuts, ccdbVar);
-        resAnls.shiftAnalysis(var, testShArr, swmSetup);
+        if (resAnls.shiftAnalysis(var, testShArr, swmSetup)) System.exit(1);
+
+        System.exit(0);
     }
 
     /** Perform a basic groot setup to get fancy plots. */

@@ -8,7 +8,6 @@ import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
-import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.io.base.DataBank;
@@ -101,19 +100,18 @@ public class HipoHandler {
     /**
      * Render plots for a data group related to residuals analysis.
      * @param dgFMT Data group.
-     * @return Status int.
+     * @return Status boolean.
      */
-    public static int drawResPlot(DataGroup dgFMT) {
-        String title = "Residuals";
-        EmbeddedCanvasTabbed fmtCanvas = new EmbeddedCanvasTabbed(title);
-        fmtCanvas.getCanvas(title).draw(dgFMT);
+    public static boolean drawResPlot(DataGroup dgFMT) {
+        EmbeddedCanvas canvas = new EmbeddedCanvas();
+        canvas.draw(dgFMT);
 
         // Top plots.
         for (int pi = 0; pi < Constants.FMTLAYERS; ++pi) {
             DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
             vline.setLineColor(2);
             vline.setLineWidth(2);
-            fmtCanvas.getCanvas(title).cd(pi).draw(vline);
+            canvas.cd(pi).draw(vline);
         }
 
         // Bottom plots.
@@ -121,16 +119,16 @@ public class HipoHandler {
             DataLine vline = new DataLine(0, 0, 0, Double.POSITIVE_INFINITY);
             vline.setLineColor(0);
             vline.setLineWidth(2);
-            fmtCanvas.getCanvas(title).cd(pi).draw(vline);
+            canvas.cd(pi).draw(vline);
         }
 
         JFrame frame = new JFrame("FMT");
         frame.setSize(1600, 1000);
-        frame.add(fmtCanvas);
+        frame.add(canvas);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        return 0;
+        return false;
     }
 
     /**
@@ -141,14 +139,14 @@ public class HipoHandler {
      * @param shArr        List of shifts tested.
      * @return Status int.
      */
-    public static int drawAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
+    public static boolean drawAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
         if      (var.equals("dZ")  || var.equals("rZ"))  return draw1DAlignPlot(var, parArr, shArr);
         else if (var.equals("dXY") || var.equals("rXY")) return draw2DAlignPlot(var, parArr, shArr);
-        else return 1;
+        else return true;
     }
 
     /** Draw a 1D alignment plot. */
-    private static int draw1DAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
+    private static boolean draw1DAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
         // Setup.
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         DataGroup dg = new DataGroup(3, 1);
@@ -178,11 +176,11 @@ public class HipoHandler {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        return 0;
+        return false;
     }
 
     /** Draw a 2D alignment plot. */
-    private static int draw2DAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
+    private static boolean draw2DAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
         // Setup.
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         int size = shArr.size();
@@ -232,7 +230,6 @@ public class HipoHandler {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        return 0;
-
+        return false;
     }
 }
