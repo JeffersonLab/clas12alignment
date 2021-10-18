@@ -218,7 +218,11 @@ public class HipoHandler {
                     double absMean = Math.abs(parArr[0][li][i][j]);
                     normalizedMean += (absMean - min[li])/(max[li] - min[li]);
                 }
-                hi.fill(shArr.get(i), shArr.get(j), normalizedMean);
+                // NOTE. Weirdness here is just to solve a minor issue with 2D plots.
+                double d = (shArr.get(1) - shArr.get(0))/2;
+                double xPos = i == parArr[0][0].length-1    ? shArr.get(i)-d : shArr.get(i);
+                double yPos = j == parArr[0][0][i].length-1 ? shArr.get(j)-d : shArr.get(j);
+                hi.fill(xPos, yPos, normalizedMean);
             }
         }
 
