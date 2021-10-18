@@ -16,7 +16,7 @@ public final class IOHandler {
     private static Set<Character> L1ARGS =
             new HashSet<>(Arrays.asList('c', 'n', 'v', 'V'));
     private static Set<Character> L2ARGS =
-            new HashSet<>(Arrays.asList('d'));
+            new HashSet<>(Arrays.asList('i'));
     private static Set<Character> L3ARGS =
             new HashSet<>(Arrays.asList('s', 'x', 'y', 'z', 'X', 'Y', 'Z'));
     private static Map<String, Character> argmap;
@@ -32,7 +32,7 @@ public final class IOHandler {
             else return true; // Programmer error.
         }
         for (char argname : L2ARGS) {
-            if      (argname == 'd') argmap.put("--delta",   'd');
+            if      (argname == 'i') argmap.put("--inter",   'i');
             else return true; // Programmer error.
         }
         for (char argname : L3ARGS) {
@@ -51,7 +51,7 @@ public final class IOHandler {
     /** Print usage to stdout and exit. */
     private static boolean usage() {
         System.out.printf("\n");
-        System.out.printf("Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]\n");
+        System.out.printf("Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]\n");
         System.out.printf("                        [-s --swim] [-c --cutsinfo] [-V --variation]\n");
         System.out.printf("                        [-x --dx] [-y --dy] [-z --dz]\n");
         System.out.printf("                        [-X --rx] [-Y --ry] [-Z --rz]\n");
@@ -59,10 +59,10 @@ public final class IOHandler {
         System.out.printf("  * nevents   : number of events to run. If unspecified, runs all\n");
         System.out.printf("                events in input file.\n");
         System.out.printf("  * var       : variable to be aligned. Can be dXY, dZ, rXY, or rZ.\n");
-        System.out.printf("  * delta (2) : [0] delta between nominal position and position to\n");
+        System.out.printf("  * inter (2) : [0] range between nominal position and position to\n");
         System.out.printf("                    be tested.\n");
-        System.out.printf("                [1] interval for each tested value between\n");
-        System.out.printf("                    <nominal - delta> and <nominal + delta>.\n");
+        System.out.printf("                [1] step size for each tested value between\n");
+        System.out.printf("                    <nominal - range> and <nominal + range>.\n");
         System.out.printf("  * swim  (3) : Setup for the Swim class. If unspecified, uses\n");
         System.out.printf("                default from RG-F data (-0.75, -1.0, 3.0).\n");
         System.out.printf("                [0] Solenoid magnet scale.\n");
@@ -80,7 +80,7 @@ public final class IOHandler {
         System.out.printf("  * ry    (3) : y rotation for each FMT layer.\n");
         System.out.printf("  * rz    (3) : z rotation for each FMT layer.\n");
         System.out.printf("\n");
-        System.out.printf("For example, if <var> == 'dZ', <delta> == '0.2 0.1', and\n");
+        System.out.printf("For example, if <var> == 'dZ', <inter> == '0.2 0.1', and\n");
         System.out.printf("<dz> == 0.5, then the values tested for z are:\n");
         System.out.printf("            (0.3, 0.4, 0.5, 0.6, 0.7).\n");
         System.out.printf("If a position or rotation is not specified, it is assumed to be 0\n");
@@ -159,7 +159,7 @@ public final class IOHandler {
                         && checkDouble(val)) return usage();
             }
         }
-        if (!((params.get('v') == null) == (params.get('d') == null))) return usage();
+        if (!((params.get('v') == null) == (params.get('i') == null))) return usage();
 
         return false;
     }

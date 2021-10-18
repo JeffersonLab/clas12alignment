@@ -47,9 +47,9 @@ public class Main {
 
         // Alignment.
         List<Double> testShArr = new ArrayList<Double>();
-        if (params.get('d') != null) {
-            double inter = Double.parseDouble(params.get('d').get(0));
-            double delta = Double.parseDouble(params.get('d').get(1));
+        if (params.get('i') != null) {
+            double inter = Double.parseDouble(params.get('i').get(0));
+            double delta = Double.parseDouble(params.get('i').get(1));
             for (double i = -inter; i < 1.001*inter; i += delta) testShArr.add(i);
         }
         else testShArr.add(0.0);

@@ -9,21 +9,21 @@ After this initial setup is done, simply run the script without giving it any pa
 
 After successfully running, a plot of shifts versus sigma (for dZ or rZ alignment) or mean (for dXY and rXY alignment) will be shown. The best shift is the one with the mean and sigma closest to 0.
 
-Note that per-layer XY alignment of FMT is impossible with the current conditions, so the notebook gets the mean of the three layers distribution.
+Note that per-layer XY alignment of FMT is impossible with the current conditions, so the mean of the three layers distribution is shown.
 
 ## Usage
 ```
-Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]
-                        [-s --swim]
+Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]
+                        [-s --swim] [-c --cutsinfo] [-V --variation]
                         [-x --dx] [-y --dy] [-z --dz]
                         [-X --rx] [-Y --ry] [-Z --rz]
   * file      : hipo input file.
   * nevents   : number of events to run. If unspecified, runs all events in
                 input file.
   * var       : variable to be aligned. Can be *dXY*, *dZ*, *rXY*, or *rZ*.
-  * delta (2) : [0] delta between nominal position and position to be tested.
-                [1] interval for each tested value between <nominal - delta>
-                    and <nominal + delta>.
+  * inter (2) : [0] range between nominal position and position to be tested.
+                [1] interval for each tested value between <nominal - range>
+                    and <nominal + range>.
   * swim  (3) : Setup for the Swim class. If unspecified, uses default from
                     RG-F data (-0.75, -1.0, 3.0).
                 [0] Solenoid magnet scale.
@@ -39,7 +39,7 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-d --delta]
   * ry    (3) : y rotation for each FMT layer.
   * rz    (3) : z rotation for each FMT layer.
 
-For example, if <var> == '*dZ*', <delta> == '0.2 0.1', and <dz> == 0.5, then the
+For example, if <var> == '*dZ*', <inter> == '0.2 0.1', and <dz> == 0.5, then the
 values tested for z are:
 
         (0.3, 0.4, 0.5, 0.6, 0.7).
