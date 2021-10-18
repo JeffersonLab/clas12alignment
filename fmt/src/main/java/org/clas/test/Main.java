@@ -30,8 +30,10 @@ public class Main {
         else {
             for (int i = 0; i < 3; ++i) swmSetup[i] = Double.parseDouble(params.get('s').get(i));
         }
-        String ccdbVar = params.get('V') == null ? Constants.DEFVARIATION : params.get('V').get(0);
         int cutsInfo   = params.get('c') == null ? 1 : Integer.parseInt(params.get('c').get(0));
+        boolean sPlts  = params.get('p') == null ? false :
+                Integer.parseInt(params.get('p').get(0)) == 0 ? false : true;
+        String ccdbVar = params.get('V') == null ? Constants.DEFVARIATION : params.get('V').get(0);
 
         double[][] shArr = new double[Constants.FMTLAYERS][Constants.NVARS];
         // Update shArr based on alignment info given by user.
@@ -63,7 +65,7 @@ public class Main {
 
         // Run shift analysis.
         ResolutionAnalysis resAnls =
-                new ResolutionAnalysis(file, nEvents, cutsInfo, shArr, fCuts, ccdbVar);
+                new ResolutionAnalysis(file, nEvents, cutsInfo, shArr, fCuts, ccdbVar, sPlts);
         if (resAnls.shiftAnalysis(var, testShArr, swmSetup)) System.exit(1);
     }
 

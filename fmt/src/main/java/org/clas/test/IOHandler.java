@@ -14,7 +14,7 @@ public final class IOHandler {
     private IOHandler() {}
 
     private static Set<Character> L1ARGS =
-            new HashSet<>(Arrays.asList('c', 'n', 'v', 'V'));
+            new HashSet<>(Arrays.asList('c', 'n', 'p', 'v', 'V'));
     private static Set<Character> L2ARGS =
             new HashSet<>(Arrays.asList('i'));
     private static Set<Character> L3ARGS =
@@ -27,6 +27,7 @@ public final class IOHandler {
         for (char argname : L1ARGS) {
             if      (argname == 'c') argmap.put("--cutsinfo",  'c');
             else if (argname == 'n') argmap.put("--nevents",   'n');
+            else if (argname == 'p') argmap.put("--plot",      'p');
             else if (argname == 'v') argmap.put("--var",       'v');
             else if (argname == 'V') argmap.put("--variation", 'V');
             else return true; // Programmer error.
@@ -53,6 +54,7 @@ public final class IOHandler {
         System.out.printf("\n");
         System.out.printf("Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]\n");
         System.out.printf("                        [-s --swim] [-c --cutsinfo] [-V --variation]\n");
+        System.out.printf("                        [-p -plot]\n");
         System.out.printf("                        [-x --dx] [-y --dy] [-z --dz]\n");
         System.out.printf("                        [-X --rx] [-Y --ry] [-Z --rz]\n");
         System.out.printf("  * file      : hipo input file.\n");
@@ -73,6 +75,9 @@ public final class IOHandler {
         System.out.printf("                Default is 1.\n");
         System.out.printf("  * variation : CCDB variation to be used. Default is\n");
         System.out.printf("                ``rgf_spring2020''.\n");
+        System.out.printf("  * plot      : int describing if plots are to be shown. 1 means\n");
+        System.out.printf("                show plots, while 0 (default) means that they are to\n");
+        System.out.printf("                be saved.\n");
         System.out.printf("  * dx    (3) : x shift for each FMT layer.\n");
         System.out.printf("  * dy    (3) : y shift for each FMT layer.\n");
         System.out.printf("  * dz    (3) : z shift for each FMT layer.\n");
@@ -155,6 +160,7 @@ public final class IOHandler {
                 if (key.equals('n') && checkInt(val)) return usage();
                 if (key.equals('v') && (!val.equals("dXY") && !val.equals("dZ")
                                      && !val.equals("rXY") && !val.equals("rZ"))) return usage();
+                if (key.equals('p') && checkInt(val)) return usage();
                 if ((L2ARGS.contains(key) || L3ARGS.contains(key))
                         && checkDouble(val)) return usage();
             }
