@@ -4,12 +4,14 @@ Code used for the FMT detector alignment using residual analysis. A residual is 
 ## Setup
 Some setting up is required to run the program. The `run.sh` file requires some tuning, which includes
 * Name of the torus and solenoid maps to be used.
-* Location in disk of maven and coatjava.
+* Location in disk of coatjava.
 After this initial setup is done, simply run the script without giving it any parameters to get the programs' usage and continue from there.
 
 After successfully running, a plot of shifts versus sigma (for dZ or rZ alignment) or mean (for dXY and rXY alignment) will be shown. The best shift is the one with the mean and sigma closest to 0.
 
 Note that per-layer XY alignment of FMT is impossible with the current conditions, so the mean of the three layers distribution is shown.
+
+**NOTE**. To change number of FMT layers, change the `FMTLAYERS` variable in `src/.../test/Constants.java`. Default is 3.
 
 ## Usage
 ```
