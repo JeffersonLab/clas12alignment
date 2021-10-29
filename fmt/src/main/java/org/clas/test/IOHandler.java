@@ -18,7 +18,9 @@ public final class IOHandler {
     private static Set<Character> L2ARGS =
             new HashSet<>(Arrays.asList('i'));
     private static Set<Character> L3ARGS =
-            new HashSet<>(Arrays.asList('s', 'x', 'y', 'z', 'X', 'Y', 'Z'));
+            new HashSet<>(Arrays.asList('s'));
+    private static Set<Character> LFMTARGS =
+            new HashSet<>(Arrays.asList('x', 'y', 'z', 'X', 'Y', 'Z'));
     private static Map<String, Character> argmap;
 
     /** Associate char-indexed args with String-indexed args. */
@@ -33,17 +35,20 @@ public final class IOHandler {
             else return true; // Programmer error.
         }
         for (char argname : L2ARGS) {
-            if      (argname == 'i') argmap.put("--inter",   'i');
+            if      (argname == 'i') argmap.put("--inter",     'i');
             else return true; // Programmer error.
         }
         for (char argname : L3ARGS) {
-            if      (argname == 's') argmap.put("--swim",    's');
-            else if (argname == 'x') argmap.put("--dx",      'x');
-            else if (argname == 'y') argmap.put("--dy",      'y');
-            else if (argname == 'z') argmap.put("--dz",      'z');
-            else if (argname == 'X') argmap.put("--rx",      'X');
-            else if (argname == 'Y') argmap.put("--ry",      'Y');
-            else if (argname == 'Z') argmap.put("--rz",      'Z');
+            if      (argname == 's') argmap.put("--swim",      's');
+            else return true; // Programmer error.
+        }
+        for (char argname : LFMTARGS) {
+            if      (argname == 'x') argmap.put("--dx",        'x');
+            else if (argname == 'y') argmap.put("--dy",        'y');
+            else if (argname == 'z') argmap.put("--dz",        'z');
+            else if (argname == 'X') argmap.put("--rx",        'X');
+            else if (argname == 'Y') argmap.put("--ry",        'Y');
+            else if (argname == 'Z') argmap.put("--rz",        'Z');
             else return true; // Programmer error.
         }
         return false;
@@ -134,9 +139,10 @@ public final class IOHandler {
                     argC = argS.charAt(1);
                 }
                 params.put(argC, new ArrayList<String>());
-                if      (L1ARGS.contains(argC)) count = 1;
-                else if (L2ARGS.contains(argC)) count = 2;
-                else if (L3ARGS.contains(argC)) count = 3;
+                if      (L1ARGS.contains(argC))   count = 1;
+                else if (L2ARGS.contains(argC))   count = 2;
+                else if (L3ARGS.contains(argC))   count = 3;
+                else if (LFMTARGS.contains(argC)) count = Constants.FMTLAYERS;
                 else return usage(); // argument is not in list of accepted arguments.
                 for (int j = 0; j < count; ++j) params.get(argC).add(args[++i]);
             }
@@ -161,7 +167,7 @@ public final class IOHandler {
                 if (key.equals('v') && (!val.equals("dXY") && !val.equals("dZ")
                                      && !val.equals("rXY") && !val.equals("rZ"))) return usage();
                 if (key.equals('p') && checkInt(val)) return usage();
-                if ((L2ARGS.contains(key) || L3ARGS.contains(key))
+                if ((L2ARGS.contains(key) || L3ARGS.contains(key) || LFMTARGS.contains(key))
                         && checkDouble(val)) return usage();
             }
         }
