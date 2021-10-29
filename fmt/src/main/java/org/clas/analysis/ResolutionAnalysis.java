@@ -18,6 +18,7 @@ public class ResolutionAnalysis {
     private String infile;        // Input hipo file.
     private int nEvents;          // Number of events to run.
     private int cutsInfo;         // Int describing how much info on the cuts should be printed.
+    private boolean sPlts;        // Boolean describing if plots are to be shown or saved.
     private double[] fmtZ;        // z position of the layers in cm (before shifting).
     private double[] fmtAngle;    // strip angle in degrees.
     private double[][] shArr;     // 2D array of shifts to be applied.
@@ -28,15 +29,16 @@ public class ResolutionAnalysis {
 
     /**
      * Class constructor.
-     * @param f      Input hipo file.
-     * @param n      Number of events to run. Set to 0 to run all events in file.
-     * @param c      Amount of information on the applied cuts that should be printed.
-     * @param shArr  Array of arrays describing all the shifts applied.
-     * @param fCuts  FiducialCuts class instance.
-     * @param var    CCDB variation to be used.
+     * @param f         Input hipo file.
+     * @param n         Number of events to run. Set to 0 to run all events in file.
+     * @param c         Amount of information on the applied cuts that should be printed.
+     * @param shArr     Array of arrays describing all the shifts applied.
+     * @param fCuts     FiducialCuts class instance.
+     * @param var       CCDB variation to be used.
+     * @param showPlots boolean describing if plots are to be shown or saved.
      */
     public ResolutionAnalysis(String f, int n, int c, double[][] shArr, FiducialCuts fCuts,
-            String var) {
+            String var, boolean showPlots) {
         // Sanitize input.
         if (shArr.length != Constants.FMTLAYERS || shArr[0].length != Constants.NVARS) {
             System.err.printf("[ERROR] shArr is malformed!\n");
@@ -47,6 +49,7 @@ public class ResolutionAnalysis {
         this.nEvents   = n;
         this.cutsInfo  = c;
         this.fCuts     = fCuts;
+        this.sPlts     = showPlots;
         this.origShArr = new double[Constants.FMTLAYERS][Constants.NVARS];
         this.shArr     = new double[Constants.FMTLAYERS][Constants.NVARS];
         for (int li = 0; li < Constants.FMTLAYERS; ++li) {
@@ -158,8 +161,8 @@ public class ResolutionAnalysis {
         reader.close();
 
         // Draw plots.
-        if (var != null) HipoHandler.drawAlignPlot(var, fitParamsArr, tShArr);
-        else             HipoHandler.drawResPlot(dgFMT[0][0]);
+        if (var != null) HipoHandler.drawAlignPlot(var, fitParamsArr, tShArr, this.sPlts);
+        else             HipoHandler.drawResPlot(dgFMT[0][0], this.sPlts);
 
         return false;
     }

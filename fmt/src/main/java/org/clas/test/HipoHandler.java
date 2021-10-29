@@ -1,11 +1,14 @@
 package org.clas.test;
 
+import java.util.Map;
 import java.util.List;
 import javax.swing.*;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
+import org.jlab.groot.data.IDataSet;
+import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
@@ -99,10 +102,11 @@ public class HipoHandler {
 
     /**
      * Render plots for a data group related to residuals analysis.
-     * @param dgFMT Data group.
+     * @param dgFMT     Data group.
+     * @param showPlots boolean describing if plots are to be shown or saved.
      * @return Status boolean.
      */
-    public static boolean drawResPlot(DataGroup dgFMT) {
+    public static boolean drawResPlot(DataGroup dgFMT, boolean showPlots) {
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         canvas.draw(dgFMT);
 
@@ -122,31 +126,26 @@ public class HipoHandler {
             canvas.cd(pi).draw(vline);
         }
 
-        JFrame frame = new JFrame("FMT");
-        frame.setSize(1600, 1000);
-        frame.add(canvas);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-        return false;
+        return drawFrame("FMT", canvas, showPlots);
     }
 
     /**
      * Master method for drawing alignment plots.
-     * @param var          String containing variable tested.
-     * @param fitParamsArr 4D array containing 4 fit parameters for each FMT layer, for each shift
-     *                     tested.
-     * @param shArr        List of shifts tested.
+     * @param v String containing variable tested.
+     * @param f 4D array containing 4 fit parameters for each FMT layer, for each shift tested.
+     * @param s List of shifts tested.
+     * @param p boolean describing if plots are to be shown or saved.
      * @return Status int.
      */
-    public static boolean drawAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
-        if      (var.equals("dZ")  || var.equals("rZ"))  return draw1DAlignPlot(var, parArr, shArr);
-        else if (var.equals("dXY") || var.equals("rXY")) return draw2DAlignPlot(var, parArr, shArr);
+    public static boolean drawAlignPlot(String v, double[][][][] f, List<Double> s, boolean p) {
+        if      (v.equals("dZ")  || v.equals("rZ"))  return draw1DAlignPlot(v, f, s, p);
+        else if (v.equals("dXY") || v.equals("rXY")) return draw2DAlignPlot(v, f, s, p);
         else return true;
     }
 
     /** Draw a 1D alignment plot. */
-    private static boolean draw1DAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
+    private static boolean draw1DAlignPlot(String var, double[][][][] parArr, List<Double> shArr,
+                                           boolean showPlots) {
         // Setup.
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         DataGroup dg = new DataGroup(3, 1);
@@ -169,18 +168,12 @@ public class HipoHandler {
 
         // Show plots.
         canvas.draw(dg);
-        String title = "" + var + " Alignment";
-        JFrame frame = new JFrame(title);
-        frame.setSize(1600, 1000);
-        frame.add(canvas);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-        return false;
+        return drawFrame("" + var + " Alignment", canvas, showPlots);
     }
 
     /** Draw a 2D alignment plot. */
-    private static boolean draw2DAlignPlot(String var, double[][][][] parArr, List<Double> shArr) {
+    private static boolean draw2DAlignPlot(String var, double[][][][] parArr, List<Double> shArr,
+                                           boolean showPlots) {
         // Setup.
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         int size = shArr.size();
@@ -218,17 +211,36 @@ public class HipoHandler {
                     double absMean = Math.abs(parArr[0][li][i][j]);
                     normalizedMean += (absMean - min[li])/(max[li] - min[li]);
                 }
-                hi.fill(shArr.get(i), shArr.get(j), normalizedMean);
+                // NOTE. Weirdness here is just to solve a minor issue with 2D plots.
+                double d = (shArr.get(1) - shArr.get(0))/2;
+                double xPos = i == parArr[0][0].length-1    ? shArr.get(i)-d : shArr.get(i);
+                double yPos = j == parArr[0][0][i].length-1 ? shArr.get(j)-d : shArr.get(j);
+                hi.fill(xPos, yPos, normalizedMean);
             }
         }
 
         // Show plots.
         canvas.draw(hi);
-        JFrame frame = new JFrame("" + var + " Alignment");
-        frame.setSize(1600, 1000);
-        frame.add(canvas);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        return drawFrame("" + var + " Alignment", canvas, showPlots);
+    }
+
+    /** Draw or save plots via a JFrame. */
+    private static boolean drawFrame(String title, EmbeddedCanvas canvas, boolean showPlots) {
+        if (showPlots) { // Show plots.
+            JFrame frame = new JFrame(title);
+            frame.setSize(1600, 1000);
+            frame.add(canvas);
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        }
+        else { // Save plots.
+            TDirectory dir = new TDirectory();
+            dir.mkdir("/histos");
+            dir.cd("/histos");
+            Map<String, IDataSet> objMap = canvas.getObjectMap();
+            for (IDataSet val : objMap.values()) dir.addDataSet(val);
+            dir.writeFile("histograms.hipo");
+        }
 
         return false;
     }
