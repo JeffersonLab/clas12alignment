@@ -1,11 +1,14 @@
 package org.clas.test;
 
+import java.util.Map;
 import java.util.List;
 import javax.swing.*;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
+import org.jlab.groot.data.IDataSet;
+import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.group.DataGroup;
@@ -223,15 +226,20 @@ public class HipoHandler {
 
     /** Draw or save plots via a JFrame. */
     private static boolean drawFrame(String title, EmbeddedCanvas canvas, boolean showPlots) {
-        if (showPlots) {
+        if (showPlots) { // Show plots.
             JFrame frame = new JFrame(title);
             frame.setSize(1600, 1000);
             frame.add(canvas);
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         }
-        else {
-            // Save plots.
+        else { // Save plots.
+            TDirectory dir = new TDirectory();
+            dir.mkdir("/histos");
+            dir.cd("/histos");
+            Map<String, IDataSet> objMap = canvas.getObjectMap();
+            for (IDataSet val : objMap.values()) dir.addDataSet(val);
+            dir.writeFile("histograms.hipo");
         }
 
         return false;
