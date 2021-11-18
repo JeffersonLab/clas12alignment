@@ -4,6 +4,7 @@ package org.clas.test;
 public class Constants {
     // Generic.
     public static final String DEFVARIATION = "rgf_spring2020"; // Default ccdb variation.
+    public static final String FMTTABLEGLO  = "/geometry/fmt/fmt_global";
     public static final String FMTTABLELOC  = "/geometry/fmt/fmt_layer_noshim";
     public static final int    NVARS   = 6;   // Number of variables to be aligned.
     public static final int    PLOTRES = 200; // Resolution of Residuals plots.
@@ -29,7 +30,7 @@ public class Constants {
     public static final double MAXPZ     = 0.4;  // Max Pz/P.
     public static final double MINTMIN   = 50;   // Min Tmin for a cluster.
     public static final double MAXTMIN   = 500;  // Max Tmin for a cluster.
-    public static final double MINENERGY = 100;  // Min energy for a cluster.
+    public static final double MINENERGY = 0;  // Min energy for a cluster.
 
     public Constants() {}
 }

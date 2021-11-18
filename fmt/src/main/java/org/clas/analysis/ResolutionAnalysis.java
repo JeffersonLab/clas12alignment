@@ -19,6 +19,7 @@ public class ResolutionAnalysis {
     private int nEvents;          // Number of events to run.
     private int cutsInfo;         // Int describing how much info on the cuts should be printed.
     private boolean sPlts;        // Boolean describing if plots are to be shown or saved.
+    private double fmtDrift;      // thickness of the drift gap
     private double[] fmtZ;        // z position of the layers in cm (before shifting).
     private double[] fmtAngle;    // strip angle in degrees.
     private double[][] shArr;     // 2D array of shifts to be applied.
@@ -66,9 +67,12 @@ public class ResolutionAnalysis {
 
         DatabaseConstantProvider dbProvider = new DatabaseConstantProvider(10, var);
         dbProvider.loadTable(Constants.FMTTABLELOC);
+        dbProvider.loadTable("/geometry/fmt/fmt_global");
+        fmtDrift = dbProvider.getDouble(Constants.FMTTABLEGLO+"/hDrift",0)/10;
         for (int li = 0; li < Constants.FMTLAYERS; li++) {
-            fmtZ[li]     = dbProvider.getDouble(Constants.FMTTABLELOC+"/Z",    li)/10;
-            fmtAngle[li] = dbProvider.getDouble(Constants.FMTTABLELOC+"/Angle",li);
+            fmtZ[li]     = dbProvider.getDouble(Constants.FMTTABLELOC+"/Z",    li)/10
+                         + fmtDrift/2;
+            fmtAngle[li] =-dbProvider.getDouble(Constants.FMTTABLELOC+"/Angle",li);
         }
     }
 
