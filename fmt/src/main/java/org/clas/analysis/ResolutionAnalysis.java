@@ -72,7 +72,7 @@ public class ResolutionAnalysis {
         for (int li = 0; li < Constants.FMTLAYERS; li++) {
             fmtZ[li]     = dbProvider.getDouble(Constants.FMTTABLELOC+"/Z",    li)/10
                          + fmtDrift/2;
-            fmtAngle[li] =-dbProvider.getDouble(Constants.FMTTABLELOC+"/Angle",li);
+            fmtAngle[li] = dbProvider.getDouble(Constants.FMTTABLELOC+"/Angle",li);
         }
     }
 
