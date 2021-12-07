@@ -120,22 +120,40 @@ public final class IOHandler {
     public static boolean parseArgs(String[] args, Map<Character, List<String>> params) {
         // NOTE. Better error messages here would be cool, but not strictly necessary at the moment.
         if (initArgmap()) return true;
-        if (args.length < 1) return usage();
+        if (args.length < 1) {
+            System.out.printf("\n[ERROR] File to be opened needs to be added as positional arg.");
+            return usage();
+        }
 
-        // Get args. Can't believe that Java doesn't have a standard method for this.
+        // Get args.
         for (int i = 0; i < args.length; ++i) {
             final String argS = args[i];
             char argC;
             if (argS.charAt(0) == '-') {
                 int count = 0;
-                if (argS.length() < 2) return usage();
+                if (argS.length() < 2) {
+                    System.out.printf("\n[ERROR] Invalid char-indexed optional argument: ");
+                    System.out.printf("``%s''", argS);
+                    return usage();
+                }
                 if (argS.charAt(1) == '-') { // string-indexed argument.
-                    if (argS.length() < 3) return usage();
-                    if (argmap.get(argS) == null) return usage();
+                    if (argS.length() < 3) {
+                        System.out.printf("\n[ERROR] Invalid string-indexed optional argument: ");
+                        System.out.printf("``%s''", argS);
+                        return usage();
+                    }
+                    if (argmap.get(argS) == null) {
+                        System.out.printf("\n[ERROR] Unknown argument: ``%s''", argS);
+                        return usage();
+                    }
                     argC = argmap.get(argS);
                 }
                 else { // char-indexed argument.
-                    if (argS.length() > 2) return usage();
+                    if (argS.length() > 2) {
+                        System.out.printf("\n[ERROR] String-indexed argument needs two dashes: ");
+                        System.out.printf("``%s''", argS);
+                        return usage();
+                    }
                     argC = argS.charAt(1);
                 }
                 params.put(argC, new ArrayList<String>());
@@ -143,35 +161,71 @@ public final class IOHandler {
                 else if (L2ARGS.contains(argC))   count = 2;
                 else if (L3ARGS.contains(argC))   count = 3;
                 else if (LFMTARGS.contains(argC)) count = Constants.FMTLAYERS;
-                else return usage(); // argument is not in list of accepted arguments.
-                for (int j = 0; j < count; ++j) params.get(argC).add(args[++i]);
+                else {
+                    System.out.printf("\n[ERROR] Unknown argument: ``-%s''", argC);
+                    return usage();
+                }
+                for (int j = 0; j < count; ++j) {
+                    if (i == args.length-1) {
+                        System.out.printf("\n[ERROR] Key ``%s'' needs more values!", argS);
+                        return usage();
+                    }
+                    params.get(argC).add(args[++i]);
+                }
             }
             else { // positional argument.
-                if (params.get('f') != null) return usage();
+                if (params.get('f') != null) {
+                    System.out.printf("\n[ERROR] Only one positional argument is allowed.");
+                    return usage();
+                }
                 params.put('f', new ArrayList<String>());
                 params.get('f').add(argS);
             }
         }
 
         // Check that args are of correct type.
-        if (params.get('f') == null) return usage();
-        if (!params.get('f').get(0).endsWith(".hipo")) return usage();
+        if (params.get('f') == null) {
+            System.out.printf("\n[ERROR] File to be opened needs to be added as positional arg.");
+            return usage();
+        }
+        if (!params.get('f').get(0).endsWith(".hipo")) {
+            System.out.printf("\n[ERROR] Program can only process .hipo files. filename is ");
+            System.out.printf("``%s''", params.get('f').get(0));
+            return usage();
+        }
         for (Map.Entry<Character, List<String>> entry : params.entrySet()) {
             Character    key = entry.getKey();
             List<String> vals = entry.getValue();
-            if (vals.size() == 0) return usage();
             for (String val : vals) {
-                if (val == null) return usage();
-                if (key.equals('c') && checkInt(val)) return usage();
-                if (key.equals('n') && checkInt(val)) return usage();
+                if (val == null) {
+                    System.out.printf("[ERROR] Key ``-%s'' has a null value.", key);
+                    return usage();
+                }
+                if ((key.equals('c') || key.equals('n') || key.equals('p'))
+                        && checkInt(val)) {
+                    System.out.printf("[ERROR] Key ``-%s'' requires integer values ", key);
+                    System.out.printf("(``%s'' provided)", val);
+                    return usage();
+                }
                 if (key.equals('v') && (!val.equals("dXY") && !val.equals("dZ")
-                                     && !val.equals("rXY") && !val.equals("rZ"))) return usage();
-                if (key.equals('p') && checkInt(val)) return usage();
+                                     && !val.equals("rXY") && !val.equals("rZ"))) {
+                    System.out.printf("[ERROR] The only allowed values for key ``-v'' are ``dXY''");
+                    System.out.printf(", ``dZ'', ``rXY'', and ``rZ'' (``%s'' provided).", val);
+                    return usage();
+                }
                 if ((L2ARGS.contains(key) || L3ARGS.contains(key) || LFMTARGS.contains(key))
-                        && checkDouble(val)) return usage();
+                        && checkDouble(val)) {
+                    System.out.printf("[ERROR] Key ``%s'' requires Double values", key);
+                    System.out.printf(" (``%s'' provided).", val);
+                    return usage();
+                }
             }
         }
-        if ((params.get('v') == null) != (params.get('i') == null)) return usage();
+        if ((params.get('v') == null) != (params.get('i') == null)) {
+            System.out.printf("[ERROR] Both ``-v'' and ``i'' arguments need to be specified if ");
+            System.out.printf("one of them is.");
+            return usage();
+        }
 
         return false;
     }
