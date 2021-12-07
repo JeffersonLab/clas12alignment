@@ -17,6 +17,7 @@ Note that per-layer XY alignment of FMT is impossible with the current condition
 ```
 Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]
                         [-s --swim] [-c --cutsinfo] [-V --variation]
+                        [-p -plot]
                         [-x --dx] [-y --dy] [-z --dz]
                         [-X --rx] [-Y --ry] [-Z --rz]
   * file      : hipo input file.
@@ -34,6 +35,8 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]
   * cutsinfo  : int describing how much info on the cuts should be printed. 0
                 is no info, 1 is minimal, 2 is detailed. Default is 1.
   * variation : CCDB variation to be used. Default is ``rgf_spring2020''.
+  * plot      : int describing if plots are to be shown. 1 means show them.
+                Plots are always saved in the ``histograms.hipo'' file.
   * dx    (3) : x shift for each FMT layer.
   * dy    (3) : y shift for each FMT layer.
   * dz    (3) : z shift for each FMT layer.

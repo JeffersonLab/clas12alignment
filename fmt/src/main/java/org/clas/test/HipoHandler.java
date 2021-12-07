@@ -233,14 +233,14 @@ public class HipoHandler {
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         }
-        else { // Save plots.
-            TDirectory dir = new TDirectory();
-            dir.mkdir("/histos");
-            dir.cd("/histos");
-            Map<String, IDataSet> objMap = canvas.getObjectMap();
-            for (IDataSet val : objMap.values()) dir.addDataSet(val);
-            dir.writeFile("histograms.hipo");
-        }
+
+        // Save plots.
+        TDirectory dir = new TDirectory();
+        dir.mkdir("/histos");
+        dir.cd("/histos");
+        Map<String, IDataSet> objMap = canvas.getObjectMap();
+        for (IDataSet val : objMap.values()) dir.addDataSet(val);
+        dir.writeFile("histograms.hipo");
 
         return false;
     }
