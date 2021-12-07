@@ -15,7 +15,7 @@ public class TrkSwim {
      * @param swmSetup Swim setup array:
      *                   * [0] : solenoid magnet scale.
      *                   * [1] : torus magnet scale.
-     *                   * [2] : torus magnet shift.
+     *                   * [2] : solenoid magnet shift.
      */
     public TrkSwim(double[] swmSetup, double yaw, double pitch) {
         MagFieldsEngine mf = new MagFieldsEngine();

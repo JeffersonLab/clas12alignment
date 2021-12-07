@@ -74,7 +74,7 @@ public final class IOHandler {
         System.out.printf("                default from RG-F data (-0.75, -1.0, 3.0).\n");
         System.out.printf("                [0] Solenoid magnet scale.\n");
         System.out.printf("                [1] Torus magnet scale.\n");
-        System.out.printf("                [2] Torus magnet shift.\n");
+        System.out.printf("                [2] Solenoid magnet shift.\n");
         System.out.printf("  * cutsinfo  : int describing how much info on the cuts should be\n");
         System.out.printf("                printed. 0 is no info, 1 is minimal, 2 is detailed.\n");
         System.out.printf("                Default is 1.\n");

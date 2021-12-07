@@ -30,7 +30,7 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]
                     RG-F data (-0.75, -1.0, 3.0).
                 [0] Solenoid magnet scale.
                 [1] Torus magnet scale.
-                [2] Torus magnet shift.
+                [2] Solenoid magnet shift.
   * cutsinfo  : int describing how much info on the cuts should be printed. 0
                 is no info, 1 is minimal, 2 is detailed. Default is 1.
   * variation : CCDB variation to be used. Default is ``rgf_spring2020''.
