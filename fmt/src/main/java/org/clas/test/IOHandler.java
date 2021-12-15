@@ -82,7 +82,7 @@ public final class IOHandler {
         System.out.printf("                ``rgf_spring2020''.\n");
         System.out.printf("  * plot      : int describing if plots are to be shown. 1 means\n");
         System.out.printf("                show them. Plots are always saved in the\n");
-        System.out.printf("                ``histograms.hipo'' file.");
+        System.out.printf("                ``histograms.hipo'' file.\n");
         System.out.printf("  * dx    (3) : x shift for each FMT layer.\n");
         System.out.printf("  * dy    (3) : y shift for each FMT layer.\n");
         System.out.printf("  * dz    (3) : z shift for each FMT layer.\n");
