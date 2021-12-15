@@ -131,25 +131,28 @@ public class HipoHandler {
 
     /**
      * Master method for drawing alignment plots.
-     * @param v String containing variable tested.
-     * @param f 4D array containing 4 fit parameters for each FMT layer, for each shift tested.
-     * @param s List of shifts tested.
-     * @param p boolean describing if plots are to be shown or saved.
+     * @param v  String containing variable tested.
+     * @param f  4D array containing 4 fit parameters for each FMT layer, for each shift tested.
+     * @param os Original shifts.
+     * @param ts List of shifts tested.
+     * @param p  Boolean describing if plots are to be shown or saved.
      * @return Status int.
      */
-    public static boolean drawAlignPlot(String v, double[][][][] f, List<Double> s, boolean p) {
-        if      (v.equals("dZ")  || v.equals("rZ"))  return draw1DAlignPlot(v, f, s, p);
-        else if (v.equals("dXY") || v.equals("rXY")) return draw2DAlignPlot(v, f, s, p);
+    public static boolean drawAlignPlot(String v, double[][][][] f, double[][] os, List<Double> ts,
+                                        boolean p) {
+        if      (v.equals("dZ")  || v.equals("rZ"))  return draw1DAlignPlot(v, f, os, ts, p);
+        else if (v.equals("dXY") || v.equals("rXY")) return draw2DAlignPlot(v, f, ts, p);
         else return true;
     }
 
     /** Draw a 1D alignment plot. */
-    private static boolean draw1DAlignPlot(String var, double[][][][] parArr, List<Double> shArr,
-                                           boolean showPlots) {
+    private static boolean draw1DAlignPlot(String var, double[][][][] parArr, double[][] oShArr,
+                                           List<Double> tShArr, boolean showPlots) {
         // Setup.
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         DataGroup dg = new DataGroup(3, 1);
         GraphErrors[] graphs = new GraphErrors[Constants.FMTLAYERS];
+        int pos = var.equals("dZ") ? 2 : 5;
 
         for (int li = 0; li < Constants.FMTLAYERS; ++li) {
             // Create graphs.
@@ -159,8 +162,9 @@ public class HipoHandler {
             graphs[li].setTitleY("#sigma [cm]");
 
             // Fill.
-            for (int i = 0; i < shArr.size(); ++i)
-                graphs[li].addPoint(shArr.get(i), parArr[1][li][i][0], 0, parArr[2][li][i][0]);
+            for (int i = 0; i < tShArr.size(); ++i)
+                graphs[li].addPoint(oShArr[li][pos] + tShArr.get(i), parArr[1][li][i][0], 0,
+                                    parArr[2][li][i][0]);
 
             // Add to dataset.
             dg.addDataSet(graphs[li], li);
@@ -172,18 +176,21 @@ public class HipoHandler {
     }
 
     /** Draw a 2D alignment plot. */
-    private static boolean draw2DAlignPlot(String var, double[][][][] parArr, List<Double> shArr,
+    private static boolean draw2DAlignPlot(String var, double[][][][] parArr, List<Double> tShArr,
                                            boolean showPlots) {
         // Setup.
         EmbeddedCanvas canvas = new EmbeddedCanvas();
-        int size = shArr.size();
-        H2F hi = new H2F("hi", size, shArr.get(0), shArr.get(size-1),
-                               size, shArr.get(0), shArr.get(size-1));
+        int size = tShArr.size();
+        int pos;
+        H2F hi = new H2F("hi", size, tShArr.get(0), tShArr.get(size-1),
+                               size, tShArr.get(0), tShArr.get(size-1));
         if (var.equals("dXY")) {
+            pos = 0;
             hi.setTitleX("x shift [cm]");
             hi.setTitleY("y shift [cm]");
         }
         else {
+            pos = 3;
             hi.setTitleX("x angle [deg]");
             hi.setTitleY("y angle [deg]");
         }
@@ -212,9 +219,9 @@ public class HipoHandler {
                     normalizedMean += (absMean - min[li])/(max[li] - min[li]);
                 }
                 // NOTE. Weirdness here is just to solve a minor issue with 2D plots.
-                double d = (shArr.get(1) - shArr.get(0))/2;
-                double xPos = i == parArr[0][0].length-1    ? shArr.get(i)-d : shArr.get(i);
-                double yPos = j == parArr[0][0][i].length-1 ? shArr.get(j)-d : shArr.get(j);
+                double d = (tShArr.get(1) - tShArr.get(0))/2;
+                double xPos = i == parArr[0][0].length-1    ? tShArr.get(i)-d : tShArr.get(i);
+                double yPos = j == parArr[0][0][i].length-1 ? tShArr.get(j)-d : tShArr.get(j);
                 hi.fill(xPos, yPos, normalizedMean);
             }
         }

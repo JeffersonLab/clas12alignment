@@ -165,7 +165,8 @@ public class ResolutionAnalysis {
         reader.close();
 
         // Draw plots.
-        if (var != null) HipoHandler.drawAlignPlot(var, fitParamsArr, tShArr, this.sPlts);
+        if (var != null) HipoHandler.drawAlignPlot(var, fitParamsArr, this.origShArr, tShArr,
+                                                   this.sPlts);
         else             HipoHandler.drawResPlot(dgFMT[0][0], this.sPlts);
 
         return false;
