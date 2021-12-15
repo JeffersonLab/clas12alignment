@@ -1,5 +1,5 @@
 # FMT Analysis
-Code used for the FMT detector alignment using residual analysis. A residual is the distance between an FMT cluster of hits and a DC track.
+Code used for the FMT detector alignment using residual analysis. A residual is the distance between an FMT cluster of hits and a DC track. In case the README and/or the usage of the program is not clear enough, a short presentation with details on how to run is included in this directory, named `usage_help.pdf`.
 
 ## Setup
 Some setting up is required to run the program. The `run.sh` file requires some tuning, which includes
@@ -23,7 +23,7 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]
   * file      : hipo input file.
   * nevents   : number of events to run. If unspecified, runs all events in
                 input file.
-  * var       : variable to be aligned. Can be *dXY*, *dZ*, *rXY*, or *rZ*.
+  * var       : variable to be aligned. Can be dXY, dZ, rXY, or rZ.
   * inter (2) : [0] range between nominal position and position to be tested.
                 [1] interval for each tested value between <nominal - range>
                     and <nominal + range>.
@@ -44,8 +44,8 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]
   * ry    (3) : y rotation for each FMT layer.
   * rz    (3) : z rotation for each FMT layer.
 
-For example, if <var> == '*dZ*', <inter> == '0.2 0.1', and <dz> == 0.5, then the
-values tested for z are:
+For example, if var == dZ, inter == 0.2 0.1, and dz == 0.5, then the values
+tested for z are:
 
         (0.3, 0.4, 0.5, 0.6, 0.7).
 

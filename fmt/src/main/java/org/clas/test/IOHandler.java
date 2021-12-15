@@ -90,8 +90,8 @@ public final class IOHandler {
         System.out.printf("  * ry    (3) : y rotation for each FMT layer.\n");
         System.out.printf("  * rz    (3) : z rotation for each FMT layer.\n");
         System.out.printf("\n");
-        System.out.printf("For example, if <var> == 'dZ', <inter> == '0.2 0.1', and\n");
-        System.out.printf("<dz> == 0.5, then the values tested for z are:\n");
+        System.out.printf("For example, if var == dZ, inter == 0.2 0.1, and\n");
+        System.out.printf("dz == 0.5, then the values tested for z are:\n");
         System.out.printf("            (0.3, 0.4, 0.5, 0.6, 0.7).\n");
         System.out.printf("If a position or rotation is not specified, it is assumed to be 0\n");
         System.out.printf("for all FMT layers. If no argument is specified, a plot showing\n");
