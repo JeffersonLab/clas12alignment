@@ -102,11 +102,13 @@ public class HipoHandler {
 
     /**
      * Render plots for a data group related to residuals analysis.
-     * @param dgFMT     Data group.
-     * @param showPlots boolean describing if plots are to be shown or saved.
+     * @param dir   TDirectory where plots are to be saved.
+     * @param name  Name under which plots are to be saved.
+     * @param dgFMT Data group.
+     * @param sp    boolean describing if plots are to be shown or saved.
      * @return Status boolean.
      */
-    public static boolean drawResPlot(DataGroup dgFMT, boolean showPlots) {
+    public static boolean drawResPlot(TDirectory dir, String name, DataGroup dgFMT, boolean sp) {
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         canvas.draw(dgFMT);
 
@@ -126,28 +128,30 @@ public class HipoHandler {
             canvas.cd(pi).draw(vline);
         }
 
-        return drawFrame("FMT", canvas, showPlots);
+        return drawFrame(dir, name, canvas, sp);
     }
 
     /**
      * Master method for drawing alignment plots.
-     * @param v  String containing variable tested.
-     * @param f  4D array containing 4 fit parameters for each FMT layer, for each shift tested.
-     * @param os Original shifts.
-     * @param ts List of shifts tested.
-     * @param p  Boolean describing if plots are to be shown or saved.
-     * @return Status int.
+     * @param dir TDirectory where plots are to be saved.
+     * @param v   String containing variable tested.
+     * @param f   4D array containing 4 fit parameters for each FMT layer, for each shift tested.
+     * @param os  Original shifts.
+     * @param ts  List of shifts tested.
+     * @param p   Boolean describing if plots are to be shown or saved.
+     * @return    Status int.
      */
-    public static boolean drawAlignPlot(String v, double[][][][] f, double[][] os, List<Double> ts,
-                                        boolean p) {
-        if      (v.equals("dZ")  || v.equals("rZ"))  return draw1DAlignPlot(v, f, os, ts, p);
-        else if (v.equals("dXY") || v.equals("rXY")) return draw2DAlignPlot(v, f, ts, p);
+    public static boolean drawAlignPlot(TDirectory dir, String v, double[][][][] f, double[][] os,
+                                        List<Double> ts, boolean p) {
+        if      (v.equals("dZ")  || v.equals("rZ"))  return draw1DAlignPlot(dir, v, f, os, ts, p);
+        else if (v.equals("dXY") || v.equals("rXY")) return draw2DAlignPlot(dir, v, f, ts, p);
         else return true;
     }
 
     /** Draw a 1D alignment plot. */
-    private static boolean draw1DAlignPlot(String var, double[][][][] parArr, double[][] oShArr,
-                                           List<Double> tShArr, boolean showPlots) {
+    private static boolean draw1DAlignPlot(TDirectory dir, String var, double[][][][] parArr,
+                                           double[][] oShArr, List<Double> tShArr,
+                                           boolean showPlots) {
         // Setup.
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         DataGroup dg = new DataGroup(3, 1);
@@ -172,12 +176,12 @@ public class HipoHandler {
 
         // Show plots.
         canvas.draw(dg);
-        return drawFrame("" + var + " Alignment", canvas, showPlots);
+        return drawFrame(dir, "" + var + " Alignment", canvas, showPlots);
     }
 
     /** Draw a 2D alignment plot. */
-    private static boolean draw2DAlignPlot(String var, double[][][][] parArr, List<Double> tShArr,
-                                           boolean showPlots) {
+    private static boolean draw2DAlignPlot(TDirectory dir, String var, double[][][][] parArr,
+                                           List<Double> tShArr, boolean showPlots) {
         // Setup.
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         int size = tShArr.size();
@@ -228,12 +232,13 @@ public class HipoHandler {
 
         // Show plots.
         canvas.draw(hi);
-        return drawFrame("" + var + " Alignment", canvas, showPlots);
+        return drawFrame(dir, "" + var + " Alignment", canvas, showPlots);
     }
 
-    /** Draw or save plots via a JFrame. */
-    private static boolean drawFrame(String title, EmbeddedCanvas canvas, boolean showPlots) {
-        if (showPlots) { // Show plots.
+    /** Draw and save plots via a JFrame. */
+    private static boolean drawFrame(TDirectory dir, String title, EmbeddedCanvas canvas,
+                                     boolean sp) {
+        if (sp) { // Show plots.
             JFrame frame = new JFrame(title);
             frame.setSize(1600, 1000);
             frame.add(canvas);
@@ -242,12 +247,9 @@ public class HipoHandler {
         }
 
         // Save plots.
-        TDirectory dir = new TDirectory();
-        dir.mkdir("/histos");
-        dir.cd("/histos");
-        Map<String, IDataSet> objMap = canvas.getObjectMap();
-        for (IDataSet val : objMap.values()) dir.addDataSet(val);
-        dir.writeFile("histograms.hipo");
+        dir.mkdir("/" + title);
+        dir.cd("/" + title);
+        for (IDataSet val : canvas.getObjectMap().values()) dir.addDataSet(val);
 
         return false;
     }

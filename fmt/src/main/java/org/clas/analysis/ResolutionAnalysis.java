@@ -1,5 +1,6 @@
 package org.clas.analysis;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.jlab.detector.calib.utils.DatabaseConstantProvider;
@@ -7,6 +8,7 @@ import org.jlab.groot.group.DataGroup;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.hipo.*;
 import org.jlab.groot.math.F1D;
+import org.jlab.groot.data.TDirectory;
 import org.clas.data.Cluster;
 import org.clas.data.TrajPoint;
 import org.clas.test.Constants;
@@ -114,6 +116,7 @@ public class ResolutionAnalysis {
         else if (var.equals("rZ" )) {pos[0] = 5;}
 
         DataGroup[][] dgFMT = HipoHandler.createResDataGroups(cn1, cn2);
+        TDirectory dir = new TDirectory(); // Directory where plots are to be saved.
 
         // Four params for each layer and tested shift: mean, sigma, sigma error, and chi^2.
         double[][][][] fitParamsArr = new double[4][Constants.FMTLAYERS][cn1][cn2];
@@ -160,14 +163,21 @@ public class ResolutionAnalysis {
                 // Print cuts data to stdout.
                 if      (this.cutsInfo == 1) this.fCuts.printCutsInfo();
                 else if (this.cutsInfo == 2) this.fCuts.printDetailedCutsInfo();
+
+                // Draw and save residuals plots.
+                HipoHandler.drawResPlot(dir, "Residuals " + (ci1*cn2+ci2+1) + "-" + (cn1*cn2),
+                                        dgFMT[ci1][ci2], var == null && this.sPlts);
             }
         }
         reader.close();
 
-        // Draw plots.
-        if (var != null) HipoHandler.drawAlignPlot(var, fitParamsArr, this.origShArr, tShArr,
-                                                   this.sPlts);
-        else             HipoHandler.drawResPlot(dgFMT[0][0], this.sPlts);
+        // Draw, save, and (maybe) show alignment plots.
+        if (var != null)
+            HipoHandler.drawAlignPlot(dir, var, fitParamsArr, this.origShArr, tShArr, this.sPlts);
+
+        File fname = new File("histograms.hipo");
+        fname.delete(); // Delete file in case it already exists.
+        dir.writeFile("histograms.hipo"); // Write file.
 
         return false;
     }
