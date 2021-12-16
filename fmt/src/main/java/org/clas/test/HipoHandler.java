@@ -160,7 +160,7 @@ public class HipoHandler {
 
         for (int li = 0; li < Constants.FMTLAYERS; ++li) {
             // Create graphs.
-            graphs[li] = new GraphErrors();
+            graphs[li] = new GraphErrors("layer " + (li+1));
             if (var.equals("dZ")) graphs[li].setTitleX("shift [cm] - layer "  + (li+1));
             else                  graphs[li].setTitleX("angle [deg] - layer " + (li+1));
             graphs[li].setTitleY("#sigma [cm]");
@@ -186,8 +186,9 @@ public class HipoHandler {
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         int size = tShArr.size();
         int pos;
-        H2F hi = new H2F("hi", size, tShArr.get(0), tShArr.get(size-1),
-                               size, tShArr.get(0), tShArr.get(size-1));
+
+        H2F hi = new H2F(var, size, tShArr.get(0), tShArr.get(size-1),
+                              size, tShArr.get(0), tShArr.get(size-1));
         if (var.equals("dXY")) {
             pos = 0;
             hi.setTitleX("x shift [cm]");
