@@ -64,7 +64,7 @@ NOTE. All measurements are in cm, while the ccdb works in mm.
     * Crosses are constructed by grouping clusters from the six different FMT layers.
     * The DC track is updated with these crosses via a Kalman Filter algorithm.
 
-**NOTE**. Crosses are not implemented for the RG-F run, where only three FMT layers were installed.
+**NOTE**. Crosses are not implemented for runs with only three FMT layers.
 
 ### Plotting Residuals:
 * Residuals are the difference between the DC track and the FMT clusters in y in the FMT layer's local coordinate system.
@@ -73,5 +73,3 @@ NOTE. All measurements are in cm, while the ccdb works in mm.
 ### Comparing results:
 * For *dZ* and *rZ* alignment, it is ideal to use the sigma of the residuals distribution, fixing as much as sigmaError allows.
 * For *dXY* and *rXY* alignment, the mean of the residuals distribution can be used, fixing as much as sigma allows.
-
-**NOTE**. This program was designed to work with Coatjava 6.5.8. Different versions may cause errors or weird behavior.
