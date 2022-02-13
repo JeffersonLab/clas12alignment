@@ -31,5 +31,17 @@ public class Bin {
         return (low+high)/2;
     }
     
+    public double getMin() {
+        return low;
+    }
+    
+    public double getMax() {
+        return high;
+    }
+    
+    public double getWidth() {
+        return high-low;
+    }
+    
 
 }

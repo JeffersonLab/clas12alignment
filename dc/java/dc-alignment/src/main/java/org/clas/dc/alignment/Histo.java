@@ -3,6 +3,7 @@ package org.clas.dc.alignment;
 import java.util.List;
 import org.jlab.clas.physics.Particle;
 import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.fitter.DataFitter;
@@ -24,19 +25,17 @@ public class Histo {
     private final int nSector = 6;
     private final int nLayer  = 36;
     
+    private DataGroup       electron  = null; 
     private DataGroup[][][] residuals = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][]   vertex    = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains sectors
 
-    private double[][][][] resValues = null;
-    private double[][][][] resErrors = null;
-    private double[][][]   vtxValues = null;
-    private double[][][]   vtxErrors = null;
+    private double[][][][] parValues = null;
+    private double[][][][] parErrors = null;
     
     private Bin[] thetaBins = null;
     private Bin[] phiBins  = null;
     
-    private static double tlength = 5;   //target length
-    private static double wdist   = 2.8; //distance between the mylar foil and the downstream window
+    private static double scale   = 1000; // scale factor for vertex residuals to be visible on the plots
     
     // histogram limits for residuals
     int    resBins = 200;
@@ -60,15 +59,13 @@ public class Histo {
     }
     
     private void createHistos(String optStats) {
-        System.out.println("Creating histograms for " + nSector          + " sector, " 
-                                                      + thetaBins.length + " theta bins, " 
-                                                      + phiBins.length   + " phi bins");
+        System.out.println("Creating histograms for " + nSector              + " sectors, " 
+                                                      + (thetaBins.length-1) + " theta bins, " 
+                                                      + (phiBins.length-1)   + " phi bins");
         this.residuals = new DataGroup[nSector][thetaBins.length][phiBins.length];
         this.vertex    = new DataGroup[thetaBins.length][phiBins.length];
-        this.resValues = new double[nSector][thetaBins.length][phiBins.length][nLayer];
-        this.resErrors = new double[nSector][thetaBins.length][phiBins.length][nLayer];
-        this.vtxValues = new double[nSector][thetaBins.length][phiBins.length];
-        this.vtxErrors = new double[nSector][thetaBins.length][phiBins.length];
+        this.parValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+1];
+        this.parErrors = new double[nSector][thetaBins.length][phiBins.length][nLayer+1];
         
         for(int is=0; is<nSector; is++) {
             int sector = is+1;
@@ -100,6 +97,26 @@ public class Histo {
                 }
             }
         }           
+        this.electron = new DataGroup(3,2);
+        H1F hi_nphe  = new H1F("hi_nphe",  "HTCC NPhe",   "Counts", 100, 0., 50.);
+        hi_nphe.setFillColor(4);
+        H1F hi_ecal  = new H1F("hi_ecal",  "ECAL E(GeV)", "Counts", 100, 0., 4.);
+        hi_ecal.setFillColor(4);
+        H1F hi_vtx   = new H1F("hi_vtx",   "Vertex(cm)",  "Counts", vtxBins, vtxMin, vtxMax);
+        hi_vtx.setFillColor(4);
+        H1F hi_theta = new H1F("hi_theta", "#theta(deg)", "Counts", 100, 0., 40.);
+        hi_theta.setFillColor(4);
+        H1F hi_phi   = new H1F("hi_phi",   "#phi(deg)",   "Counts", 100, -180, 180);
+        hi_phi.setFillColor(4);
+        H2F hi_thetaphi = new H2F("hi_thetaphi", "", 100, -180, 180, 100, 0, 40.);
+        hi_thetaphi.setTitleX("#phi(deg)");
+        hi_thetaphi.setTitleY( "#theta(deg)");
+        this.electron.addDataSet(hi_nphe,     0);
+        this.electron.addDataSet(hi_ecal,     1);
+        this.electron.addDataSet(hi_vtx,      2);
+        this.electron.addDataSet(hi_theta,    3);
+        this.electron.addDataSet(hi_phi,      4);
+        this.electron.addDataSet(hi_thetaphi, 5);
     }
   
     private int getElectron(Event event) {
@@ -123,7 +140,8 @@ public class Histo {
 
             for(int loop=0; loop<particleBank.getRows(); loop++) {
                 double beta = particleBank.getFloat("beta",loop);
-
+                double vtx  = particleBank.getFloat("vz",loop);
+                
                 double nphe = 0;
                 for(int i=0; i<cherenkovBank.getRows(); i++) {
                     if(cherenkovBank.getShort("pindex", i)==loop) {
@@ -138,14 +156,18 @@ public class Histo {
                     }
                 }
 
-                if(beta>0 && nphe>2 && energy>0.2) { // require at least 0.06 energy deposited in the calorimeter
+                if(beta>0 && nphe>Constants.NPHEMIN && energy>Constants.ECALMIN) { 
                     for (int i=0; i<trackBank.getRows(); i++) {
                         if(trackBank.getShort("pindex", i)==loop) {
                             iele = trackBank.getShort("index", i);
                         }
                     }
                 }
-                if(iele>=0) break;
+                if(iele>=0) {
+                    electron.getH1F("hi_nphe").fill(nphe);
+                    electron.getH1F("hi_ecal").fill(energy);
+                    break;
+                }
             }
         } 
                 
@@ -155,15 +177,15 @@ public class Histo {
 
         Bank runConfig = new Bank(schema.getSchema("RUN::config"));
         Bank trackBank = new Bank(schema.getSchema("TimeBasedTrkg::TBTracks"));
-        Bank hitBank  = new Bank(schema.getSchema("TimeBasedTrkg::TBHits"));
+        Bank hitBank   = new Bank(schema.getSchema("TimeBasedTrkg::TBHits"));
 					
-        if(runConfig!=null)       event.read(runConfig);
-        if(trackBank!=null)       event.read(trackBank);
+        if(runConfig!=null)      event.read(runConfig);
+        if(trackBank!=null)      event.read(trackBank);
         if(hitBank!=null)        event.read(hitBank);
         
         if(runConfig!=null &&
            trackBank!=null && trackBank.getRows()>0 &&
-           hitBank!=null  && hitBank.getRows()>0) {
+           hitBank!=null   && hitBank.getRows()>0) {
             
             int iele = this.getElectron(event);
             if(iele<0) return;
@@ -175,18 +197,20 @@ public class Histo {
                                              trackBank.getFloat("Vtx0_x", iele),
                                              trackBank.getFloat("Vtx0_y", iele),
                                              trackBank.getFloat("Vtx0_z", iele));
+
             
+            this.electron.getH1F("hi_vtx").fill(electron.vz());
+            this.electron.getH1F("hi_theta").fill(Math.toDegrees(electron.theta()));
+            this.electron.getH1F("hi_phi").fill(Math.toDegrees(electron.phi()));
+            this.electron.getH2F("hi_thetaphi").fill(Math.toDegrees(electron.phi()), Math.toDegrees(electron.theta()));
+                        
             int id     = trackBank.getInt("id", iele);
             int sector = trackBank.getByte("sector", iele);
-//            double pphi = Math.toDegrees(electron.phi());
             electron.vector().rotateZ(Math.toRadians(-60*(sector-1)));
             
             double theta = Math.toDegrees(electron.theta());
             double phi   = Math.toDegrees(electron.phi());
-//            if(Math.abs(phi)>30) {
-//                System.out.println(phi + " " + sector + " " + pphi);
-//                System.out.println(electron.toString());
-//            }
+
             for(int i=0; i<hitBank.getRows(); i++){
                 
                 if(hitBank.getInt("trkID", i) == id) {
@@ -238,72 +262,68 @@ public class Histo {
     }
     
  
-    public void analyzeHisto() {
+    public void analyzeHisto(boolean fit) {
         for(int is=0; is<nSector; is++) {
             int s = is +1;
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
                     for(int l=1; l<=nLayer; l++) {
                         H1F hres = residuals[is][it][ip].getH1F("hi_L"+l);
-                        System.out.print(String.format("sector=%1d theta bin=%1d phi bin=%1d layer=%2d...",s,it,ip,l));
-                        Histo.fitResiduals(hres);
-                        if(hres.getFunction()!=null) {
-                            this.resValues[is][it][ip][l-1] = hres.getFunction().getParameter(1); 
-                            this.resErrors[is][it][ip][l-1] = hres.getFunction().parameter(1).error();
+                        System.out.print(String.format("\tsector=%1d theta bin=%1d phi bin=%1d layer=%2d",s,it,ip,l));
+                        if(fit) {
+                            boolean fitStatus = Histo.fitResiduals(hres);
+                            if(fitStatus) {
+                                this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
+                                this.parErrors[is][it][ip][l] = hres.getFunction().parameter(1).error();
+                            }
+                            else {
+                                double integral = Histo.getIntegralIDataSet(hres, hres.getFunction().getMin(), hres.getFunction().getMin());
+                                this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
+                                this.parErrors[is][it][ip][l] = hres.getFunction().getParameter(2)/Math.sqrt(integral);
+                            }
                         }
                         else {
-                            this.resValues[is][it][ip][l-1] = 0; 
-                            this.resErrors[is][it][ip][l-1] = 0;
+                            this.parValues[is][it][ip][l] = hres.getMean(); 
+                            this.parErrors[is][it][ip][l] = hres.getRMS()/Math.sqrt(hres.getIntegral());
                         }
+                        System.out.print("\r");
                     }
                     H1F hvtx = vertex[it][ip].getH1F("hi_S"+s);
                     Histo.fit3Vertex(hvtx);
-                    this.vtxValues[is][it][ip] = hvtx.getFunction().getParameter(1);
-                    this.vtxErrors[is][it][ip] = hvtx.getFunction().parameter(1).error();
+                    this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*scale;
+                    this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*scale;
                 }
             }
         }
          
     }
     
-    public double[] getResidualValues(int sector, int itheta, int iphi) {
+    public double[] getParValues(int sector, int itheta, int iphi) {
         if(sector<1 || sector>6) 
             throw new IllegalArgumentException("Error: invalid sector="+sector);
         if(itheta<0 || itheta>=thetaBins.length) 
             throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
         if(iphi<0 || iphi>phiBins.length) 
             throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
-        return this.resValues[sector-1][itheta][iphi];
+        return this.parValues[sector-1][itheta][iphi];
     }
     
-    public double[] getResidualErrors(int sector, int itheta, int iphi) {
+    public double[] getParErrors(int sector, int itheta, int iphi) {
         if(sector<1 || sector>6) 
             throw new IllegalArgumentException("Error: invalid sector="+sector);
         if(itheta<0 || itheta>=thetaBins.length) 
             throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
         if(iphi<0 || iphi>phiBins.length) 
             throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
-        return this.resErrors[sector-1][itheta][iphi];
-    }
-       
-    public double getVertexValues(int sector, int itheta, int iphi) {
-        if(sector<1 || sector>6) 
-            throw new IllegalArgumentException("Error: invalid sector="+sector);
-        if(itheta<0 || itheta>=thetaBins.length) 
-            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
-        if(iphi<0 || iphi>phiBins.length) 
-            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
-        return this.vtxValues[sector-1][itheta][iphi];
+        return this.parErrors[sector-1][itheta][iphi];
     }
     
-    public double getVertexErrors(int sector, int itheta, int iphi) {
-        if(sector<1 || sector>6) 
-            throw new IllegalArgumentException("Error: invalid sector="+sector);
-        if(itheta<0 || itheta>=thetaBins.length) 
-            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
-        if(iphi<0 || iphi>phiBins.length) 
-            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
-        return this.vtxErrors[sector-1][itheta][iphi];
+    public EmbeddedCanvasTabbed getElectronPlots() {
+        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("electron");
+        canvas.getCanvas().draw(electron);
+        canvas.getCanvas().getPad(3).getAxisY().setLog(true);
+        canvas.getCanvas().getPad(5).getAxisZ().setLog(true);
+        return canvas;
     }
     
     public EmbeddedCanvasTabbed plotHistos() {
@@ -338,38 +358,40 @@ public class Histo {
     
     
     public static boolean fitResiduals(H1F histo) {
-        double mean  = histo.getDataX(histo.getMaximumBin());
+        double mean  = Histo.getMeanIDataSet(histo, histo.getMean()-histo.getRMS(), 
+                                                    histo.getMean()+histo.getRMS());
         double amp   = histo.getBinContent(histo.getMaximumBin());
         double rms   = histo.getRMS();
         double sigma = rms/2;
         double min = mean - rms;
         double max = mean + rms;
         
-        if(amp>10) {
-            F1D f1   = new F1D("f1res","[amp]*gaus(x,[mean],[sigma])", min, max);
-            f1.setLineColor(2);
-            f1.setLineWidth(2);
-            f1.setOptStat("1111");
-            f1.setParameter(0, amp);
-            f1.setParameter(1, mean);
-            f1.setParameter(2, sigma);
+        F1D f1   = new F1D("f1res","[amp]*gaus(x,[mean],[sigma])", min, max);
+        f1.setLineColor(2);
+        f1.setLineWidth(2);
+        f1.setOptStat("1111");
+        f1.setParameter(0, amp);
+        f1.setParameter(1, mean);
+        f1.setParameter(2, sigma);
+            
+        if(amp>5) {
             f1.setParLimits(0, amp*0.2,   amp*1.2);
-            f1.setParLimits(1, mean*0.8,  mean*1.2);
-            f1.setParLimits(2, sigma*0.2, sigma*1.2);
-            System.out.print("1st...");
+            f1.setParLimits(1, mean*0.5,  mean*1.5);
+            f1.setParLimits(2, sigma*0.2, sigma*2);
+//            System.out.print("1st...");
             DataFitter.fit(f1, histo, "Q");
-            mean  = f1.getParameter(1);
-            sigma = f1.getParameter(2);
-            f1.setParLimits(0, 0, 2*amp);
-            f1.setParLimits(1, mean-sigma, mean+sigma);
-            f1.setParLimits(2, 0, sigma*2);
-            f1.setRange(mean-2.0*sigma,mean+2.0*sigma);
-            DataFitter.fit(f1, histo, "Q");
-            System.out.print("2nd\r");
+//            mean  = f1.getParameter(1);
+//            sigma = f1.getParameter(2);
+//            f1.setParLimits(0, 0, 2*amp);
+//            f1.setParLimits(1, mean-sigma, mean+sigma);
+//            f1.setParLimits(2, 0, sigma*2);
+//            f1.setRange(mean-2.0*sigma,mean+2.0*sigma);
+//            DataFitter.fit(f1, histo, "Q");
+//            System.out.print("2nd");
             return true;
         }
         else {
-            System.out.print("\r");
+            histo.setFunction(f1);
             return false;
         }
     }    
@@ -381,8 +403,8 @@ public class Histo {
         //find downstream window
         int ibin0 = histo.getMaximumBin();
         //check if the found maximum is the first or second peak, ibin is tentative upstream window
-        int ibin1 = Math.max(0, histo.getMaximumBin() - (int)(tlength/dx));
-        int ibin2 = Math.min(nbin-1, histo.getMaximumBin() + (int)(tlength/dx));
+        int ibin1 = Math.max(0, histo.getMaximumBin() - (int)(Constants.TARGETLENGTH/dx));
+        int ibin2 = Math.min(nbin-1, histo.getMaximumBin() + (int)(Constants.TARGETLENGTH/dx));
         if(histo.getBinContent(ibin1)<histo.getBinContent(ibin2)) {
             ibin1 = ibin0;
             ibin0 = ibin2;
@@ -399,14 +421,14 @@ public class Histo {
         f1_vtx.setOptStat("11111111");
         f1_vtx.setParameter(0, amp/2);
         f1_vtx.setParameter(1, mean);
-        f1_vtx.setParameter(2, tlength);
-        f1_vtx.setParLimits(2, tlength*0.99, tlength*1.01);
+        f1_vtx.setParameter(2, Constants.TARGETLENGTH);
+        f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.99, Constants.TARGETLENGTH*1.01);
         f1_vtx.setParameter(3, sigma);
-        f1_vtx.setParameter(4, wdist);
-        f1_vtx.setParLimits(4, wdist*0.9, wdist*1.1);
+        f1_vtx.setParameter(4, Constants.WINDOWDIST);
+        f1_vtx.setParLimits(4, Constants.WINDOWDIST*0.9, Constants.WINDOWDIST*1.1);
         f1_vtx.setParameter(5, bg);
 //        f1_vtx.setParameter(4, sigma*3);
-        f1_vtx.setRange(mean-tlength*1.5,mean+tlength);
+        f1_vtx.setRange(mean-Constants.TARGETLENGTH*1.5,mean+Constants.TARGETLENGTH);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
     }
     
@@ -481,6 +503,52 @@ public class Histo {
         }
     }
 
+    private static double getIntegralIDataSet(IDataSet data, double min, double max) {
+            double nEntries = 0;
+            for (int i = 0; i < data.getDataSize(0); i++) {
+                    double x = data.getDataX(i);
+                    double y = data.getDataY(i);
+                    if (x > min && x < max && y != 0) {
+                            nEntries += y;
+                    }
+            }
+            return (double) nEntries;
+    }
+
+    private static double getMeanIDataSet(IDataSet data, double min, double max) {
+            int nsamples = 0;
+            double sum = 0;
+            double nEntries = 0;
+            for (int i = 0; i < data.getDataSize(0); i++) {
+                    double x = data.getDataX(i);
+                    double y = data.getDataY(i);
+                    if (x > min && x < max && y != 0) {
+                            nsamples++;
+                            sum += x * y;
+                            nEntries += y;
+                    }
+            }
+            return sum / (double) nEntries;
+    }
+
+    private static double getRMSIDataSet(IDataSet data, double min, double max) {
+            int nsamples = 0;
+            double mean = getMeanIDataSet(data, min, max);
+            double sum = 0;
+            double nEntries = 0;
+
+            for (int i = 0; i < data.getDataSize(0); i++) {
+                    double x = data.getDataX(i);
+                    double y = data.getDataY(i);
+                    if (x > min && x < max && y != 0) {
+                            nsamples++;
+                            sum += Math.pow(x - mean, 2) * y;
+                            nEntries += y;
+                    }
+            }
+            return Math.sqrt(sum / (double) nEntries);
+    }
+        
     public void readDataGroup(String folder, TDirectory dir) {
         for(int is=0; is<nSector; is++) {
             for(int it=0; it<thetaBins.length; it++) {
