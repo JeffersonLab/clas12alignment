@@ -550,87 +550,82 @@ public class Histo {
     }
         
     public void readDataGroup(String folder, TDirectory dir) {
+        electron = this.readDataGroup(folder + "/electron", dir, electron);
         for(int is=0; is<nSector; is++) {
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
                     String subfolder = folder + "/residuals/sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
-                    int nrows = residuals[is][it][ip].getRows();
-                    int ncols = residuals[is][it][ip].getColumns();
-                    int nds   = nrows*ncols;
-                    DataGroup newGroup = new DataGroup(ncols,nrows);
-                    for(int i = 0; i < nds; i++){
-                        List<IDataSet> dsList = residuals[is][it][ip].getData(i);
-                        for(IDataSet ds : dsList){
-                            if(dir.getObject(subfolder, ds.getName())!=null) {
-                                newGroup.addDataSet(dir.getObject(subfolder, ds.getName()),i);
-                            }
-                        }
-                    }
-                    residuals[is][it][ip]=newGroup;
+                    residuals[is][it][ip]=this.readDataGroup(subfolder, dir, residuals[is][it][ip]);
                 }
             }
         }
         for(int it=0; it<thetaBins.length; it++) {
             for(int ip=0; ip<phiBins.length; ip++) {
                 String subfolder = folder + "/vertex/theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
-                int nrows = vertex[it][ip].getRows();
-                int ncols = vertex[it][ip].getColumns();
-                int nds   = nrows*ncols;
-                DataGroup newGroup = new DataGroup(ncols,nrows);
-                for(int i = 0; i < nds; i++){
-                    List<IDataSet> dsList = vertex[it][ip].getData(i);
-                    for(IDataSet ds : dsList){
-                        if(dir.getObject(subfolder, ds.getName())!=null) {
-                            newGroup.addDataSet(dir.getObject(subfolder, ds.getName()),i);
-                        }
-                    }
-                }
-                vertex[it][ip]=newGroup;
+                vertex[it][ip]=this.readDataGroup(subfolder, dir, vertex[it][ip]);
             }
         }
     }
 
-    public void writeDataGroup(String folder, TDirectory dir) {
-        dir.mkdir("/" + folder);
+    private DataGroup readDataGroup(String folder, TDirectory dir, DataGroup dg) {
+        int nrows = dg.getRows();
+        int ncols = dg.getColumns();
+        int nds   = nrows*ncols;
+        DataGroup newGroup = new DataGroup(ncols,nrows);
+        for(int i = 0; i < nds; i++){
+            List<IDataSet> dsList = dg.getData(i);
+            for(IDataSet ds : dsList){
+                if(dir.getObject(folder, ds.getName())!=null) {
+                    newGroup.addDataSet(dir.getObject(folder, ds.getName()),i);
+                }
+            }
+        }
+        return newGroup;
+    }
+    
+    public void writeDataGroup(String root, String folder, TDirectory dir) {
+        dir.cd("/" + root);
+        dir.mkdir(folder);
         dir.cd(folder);
+        this.writeDataGroup("electron", dir,electron);
+        dir.cd("/" + root + "/" + folder);
         dir.mkdir("residuals");
         dir.cd("residuals");
         for(int is=0; is<nSector; is++) {
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
                     String subfolder = "sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
-                    dir.mkdir(subfolder);
-                    dir.cd(subfolder);        
-                    for(int il=0; il<nLayer; il++) {
-                        List<IDataSet> dsList = residuals[is][it][ip].getData(il);
-                        for(IDataSet ds : dsList){
-        //                    System.out.println("\t --> " + ds.getName());
-                            dir.addDataSet(ds);
-                        }
-                    }
-                    dir.cd("/" + folder + "/residuals");
+                    this.writeDataGroup(subfolder, dir, residuals[is][it][ip]);
+                    dir.cd("/" + root + "/" + folder + "/residuals");
                 }
             }
         }
-        dir.cd("/" + folder);
+        dir.cd("/" + root + "/" + folder);
         dir.mkdir("vertex");
         dir.cd("vertex");
         for(int it=0; it<thetaBins.length; it++) {
             for(int ip=0; ip<phiBins.length; ip++) {
                 String subfolder = "theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
-                dir.mkdir(subfolder);
-                dir.cd(subfolder);        
-                for(int is=0; is<nSector; is++) {
-                    List<IDataSet> dsList = vertex[it][ip].getData(is);
-                    for(IDataSet ds : dsList){
-    //                    System.out.println("\t --> " + ds.getName());
-                        dir.addDataSet(ds);
-                    }
-                }
-                dir.cd("/" + folder + "/vertex");
+                this.writeDataGroup(subfolder, dir, vertex[it][ip]);
+                dir.cd("/" + root + "/" + folder + "/vertex");
             }
         } 
         dir.cd();
+    }
+    
+    private void writeDataGroup(String folder, TDirectory dir, DataGroup dg) {
+        int nrows = dg.getRows();
+        int ncols = dg.getColumns();
+        int nds   = nrows*ncols;
+        dir.mkdir(folder);
+        dir.cd(folder);        
+        for(int i=0; i<nds; i++) {
+            List<IDataSet> dsList = dg.getData(i);
+            for(IDataSet ds : dsList){
+//                    System.out.println("\t --> " + ds.getName());
+                dir.addDataSet(ds);
+            }
+        }
     }
     
 }

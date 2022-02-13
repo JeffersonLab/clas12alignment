@@ -12,7 +12,9 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import org.jlab.detector.calib.utils.ConstantsManager;
 import org.jlab.groot.base.GStyle;
+import org.jlab.groot.data.Directory;
 import org.jlab.groot.data.GraphErrors;
+import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.graphics.EmbeddedPad;
@@ -29,7 +31,7 @@ public class Alignment {
     private Map<String,Histo> histos = new LinkedHashMap();
     private String[]          inputs = new String[19];
     private Bin[]             thetaBins = null;
-    private Bin[]             phiBins  = null;
+    private Bin[]             phiBins   = null;
     private ConstantsManager  manager = new ConstantsManager();
     private Table             alignment = null;
         
@@ -50,7 +52,6 @@ public class Alignment {
     
     public Alignment() {
         this.initInputs();
-        this.initGraphics();
     }
     
     private void initConstants(int run, String variation) {
@@ -451,6 +452,16 @@ public class Alignment {
         }
         return binArray;
     }
+    
+    private String getBinString(Bin[] bins) {
+        String binString = "";
+        if(bins.length>1) {
+            binString += bins[1].getMin();
+            for(int i=1; i<bins.length; i++)
+                binString += ":" + bins[i].getMax();
+        }
+        return binString;
+    }
 
     private void setAngularBins(String thetabins, String phibins) {
         thetaBins = this.getBins(thetabins);
@@ -466,6 +477,7 @@ public class Alignment {
     }   
     
     public JTabbedPane getCanvases() {
+        this.initGraphics();
         JTabbedPane panel = new JTabbedPane();
         panel.add("analysis", this.analyzeFits());
         panel.add("results", this.plotResults());
@@ -501,8 +513,8 @@ public class Alignment {
             histos.get(key).processFiles();
         }
     }
-    
-    public void readHistos(String fileName, Bin[] thetaBins, Bin[] phiBins, String optStats) {
+
+    public void readHistos(String fileName, String optStats) {
         System.out.println("Opening file: " + fileName);
         PrintStream pipeStream = new PrintStream(pipeOut);
         System.setOut(pipeStream);
@@ -510,26 +522,32 @@ public class Alignment {
         TDirectory dir = new TDirectory();
         dir.readFile(fileName);
         System.out.println(dir.getDirectoryList());
-        dir.cd("/nominal");
+        String folder = dir.getDirectoryList().get(0);
+        String[] bins = folder.split("_");
+        this.setAngularBins(bins[1], bins[2]);
+        dir.cd("/" + folder);
         dir.ls();
-        dir.cd("residuals");
-        dir.ls();
-        for(String key : dir.getDirectoryList()) {
+        for(Object entry : dir.getDir().getDirectoryMap().entrySet()) {
+            Map.Entry<String,Directory> object = (Map.Entry<String,Directory>) entry;
+            String key = object.getKey();
             this.addHistoSet(key, new Histo(null, thetaBins, phiBins, optStats));
-            histos.get(key).readDataGroup(key, dir);
+            histos.get(key).readDataGroup(folder+"/"+key, dir);
         }
         System.setOut(outStream);
         System.setErr(errStream);
     }
 
     public void saveHistos(String fileName) {
-        System.out.println("Saving histograms to file " + fileName);
+        System.out.println("\nSaving histograms to file " + fileName);
         PrintStream pipeStream = new PrintStream(pipeOut);
         System.setOut(pipeStream);
         System.setErr(pipeStream);
         TDirectory dir = new TDirectory();
+        String folder = "angles_" + this.getBinString(thetaBins) + "_" + this.getBinString(phiBins);
+        dir.mkdir("/" + folder);
+        dir.cd(folder);
         for(String key : histos.keySet()) {
-            histos.get(key).writeDataGroup(key, dir);
+            histos.get(key).writeDataGroup(folder, key, dir);
         }
         dir.writeFile(fileName);
         System.setOut(outStream);
@@ -566,8 +584,6 @@ public class Alignment {
         parser.getOptionParser("-analyze").addRequired("-input"  ,                 "input histogram file");
         parser.getOptionParser("-analyze").addOption("-display"  ,"1",             "display histograms (0/1)");
         parser.getOptionParser("-analyze").addOption("-stats"    ,"",              "set histogram stat option");
-        parser.getOptionParser("-analyze").addOption("-theta"    , "",             "theta bin limits, e.g. \"5:10:20:30\"");
-        parser.getOptionParser("-analyze").addOption("-phi"      , "",             "phi bin limits, e.g. \"-30:-15:0:15:30\"");
         parser.getOptionParser("-analyze").addOption("-variation", "",             "database variation for constant test");
         parser.getOptionParser("-analyze").addOption("-fit"      , "1",            "fit residuals (1) or use mean (0)");
         parser.getOptionParser("-analyze").addOption("-sector"   , "0",            "sector-dependent derivatives (1) or average (0)");
@@ -614,8 +630,6 @@ public class Alignment {
         }
         
         if(parser.getCommand().equals("-analyze")) {
-            String thetaBins   = parser.getOptionParser("-analyze").getOption("-theta").stringValue();
-            String phiBins     = parser.getOptionParser("-analyze").getOption("-phi").stringValue();
             String optStats    = parser.getOptionParser("-analyze").getOption("-stats").stringValue();
             String variation   = parser.getOptionParser("-analyze").getOption("-variation").stringValue();
             boolean fit        = parser.getOptionParser("-analyze").getOption("-fit").intValue()!=0;
@@ -627,10 +641,9 @@ public class Alignment {
             if(!openWindow) System.setProperty("java.awt.headless", "true");
 
             String histoName   = parser.getOptionParser("-analyze").getOption("-input").stringValue();
-            align.setAngularBins(thetaBins, phiBins);
             align.setFitOptions(fit, sector, init, iter, verbose);
             align.initConstants(11, variation);
-            align.readHistos(histoName,align.getThetaBins(),align.getPhiBins(),optStats);
+            align.readHistos(histoName, optStats);
             align.analyzeHistos();
         }
 
