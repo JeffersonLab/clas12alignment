@@ -392,7 +392,7 @@ public class Alignment {
         canvas.getCanvas("theta dependence: fitted").draw(this.getAngularGraph(true));
         canvas.getCanvas().setFont(fontName);
         for(EmbeddedPad pad : canvas.getCanvas("theta dependence: fitted").getCanvasPads())
-            pad.getAxisX().setRange(-2000, 2000);
+            pad.getAxisX().setRange(-1000, 1000);
         return canvas;
     }
 
@@ -401,7 +401,7 @@ public class Alignment {
 
         int scale=0;
         if(correct) scale = 1;
-        DataGroup residuals = new DataGroup(3,2);
+        DataGroup residuals = new DataGroup(6,1);
         for(int is=0; is<Constants.NSECTOR; is++ ) {
             int sector = is+1;
             for(int ip=1; ip<phiBins.length; ip++) {
@@ -414,7 +414,7 @@ public class Alignment {
                                        - scale*this.getFittedResidual(sector, it, ip)[il];
                         errorRes[it-1] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(sector, it, ip)[il], 2)
                                          + scale*0*Math.pow(this.getFittedResidualError(sector, it, ip)[il], 2));
-                        angles[it-1]   = thetaBins[it].getMean()+thetaBins[it].getWidth()*(il-Constants.NLAYER/2)/Constants.NLAYER/2;
+                        angles[it-1]   = thetaBins[it].getMean()+thetaBins[it].getWidth()*(il-Constants.NLAYER/2)/Constants.NLAYER/1.2;
                     }
                     GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_layer " + il + "_phi" + ip, 
                                                          shiftRes, angles, errorRes, zeros);
@@ -425,8 +425,7 @@ public class Alignment {
                     else      gr_fit.setMarkerColor(this.markerColor[(il-1)/6]);
                     gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
                     gr_fit.setMarkerSize(this.markerSize);
-                    residuals.addDataSet(gr_fit, is);
-                    
+                    residuals.addDataSet(gr_fit, is);                    
                 }               
             }
         }

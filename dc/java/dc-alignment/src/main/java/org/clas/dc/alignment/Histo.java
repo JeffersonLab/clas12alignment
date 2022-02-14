@@ -219,23 +219,22 @@ public class Histo {
             double theta = Math.toDegrees(electron.theta());
             double phi   = Math.toDegrees(electron.phi());
 
-            for(int i=0; i<hitBank.getRows(); i++){
-                
-                if(hitBank.getInt("trkID", i) == id) {
-                    double residual = 10000*hitBank.getFloat("fitResidual", i);
-                    double time     = 10000*hitBank.getFloat("timeResidual", i);
-                    int superlayer  = hitBank.getInt("superlayer", i);
-                    int layer       = hitBank.getInt("layer", i)+6*(superlayer-1);
-                    
-                    for(int it=0; it<thetaBins.length; it++) {
-                        if(thetaBins[it].contains(theta)) {
-                            for(int ip=0; ip<phiBins.length; ip++) {
-                                if(phiBins[ip].contains(phi)) {                             
-                                    this.residuals[sector-1][it][ip].getH1F("hi_L" + layer).fill(residual);
-                                    this.time[sector-1][it][ip].getH1F("hi_L" + layer).fill(time);
-                                    this.vertex[it][ip].getH1F("hi_S" + sector).fill(electron.vz());
+            for (int it = 0; it < thetaBins.length; it++) {
+                if (thetaBins[it].contains(theta)) {
+                    for (int ip = 0; ip < phiBins.length; ip++) {
+                        if (phiBins[ip].contains(phi)) {
+                            for (int i = 0; i < hitBank.getRows(); i++) {
+                                if (hitBank.getInt("trkID", i) == id) {
+                                    double residual = 10000 * hitBank.getFloat("fitResidual", i);
+                                    double time = 10000 * hitBank.getFloat("timeResidual", i);
+                                    int superlayer = hitBank.getInt("superlayer", i);
+                                    int layer = hitBank.getInt("layer", i) + 6 * (superlayer - 1);
+
+                                    this.residuals[sector - 1][it][ip].getH1F("hi_L" + layer).fill(residual);
+                                    this.time[sector - 1][it][ip].getH1F("hi_L" + layer).fill(time);
                                 }
                             }
+                            this.vertex[it][ip].getH1F("hi_S" + sector).fill(electron.vz());
                         }
                     }
                 }
