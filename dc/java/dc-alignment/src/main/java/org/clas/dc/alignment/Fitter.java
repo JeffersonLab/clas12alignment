@@ -184,6 +184,13 @@ public class Fitter  implements FCNBase {
     }   
     
     
+    public void printPars() {
+        for(int i=0; i<pars.length; i++) {
+            if(pars[i].getStep()>0) System.out.print(String.format("   %s: %.4f +/- %.4f", pars[i].name(), pars[i].value(), pars[i].error()));
+        }
+        System.out.println();
+    }
+    
     public void printResiduals() {
         System.out.println("Layer\tResiduals+/-Errors...");
         for(int im=0; im<currentValues.length; im++) {

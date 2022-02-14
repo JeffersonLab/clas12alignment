@@ -28,11 +28,11 @@ import org.jlab.jnp.utils.options.OptionStore;
 public class Alignment {
 
 
-    private Map<String,Histo> histos = new LinkedHashMap();
-    private String[]          inputs = new String[19];
+    private Map<String,Histo> histos    = new LinkedHashMap();
+    private String[]          inputs    = new String[19];
     private Bin[]             thetaBins = null;
     private Bin[]             phiBins   = null;
-    private ConstantsManager  manager = new ConstantsManager();
+    private ConstantsManager  manager   = new ConstantsManager();
     private Table             alignment = null;
         
     private boolean           residualFit  = false;
@@ -233,18 +233,30 @@ public class Alignment {
     }
     
     public EmbeddedCanvasTabbed analyzeFits() {
-        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("nominal residuals");
+        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("nominal");
         System.out.println("\nPlotting nominal geometry residuals");
-        canvas.getCanvas("nominal residuals").draw(this.getResidualGraphs(false));
+        canvas.getCanvas("nominal").draw(this.getResidualGraphs(false));
         canvas.getCanvas().setFont(fontName);
-        for(EmbeddedPad pad : canvas.getCanvas("nominal residuals").getCanvasPads())
+        for(EmbeddedPad pad : canvas.getCanvas("nominal").getCanvasPads())
+            pad.getAxisX().setRange(-2000, 2000);
+        
+        canvas.addCanvas("nominal vs. theta");
+        canvas.getCanvas("nominal vs. theta").draw(this.getAngularGraph(false));
+        canvas.getCanvas().setFont(fontName);
+        for(EmbeddedPad pad : canvas.getCanvas("nominal vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
         System.out.println("\nPlotting corrected geometry residuals");        
-        canvas.addCanvas("corrected residuals");
-        canvas.getCanvas("corrected residuals").draw(this.getResidualGraphs(true));
+        canvas.addCanvas("corrected");
+        canvas.getCanvas("corrected").draw(this.getResidualGraphs(true));
         canvas.getCanvas().setFont(fontName);
-        for(EmbeddedPad pad : canvas.getCanvas("corrected residuals").getCanvasPads())
+        for(EmbeddedPad pad : canvas.getCanvas("corrected").getCanvasPads())
+            pad.getAxisX().setRange(-2000, 2000);
+        
+        canvas.addCanvas("corrected vs. theta");
+        canvas.getCanvas("corrected vs. theta").draw(this.getAngularGraph(true));
+        canvas.getCanvas().setFont(fontName);
+        for(EmbeddedPad pad : canvas.getCanvas("corrected vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
         // shifts
@@ -268,11 +280,17 @@ public class Alignment {
             }
             System.out.println("\nFinal alignment parameters\n" +this.alignment.toString());
 
-            canvas.addCanvas("fitted residuals");
-            canvas.getCanvas("fitted residuals").draw(this.getResidualGraphs(true));
+            canvas.addCanvas("fitted");
+            canvas.getCanvas("fitted").draw(this.getResidualGraphs(true));
             canvas.getCanvas().setFont(fontName);
-            for(EmbeddedPad pad : canvas.getCanvas("fitted residuals").getCanvasPads())
+            for(EmbeddedPad pad : canvas.getCanvas("fitted").getCanvasPads())
                 pad.getAxisX().setRange(-2000, 2000);
+
+            canvas.addCanvas("fitted vs. theta");
+            canvas.getCanvas("fitted vs. theta").draw(this.getAngularGraph(true));
+            canvas.getCanvas().setFont(fontName);
+            for(EmbeddedPad pad : canvas.getCanvas("fitted vs. theta").getCanvasPads())
+                pad.getAxisX().setRange(-2000, 2000); 
         }
         return canvas;
     }
@@ -285,7 +303,7 @@ public class Alignment {
         int scale=0;
         if(correct) scale = 1;
         DataGroup residuals = new DataGroup(3,2);
-        for(int it=1; it<thetaBins.length-1; it ++) {
+        for(int it=1; it<thetaBins.length; it ++) {
             for(int ip=1; ip<phiBins.length; ip++) {
                 for(int is=0; is<Constants.NSECTOR; is++ ) {
                     int sector = is+1;
@@ -355,7 +373,7 @@ public class Alignment {
         double[][][]   errors = new double[Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
         for(int i=0; i<Constants.NPARS+1; i++) {
             for(int il=0; il<=Constants.NLAYER; il++) {
-                for(int it=1; it<thetaBins.length-1; it ++) {
+                for(int it=1; it<thetaBins.length; it ++) {
                     for(int ip=1; ip<phiBins.length; ip++) {
                         if(i==0) {
                             values[il][it-1][ip-1] = histos.get("nominal").getParValues(sector, it, ip)[il];
@@ -378,22 +396,8 @@ public class Alignment {
             residualFitter.fit(options);
         }
         System.out.println(String.format("Sector %d: chi2 = %.3f NDF = %d", sector, residualFitter.getChi2(), residualFitter.getNDF()));
+        residualFitter.printPars();
         return residualFitter.getPars();
-    }
-
-    public EmbeddedCanvasTabbed plotResults() {
-        System.out.println("\nPlotting results");
-        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("theta dependence: nominal");
-        canvas.getCanvas("theta dependence: nominal").draw(this.getAngularGraph(false));
-        canvas.getCanvas().setFont(fontName);
-        for(EmbeddedPad pad : canvas.getCanvas("theta dependence: nominal").getCanvasPads())
-            pad.getAxisX().setRange(-2000, 2000);
-        canvas.addCanvas("theta dependence: fitted");
-        canvas.getCanvas("theta dependence: fitted").draw(this.getAngularGraph(true));
-        canvas.getCanvas().setFont(fontName);
-        for(EmbeddedPad pad : canvas.getCanvas("theta dependence: fitted").getCanvasPads())
-            pad.getAxisX().setRange(-1000, 1000);
-        return canvas;
     }
 
     private DataGroup getAngularGraph(boolean correct) {
@@ -414,13 +418,14 @@ public class Alignment {
                                        - scale*this.getFittedResidual(sector, it, ip)[il];
                         errorRes[it-1] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(sector, it, ip)[il], 2)
                                          + scale*0*Math.pow(this.getFittedResidualError(sector, it, ip)[il], 2));
-                        angles[it-1]   = thetaBins[it].getMean()+thetaBins[it].getWidth()*(il-Constants.NLAYER/2)/Constants.NLAYER/1.2;
+//                        angles[it-1]   = thetaBins[it].getMean()+thetaBins[it].getWidth()*(il-Constants.NLAYER/2)/Constants.NLAYER/1.2;
+                        angles[it-1]   = it+0.9*(il-Constants.NLAYER/2)/Constants.NLAYER;
                     }
                     GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_layer " + il + "_phi" + ip, 
                                                          shiftRes, angles, errorRes, zeros);
                     gr_fit.setTitle("Sector " + sector);
                     gr_fit.setTitleX("Residual (um)");
-                    gr_fit.setTitleY("#theta (deg)");
+                    gr_fit.setTitleY("#theta bin/layer");
                     if(il==0) gr_fit.setMarkerColor(1);
                     else      gr_fit.setMarkerColor(this.markerColor[(il-1)/6]);
                     gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
@@ -481,7 +486,6 @@ public class Alignment {
         this.initGraphics();
         JTabbedPane panel = new JTabbedPane();
         panel.add("analysis", this.analyzeFits());
-        panel.add("results", this.plotResults());
         panel.add("electron", this.histos.get("nominal").getElectronPlots());
         for(String key : histos.keySet()) {
             panel.add(key, histos.get(key).plotHistos());
@@ -536,6 +540,7 @@ public class Alignment {
         }
         System.setOut(outStream);
         System.setErr(errStream);
+        this.setAngularBins(bins[1],bins[2]); // just to get the printout
     }
 
     public void saveHistos(String fileName) {

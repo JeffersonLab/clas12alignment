@@ -293,7 +293,7 @@ public class Histo {
                         }
                         else {
                             this.parValues[is][it][ip][l] = hres.getMean(); 
-                            this.parErrors[is][it][ip][l] = hres.getRMS()/Math.sqrt(hres.getIntegral());
+                            this.parErrors[is][it][ip][l] = Math.max(hres.getRMS()/Math.sqrt(hres.getIntegral()),(this.resMax-this.resMin)/this.resBins);
                         }
                         System.out.print("\r");
                     }
