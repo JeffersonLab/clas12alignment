@@ -287,7 +287,6 @@ public class Alignment {
         DataGroup residuals = new DataGroup(3,2);
         for(int it=1; it<thetaBins.length-1; it ++) {
             for(int ip=1; ip<phiBins.length; ip++) {
-                if(it+ip==1) continue;
                 for(int is=0; is<Constants.NSECTOR; is++ ) {
                     int sector = is+1;
                     if(alignment!=null) {
@@ -297,7 +296,7 @@ public class Alignment {
                             shiftRes[il] = histos.get("nominal").getParValues(sector, it, ip)[il]
                                          - scale*this.getFittedResidual(sector, it, ip)[il];
                             errorRes[il] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(sector, it, ip)[il], 2)
-                                              +scale*0*Math.pow(this.getFittedResidualError(sector, it, ip)[il], 2));
+                                            +scale*0*Math.pow(this.getFittedResidualError(sector, it, ip)[il], 2));
                         }
                         GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_theta " + it + "_phi" + ip, 
                                                              shiftRes, layers, errorRes, zeros);
@@ -378,7 +377,7 @@ public class Alignment {
         for(int i=0; i<fitIteration; i++) {
             residualFitter.fit(options);
         }
-        System.out.println("Sector " + sector + ": chi2=" + residualFitter.getChi2() + " NDF=" + residualFitter.getNDF());
+        System.out.println(String.format("Sector %d: chi2 = %.3f NDF = %d", sector, residualFitter.getChi2(), residualFitter.getNDF()));
         return residualFitter.getPars();
     }
 
@@ -414,14 +413,14 @@ public class Alignment {
                         shiftRes[it-1] = histos.get("nominal").getParValues(sector, it, ip)[il]
                                        - scale*this.getFittedResidual(sector, it, ip)[il];
                         errorRes[it-1] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(sector, it, ip)[il], 2)
-                                       + scale*0*Math.pow(this.getFittedResidualError(sector, it, ip)[il], 2));
+                                         + scale*0*Math.pow(this.getFittedResidualError(sector, it, ip)[il], 2));
                         angles[it-1]   = thetaBins[it].getMean()+thetaBins[it].getWidth()*(il-Constants.NLAYER/2)/Constants.NLAYER/2;
                     }
                     GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_layer " + il + "_phi" + ip, 
                                                          shiftRes, angles, errorRes, zeros);
                     gr_fit.setTitle("Sector " + sector);
                     gr_fit.setTitleX("Residual (um)");
-                    gr_fit.setTitleY("Layer");
+                    gr_fit.setTitleY("#theta (deg)");
                     if(il==0) gr_fit.setMarkerColor(1);
                     else      gr_fit.setMarkerColor(this.markerColor[(il-1)/6]);
                     gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
@@ -444,6 +443,7 @@ public class Alignment {
                 double low  = Double.parseDouble(bins[i-1].trim());
                 double high = Double.parseDouble(bins[i].trim());
                 binArray[i] = new Bin(low,high);
+                System.out.println(binArray[i].toString());
             }
         }
         else {
@@ -464,7 +464,9 @@ public class Alignment {
     }
 
     private void setAngularBins(String thetabins, String phibins) {
+        System.out.println("Setting theta bins to:");
         thetaBins = this.getBins(thetabins);
+        System.out.println("Setting phi bins to:");
         phiBins   = this.getBins(phibins);
     }
 

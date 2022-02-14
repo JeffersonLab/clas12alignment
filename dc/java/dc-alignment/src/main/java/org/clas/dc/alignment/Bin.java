@@ -43,5 +43,8 @@ public class Bin {
         return high-low;
     }
     
-
+    @Override
+    public String toString() {
+        return "\tbin: " + low + "-" + high;
+    }
 }

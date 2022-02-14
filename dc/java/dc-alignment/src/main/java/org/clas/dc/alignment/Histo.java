@@ -27,6 +27,7 @@ public class Histo {
     
     private DataGroup       electron  = null; 
     private DataGroup[][][] residuals = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
+    private DataGroup[][][] time      = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][]   vertex    = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains sectors
 
     private double[][][][] parValues = null;
@@ -63,6 +64,7 @@ public class Histo {
                                                       + (thetaBins.length-1) + " theta bins, " 
                                                       + (phiBins.length-1)   + " phi bins");
         this.residuals = new DataGroup[nSector][thetaBins.length][phiBins.length];
+        this.time      = new DataGroup[nSector][thetaBins.length][phiBins.length];
         this.vertex    = new DataGroup[thetaBins.length][phiBins.length];
         this.parValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+1];
         this.parErrors = new double[nSector][thetaBins.length][phiBins.length][nLayer+1];
@@ -72,6 +74,7 @@ public class Histo {
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
                     this.residuals[is][it][ip] = new DataGroup(6,6);
+                    this.time[is][it][ip] = new DataGroup(6,6);
                     for(int il=0; il<nLayer; il++) {
                         int layer = il+1;
                         H1F hi_residual = new H1F("hi_L" + layer,"Layer " + layer + " Sector " + sector, resBins, resMin, resMax);
@@ -79,6 +82,11 @@ public class Histo {
                         hi_residual.setTitleY("Counts");
                         hi_residual.setOptStat(optStats);
                         this.residuals[is][it][ip].addDataSet(hi_residual, il);
+                        H1F hi_time = new H1F("hi_L" + layer,"Layer " + layer + " Sector " + sector, resBins, resMin, resMax);
+                        hi_time.setTitleX("Residuals (um)");
+                        hi_time.setTitleY("Counts");
+                        hi_time.setOptStat(optStats);
+                        this.time[is][it][ip].addDataSet(hi_time, il);
                     }
                     
                 } 
@@ -215,6 +223,7 @@ public class Histo {
                 
                 if(hitBank.getInt("trkID", i) == id) {
                     double residual = 10000*hitBank.getFloat("fitResidual", i);
+                    double time     = 10000*hitBank.getFloat("timeResidual", i);
                     int superlayer  = hitBank.getInt("superlayer", i);
                     int layer       = hitBank.getInt("layer", i)+6*(superlayer-1);
                     
@@ -223,6 +232,7 @@ public class Histo {
                             for(int ip=0; ip<phiBins.length; ip++) {
                                 if(phiBins[ip].contains(phi)) {                             
                                     this.residuals[sector-1][it][ip].getH1F("hi_L" + layer).fill(residual);
+                                    this.time[sector-1][it][ip].getH1F("hi_L" + layer).fill(time);
                                     this.vertex[it][ip].getH1F("hi_S" + sector).fill(electron.vz());
                                 }
                             }
@@ -328,6 +338,23 @@ public class Histo {
     
     public EmbeddedCanvasTabbed plotHistos() {
         EmbeddedCanvasTabbed canvas = null;
+        for(int is=0; is<nSector; is++) {
+            int    sector = is+1;
+            String title  = "Sec" + sector;
+            if(canvas==null) canvas = new EmbeddedCanvasTabbed(title);
+            else             canvas.addCanvas(title);
+            canvas.getCanvas(title).draw(this.residuals[is][0][0]);
+            for(int it=0; it<thetaBins.length; it++) {
+                for(int ip=0; ip<phiBins.length; ip++) {
+                    if(it==0 && ip==0) continue;
+                    title = "TSec" + sector;
+                    if(it!=0) title = title + " Theta:" + thetaBins[it].getRange();
+                    if(ip!=0) title = title + " Phi:" + phiBins[ip].getRange();
+                    canvas.addCanvas(title);
+                    canvas.getCanvas(title).draw(time[is][it][ip]);
+                }
+            }
+        }
         for(int is=0; is<nSector; is++) {
             int    sector = is+1;
             String title  = "Sec" + sector;
@@ -559,6 +586,14 @@ public class Histo {
                 }
             }
         }
+        for(int is=0; is<nSector; is++) {
+            for(int it=0; it<thetaBins.length; it++) {
+                for(int ip=0; ip<phiBins.length; ip++) {
+                    String subfolder = folder + "/time/sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
+                    time[is][it][ip]=this.readDataGroup(subfolder, dir, time[is][it][ip]);
+                }
+            }
+        }
         for(int it=0; it<thetaBins.length; it++) {
             for(int ip=0; ip<phiBins.length; ip++) {
                 String subfolder = folder + "/vertex/theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
@@ -597,6 +632,18 @@ public class Histo {
                     String subfolder = "sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
                     this.writeDataGroup(subfolder, dir, residuals[is][it][ip]);
                     dir.cd("/" + root + "/" + folder + "/residuals");
+                }
+            }
+        }
+        dir.cd("/" + root + "/" + folder);
+        dir.mkdir("time");
+        dir.cd("time");
+        for(int is=0; is<nSector; is++) {
+            for(int it=0; it<thetaBins.length; it++) {
+                for(int ip=0; ip<phiBins.length; ip++) {
+                    String subfolder = "sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
+                    this.writeDataGroup(subfolder, dir, time[is][it][ip]);
+                    dir.cd("/" + root + "/" + folder + "/time");
                 }
             }
         }
