@@ -21,8 +21,13 @@ import org.jlab.groot.group.DataGroup;
 import org.jlab.jnp.utils.options.OptionStore;
 
 /**
- *
+ * DC alignment code, implementing the procedure developed by T. Hayward
+ * See original scripts and documentation in original_scripts_and_docs
+ * 
+ * @author thayward
  * @author devita
+ * @author reedtg
+ * 
  */
 public class Alignment {
 
