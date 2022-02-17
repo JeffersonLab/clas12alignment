@@ -14,7 +14,6 @@ import org.jlab.detector.calib.utils.ConstantsManager;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.Directory;
 import org.jlab.groot.data.GraphErrors;
-import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.graphics.EmbeddedPad;
@@ -89,7 +88,7 @@ public class Alignment {
         GStyle.getH1FAttributes().setLineWidth(2);
     }
     
-    
+    // to be replaced by Constants array
     private void initInputs() {
         String[] inputs = new String[19];
         String[] coord = {"x", "y", "z"};
@@ -378,7 +377,6 @@ public class Alignment {
                         if(i==0) {
                             values[il][it-1][ip-1] = histos.get("nominal").getParValues(sector, it, ip)[il];
                             errors[il][it-1][ip-1] = histos.get("nominal").getParErrors(sector, it, ip)[il];
-                            if(il==0) values[il][it-1][ip-1] -= Constants.TARGETPOS;
                         }
                         else {
                             if(sectorDeriv)

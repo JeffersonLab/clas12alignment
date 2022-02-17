@@ -52,7 +52,7 @@ public class Table {
     public Parameter[] getParameters(int sector) {
         Parameter[] pars = new Parameter[18];
         for(int i=0; i<Constants.NPARS; i++) {
-            pars[1]  = new Parameter(Constants.PARNAME[i],  this.getShiftSize(Constants.PARNAME[i], sector), Constants.PARSTEP[i]);
+            pars[i]  = new Parameter(Constants.PARNAME[i],  this.getShiftSize(Constants.PARNAME[i], sector), Constants.PARSTEP[i]);
         }
         return pars;
     }

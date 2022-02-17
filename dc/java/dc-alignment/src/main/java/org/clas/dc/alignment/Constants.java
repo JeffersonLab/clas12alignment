@@ -29,14 +29,15 @@ public class Constants {
                                              1,      1,      1,       1,       1,       1, 
                                              1,      1,      1,       1,       1,       1};
     // parameter step size: set to 0 to fix the parameter
-    public static double[]   PARSTEP = {  0.01,      0,   0.01,       0,    0.01,       0,
-                                          0.01,      0,   0.01,       0,    0.01,       0,
-                                          0.01,      0,   0.01,       0,    0.01,       0};
+    public static double[]   PARSTEP = {  0.01,      0.01,   0.01,       0,    0.01,       0,
+                                          0.01,      0.01,   0.01,       0,    0.01,       0,
+                                          0.01,      0.01,   0.01,       0,    0.01,       0};
                
     
     // target parameters
     public static double TARGETPOS    = -0.5;
     public static double TARGETLENGTH =  5;   //target length
     public static double WINDOWDIST   =  2.8; //distance between the mylar foil and the downstream window
-
+    public static double SCALE        = 1000;
+    
 }

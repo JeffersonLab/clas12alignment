@@ -36,8 +36,6 @@ public class Histo {
     private Bin[] thetaBins = null;
     private Bin[] phiBins  = null;
     
-    private static double scale   = 1000; // scale factor for vertex residuals to be visible on the plots
-    
     // histogram limits for residuals
     int    resBins = 200;
     double resMin  = -5000;
@@ -299,8 +297,8 @@ public class Histo {
                     }
                     H1F hvtx = vertex[it][ip].getH1F("hi_S"+s);
                     Histo.fit3Vertex(hvtx);
-                    this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*scale;
-                    this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*scale;
+                    this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*Constants.SCALE-Constants.TARGETPOS*Constants.SCALE;
+                    this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*Constants.SCALE;
                 }
             }
         }
