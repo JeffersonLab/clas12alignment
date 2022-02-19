@@ -156,6 +156,7 @@ This tab display histogram of the z-vertex distribution, fit and time residuals 
   * sigma: sigma of the downstream cell window peak,
   * wd: distance between the 2nd and 3rd peak,
   * bg: amplitude of the background function.
+
 ![Plot_02-19-2022_10 47 51_PM](https://user-images.githubusercontent.com/7524926/154820232-aa246a66-d90a-4d02-8049-eb6183aad146.png)
 * Residual plots: residual histograms for each sector and angular bins are displayed in separate subtabs. On each, 6x6 plots show the distributions for each DC layer, as shown by the picture below. The residual shift from zero is by default estimated performing a gaussian fit. Alternatively the histogram mean can be used setting the ``-fit`` option to 0. Plots of time-residuals (on tabs TSec...) are included to allow checking the quality of the time calibrations.
 ![Plot_02-19-2022_11 03 15_PM](https://user-images.githubusercontent.com/7524926/154820651-63a37d6b-53ad-4669-84c6-1befab1216a6.png)
