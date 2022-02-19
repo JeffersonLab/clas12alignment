@@ -2,6 +2,13 @@
 
 This code implements the CLAS12 DC alignment procedure developed by T. Hayward and documented at clas12alignment/dc/original_scripts_and_docs/CLAS12___DC_Alignment_Github_Tutorial.pdf.
 
+The algorithm is based on the assumption the *real* DC geometry is close to the nominal and that the transformation between the two can be described as a linear combination of shifts and rotations in x, y and z of each DC region. The size of this shifts and rotations is determined studying how the tracking fit residuals and the z vertex distribution for straight tracks varies as a function of individual shifts or rotations and finding the set that minimize the residuals and the diffeerene between the z vertex distribution and the known target position.
+Specifically:
+* Straight electron tracks are reconstructed and histograms of fit residual for each DC layer and of the z-vertex distribution are made in bins of sector, polar and azimuthal angles. These histograms are analyzed to extract the shift from zero of the fit residuals and the shift of the z-vertex from the known target position. Since straight track runs are usually on empty target, the z-vertex histograms shows peaks corresponding to the target cell windows that can be fit and compared to the installation position.
+* The same tracks are reconstructed applying a single shift or rotation. The size of these is chosen to be large enough to have a measureable effect on fit residuals and vertex distributions, while being small compared to the DC cell size. The values used so far are of 0.2 cm for shifts and 0.2 deg for rotations. Shifts are applied in the sector frame (y axis along the DC wires, z axis along the beamline) and rotations are applied in the tilted-sector coordinate frame (y axis along the DC wires and z axis perpendicular to the DC layers, i.e. at 25 deg from the beamline axis). The total number of shifts and rotation is 18, 3 shifts and 3 rotations for each of the 3 regions. Note that rotations in x and z are ignored because they are not supported by the current tracking software.
+* The derivatives of the fit residuals and z-vertex versus each shift and rotation is extracted comparing the fit residual and z-vertex for that geometry to the nominal geometry. 
+* The nominal-geometry residual and vertex shifts with respect to the desired positions are fit to a linear combinations of the derivatives to extract the shift and rotation sizes. This global fit is performed with Minuit, minimizing a chi2 defined as the sum of squares of the residual and vertex shift normalized to their uncertainties. 
+
 ### Prerequisites:
 * Software:
   * A Linux or Mac computer
@@ -9,8 +16,7 @@ This code implements the CLAS12 DC alignment procedure developed by T. Hayward a
   * maven 
 * Data:
   * Straight-track data (both solenoid and torus should be off) with electron tracks in the forward detector.
-  * Reconstructed files from the data above, processed with nominal geometry (variation: default) and with individual shifts or rotations in xyz for each of the DC regions. The latter amount to a total of 3 regions x (3 shifts + 3 rotations) = 18 sets. See clas12alignment/dc/original_scripts_and_docs/CLAS12___DC_Alignment_Github_Tutorial.pdf for the CCDB variations. Note that rotations in x and z can be skipped because
- they are not supported by the current tracking algorithm.
+  * Reconstructed files from the data above, processed with nominal geometry (variation: default) and with individual shifts or rotations in xyz for each of the DC regions. The latter amount to a total of 3 regions x (3 shifts + 3 rotations) = 18 sets. See clas12alignment/dc/original_scripts_and_docs/CLAS12___DC_Alignment_Github_Tutorial.pdf for the CCDB variations. 
 
 ### Build and run
 Clone this repository and checkout the dcDev2 branch:
