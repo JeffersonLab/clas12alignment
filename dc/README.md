@@ -79,8 +79,10 @@ The code will process the input files specified with the ```-nominal``` or ```-r
 By specifying ``-display 0``, the graphical window presenting the plotted results will not be opened.
 
 #### Analyze a histogram file
-Check the command line options:
+Check the command line options with:
 ```
+./bin/dc-alignment -analyze
+
      Usage : dc-alignment -input [input histogram file]  [input1] [input2] ....
 
    Options :
@@ -108,13 +110,18 @@ Trkg::TBTracks,TimeBasedTrkg::TBHits" -o outputfilename inputfiles
 ```
 where the vertex, nphe and energy cut should be selected according to the experiment configuration (beam energy and target).
 
-### Output files
-A file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` option.
+### Output
+When the ``-process`` option is chosen, a file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` option.
+With both the ``-process`` and ``-analyze`` options, the extracted misalignment constants are prit out in a format consistent with the /geometry/dc/alignment CCDB table.
 
 ### Parameters
 In addition to the parameters that can be selected from command line, the code uses parameters defined in the ``Constants`` class:
 * the electron selection cuts,
 * target parameters relevant for the vertex fits,
 * global fit parameters initialization values and step size.
-These can be modified according to the needs before compilling and running the code.
+These can be modified according to the needs before compiling and running the code.
+
+### Plots and results
+If the ``-display`` option is set to 1 (default), a graphic window displaying histograms and relevant graphs is opened. 
+![Screen Shot 2022-02-19 at 21 22 06](https://user-images.githubusercontent.com/7524926/154817793-a9ab8c07-5bab-4dd2-8699-f1888b54e17d.png)
 
