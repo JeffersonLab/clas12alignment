@@ -4,7 +4,7 @@ This code implements the CLAS12 DC alignment procedure developed by T. Hayward a
 
 ### Prerequisites:
 * Software:
-  * A Linux or Mac computer (anyone ever tried on Windows?)
+  * A Linux or Mac computer
   * Java Development Kit 11 or newer
   * maven 
 * Data:
@@ -110,3 +110,11 @@ where the vertex, nphe and energy cut should be selected according to the experi
 
 ### Output files
 A file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` option.
+
+### Parameters
+In addition to the parameters that can be selected from command line, the code uses parameters defined in the ``Constants`` class:
+* the electron selection cuts,
+* target parameters relevant for the vertex fits,
+* global fit parameters initialization values and step size.
+These can be modified according to the needs before compilling and running the code.
+
