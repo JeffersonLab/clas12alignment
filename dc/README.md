@@ -2,12 +2,13 @@
 
 This code implements the CLAS12 DC alignment procedure developed by T. Hayward and documented at clas12alignment/dc/original_scripts_and_docs/CLAS12___DC_Alignment_Github_Tutorial.pdf.
 
-The algorithm is based on the assumption the *real* DC geometry is close to the nominal and that the transformation between the two can be described as a linear combination of shifts and rotations in x, y and z of each DC region. The size of this shifts and rotations is determined studying how the tracking fit residuals and the z vertex distribution for straight tracks varies as a function of individual shifts or rotations and finding the set that minimize the residuals and the diffeerene between the z vertex distribution and the known target position.
+The algorithm is based on the assumption the *real* DC geometry is close to the nominal and that the transformation between the two can be described as a linear combination of translations and rotations in x, y and z of each DC region. The size of these translations and rotations is determined studying how the tracking fit residuals and the z vertex distribution for straight tracks varies as a function of individual translations or rotations and finding the set that minimize the residuals and the difference between the z vertex distribution and the known target position.
 Specifically:
-* Straight electron tracks are reconstructed and histograms of fit residual for each DC layer and of the z-vertex distribution are made in bins of sector, polar and azimuthal angles. These histograms are analyzed to extract the shift from zero of the fit residuals and the shift of the z-vertex from the known target position. Since straight track runs are usually on empty target, the z-vertex histograms shows peaks corresponding to the target cell windows that can be fit and compared to the installation position.
-* The same tracks are reconstructed applying a single shift or rotation. The size of these is chosen to be large enough to have a measureable effect on fit residuals and vertex distributions, while being small compared to the DC cell size. The values used so far are of 0.2 cm for shifts and 0.2 deg for rotations. Shifts are applied in the sector frame (y axis along the DC wires, z axis along the beamline) and rotations are applied in the tilted-sector coordinate frame (y axis along the DC wires and z axis perpendicular to the DC layers, i.e. at 25 deg from the beamline axis). The total number of shifts and rotation is 18, 3 shifts and 3 rotations for each of the 3 regions. Note that rotations in x and z are ignored because they are not supported by the current tracking software.
-* The derivatives of the fit residuals and z-vertex versus each shift and rotation is extracted comparing the fit residual and z-vertex for that geometry to the nominal geometry. 
-* The nominal-geometry residual and vertex shifts with respect to the desired positions are fit to a linear combinations of the derivatives to extract the shift and rotation sizes. This global fit is performed with Minuit, minimizing a chi2 defined as the sum of squares of the residual and vertex shift normalized to their uncertainties. 
+* Straight electron tracks are reconstructed and histograms of fit residuals for each DC layer and of the z-vertex distribution are made in bins of sector, polar and azimuthal angles. These histograms are analyzed to extract the shifts from zero of the fit residuals and the shifts of the z-vertex from the known target position. Since straight track runs are usually on empty target, the z-vertex histograms show peaks corresponding to the target cell windows that can be fit and compared to the installation position.
+* The same tracks are reconstructed applying a single translation or rotation. The size of these is chosen to be large enough to have a measureable effect on fit residuals and vertex distributions, while being small compared to the DC cell size. The values used so far are of 0.2 cm for shifts and 0.2 deg for rotations. Translations are applied in the sector frame (y axis along the DC wires, z axis along the beamline) and rotations are applied in the tilted-sector coordinate frame (y axis along the DC wires and z axis perpendicular to the DC layers, i.e. at 25 deg from the beamline axis). The total number of shifts and rotation is 18, 3 translations and 3 rotations for each of the 3 regions. Note that rotations in x and z are ignored because they are not supported by the current tracking software.
+* The derivatives of the fit residuals and z-vertex versus each translation and rotation are extracted comparing the fit residuals and z-vertex for that geometry to the nominal geometry. 
+* The nominal-geometry residual and vertex shifts with respect to the desired positions are fit to a linear combinations of the derivatives to extract the translations and rotation sizes. This global fit is performed with Minuit, minimizing a chi2 defined as the sum of squares of the residual and vertex shift normalized to their uncertainties. 
+* The fit parameters are printout in a format corresponding to the /geometry/dc/alignment CCDB table used by reconstruction. Here translations are defined in the CLAS12 frame while rotations are defined in the tilted-sector coordinate system.
 
 ### Prerequisites:
 * Software:
@@ -16,7 +17,7 @@ Specifically:
   * maven 
 * Data:
   * Straight-track data (both solenoid and torus should be off) with electron tracks in the forward detector.
-  * Reconstructed files from the data above, processed with nominal geometry (variation: default) and with individual shifts or rotations in xyz for each of the DC regions. The latter amount to a total of 3 regions x (3 shifts + 3 rotations) = 18 sets. See clas12alignment/dc/original_scripts_and_docs/CLAS12___DC_Alignment_Github_Tutorial.pdf for the CCDB variations. 
+  * Reconstructed files from the data above, processed with nominal geometry (variation: default) and with individual translations or rotations in xyz for each of the DC regions. See clas12alignment/dc/original_scripts_and_docs/CLAS12___DC_Alignment_Github_Tutorial.pdf for the CCDB variations. 
 
 ### Build and run
 Clone this repository and checkout the dcDev2 branch:
@@ -41,7 +42,7 @@ Run the code with:
 ```
   
 ### Usage 
-The code supports two main usage options to either process the hipo files with the reconstructed events using the nominal geometry and shifted/rotated geometry or analyze a pre-existing histogram file.
+The code supports two main usage options to either process the hipo files with the reconstructed events using the nominal geometry and translated/rotated geometry or analyze a pre-existing histogram file.
 #### Process hipo event files
 Check the command line options with:
 ```
@@ -134,11 +135,12 @@ If the ``-display`` option is set to 1 (default), a graphic window displaying hi
 #### Analysis tab
 The tab displays a summary of the extracted residuals and vertex shifts and derivatives. It includes the following sub-tabs:
 * nominal: graphs of the extracted residuals and vertex shifts for the nominal geometry. Each plot corresponds to a different sector and the color points to different polar angle bins; different symbols are used to display the phi bins. The vertex shifts are displayed as layer=0, in 10s of um.
-![Plot_02-19-2022_10 21 12_PM](https://user-images.githubusercontent.com/7524926/154819493-575dedb1-303f-4eb1-a44e-b18c06c63111.png)
+![Plot_02-19-2022_10 20 52_PM](https://user-images.githubusercontent.com/7524926/154820094-0bca8488-a895-474d-b8e2-22e25f42e7a6.png)
 * nominal vs. theta: same as above but with the y-axis defined as the angular bin number plus the layer number. The different colors corresponds to the different DC superlayers and the black points show the vertex shifts.
 ![Plot_02-19-2022_10 21 21_PM](https://user-images.githubusercontent.com/7524926/154819746-af0ee5bc-3e22-41b1-a00f-50f6d20d84c7.png)
 * corrected and corrected vs. theta: same as above but after applying the translations and rotations from the /geometry/dc/alignment table in the CCDB variation specified with the ``-variation`` option.
 * r1_x, ...r3_cy: graphs of the fit residuals and vertex derivatives for the corresponding translation or rotation. Each graph corresponds to a different angular bin. Colors corresponds to different sectors while the average is shown in black. An example is shown by the following graph.
+
 ![Plot_02-19-2022_10 22 13_PM](https://user-images.githubusercontent.com/7524926/154819842-7f8f4f72-ad4d-4d27-a0e3-ada02b65447a.png)
 * Fitted and fitted vs. theta: same as nominal or corrected, but after aplying the combination of shifts and rotations resulting from the global fit.
 
@@ -147,4 +149,16 @@ The tab displays the relevant distributions for the selected electron tracks.
 
 #### Nominal
 This tab display histogram of the z-vertex distribution, fit and time residuals for each angular bin and sector.
-* Z-vertex histograms: the picture below shows an example of a 
+* Z-vertex histograms: the picture below shows an example of a typical distribution for data taken with the 5cm-long LH2 target cell. The three peaks correspond to the cell windows and to a superinsulation foil. The distributionn is fit to the sum of three Gaussians corresponding describing the windows and foil, plus a fourth broader gaussian describing the background from residual gas or badly reconstructed tracks. To ensure a good fit convergence, the 3 peak sigma are set to be the same and the distance between the peaks is constrained to the known values from the target geometry. The fit parameters are:
+  * amp: height of the downstream cell window peak,
+  * mean: mean of the downstream cell window peak (to be compared with the nominal of 0.5 cm),
+  * tl: distance between the cell windows,
+  * sigma: sigma of the downstream cell window peak,
+  * wd: distance between the 2nd and 3rd peak,
+  * bg: amplitude of the background function.
+![Plot_02-19-2022_10 47 51_PM](https://user-images.githubusercontent.com/7524926/154820232-aa246a66-d90a-4d02-8049-eb6183aad146.png)
+* Residual plots: residual histograms for each sector and angular bins are displayed in separate subtabs. On each, 6x6 plots show the distributions for each DC layer, as shown by the picture below. The residual shift from zero is by default estimated performing a gaussian fit. Alternatively the histogram mean can be used setting the ``-fit`` option to 0. Plots of time-residuals (on tabs TSec...) are included to allow checking the quality of the time calibrations.
+![Plot_02-19-2022_11 03 15_PM](https://user-images.githubusercontent.com/7524926/154820651-63a37d6b-53ad-4669-84c6-1befab1216a6.png)
+
+Equivalent sub-tabs and plots are shown for each translation and rotation in the r1_c, r1_y, ...,r3_cy tabs.
+
