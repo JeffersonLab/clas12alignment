@@ -337,10 +337,10 @@ public class Histo {
         EmbeddedCanvasTabbed canvas = null;
         for(int is=0; is<nSector; is++) {
             int    sector = is+1;
-            String title  = "Sec" + sector;
+            String title  = "TSec" + sector;
             if(canvas==null) canvas = new EmbeddedCanvasTabbed(title);
             else             canvas.addCanvas(title);
-            canvas.getCanvas(title).draw(this.residuals[is][0][0]);
+            canvas.getCanvas(title).draw(this.time[is][0][0]);
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
                     if(it==0 && ip==0) continue;

@@ -311,25 +311,23 @@ public class Alignment {
             for(int ip=1; ip<phiBins.length; ip++) {
                 for(int is=0; is<Constants.NSECTOR; is++ ) {
                     int sector = is+1;
-                    if(alignment!=null) {
-                        double[] shiftRes = new double[Constants.NLAYER+1];
-                        double[] errorRes = new double[Constants.NLAYER+1];
-                        for (int il = 0; il <= Constants.NLAYER; il++) {
-                            shiftRes[il] = histos.get("nominal").getParValues(sector, it, ip)[il]
-                                         - scale*this.getFittedResidual(sector, it, ip)[il];
-                            errorRes[il] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(sector, it, ip)[il], 2)
-                                            +scale*0*Math.pow(this.getFittedResidualError(sector, it, ip)[il], 2));
-                        }
-                        GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_theta " + it + "_phi" + ip, 
-                                                             shiftRes, layers, errorRes, zeros);
-                        gr_fit.setTitle("Sector " + sector);
-                        gr_fit.setTitleX("Residual (um)");
-                        gr_fit.setTitleY("Layer");
-                        gr_fit.setMarkerColor(this.markerColor[(it-1)%6]);
-                        gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
-                        gr_fit.setMarkerSize(this.markerSize);
-                        residuals.addDataSet(gr_fit, is);
+                    double[] shiftRes = new double[Constants.NLAYER+1];
+                    double[] errorRes = new double[Constants.NLAYER+1];
+                    for (int il = 0; il <= Constants.NLAYER; il++) {
+                        shiftRes[il] = histos.get("nominal").getParValues(sector, it, ip)[il]
+                                     - scale*this.getFittedResidual(sector, it, ip)[il];
+                        errorRes[il] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(sector, it, ip)[il], 2)
+                                        +scale*0*Math.pow(this.getFittedResidualError(sector, it, ip)[il], 2));
                     }
+                    GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_theta " + it + "_phi" + ip, 
+                                                         shiftRes, layers, errorRes, zeros);
+                    gr_fit.setTitle("Sector " + sector);
+                    gr_fit.setTitleX("Residual (um)");
+                    gr_fit.setTitleY("Layer");
+                    gr_fit.setMarkerColor(this.markerColor[(it-1)%6]);
+                    gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
+                    gr_fit.setMarkerSize(this.markerSize);
+                    residuals.addDataSet(gr_fit, is);
                 }               
             }
         }
@@ -518,7 +516,7 @@ public class Alignment {
     
     public void processFiles() {
         for(String key : histos.keySet()) {
-            histos.get(key).processFiles();
+            if(histos.containsKey(key)) histos.get(key).processFiles();
         }
     }
 
@@ -569,18 +567,18 @@ public class Alignment {
         String[] inputs = align.getInputs();
             
 
-        OptionStore parser = new OptionStore("DC Alignment");
+        OptionStore parser = new OptionStore("dc-alignment");
         
         // valid options for event-base analysis
         parser.addCommand("-process", "process event files");
-        parser.getOptionParser("-process").addOption("-o"        ,"",              "output file name prefix");
+        parser.getOptionParser("-process").addOption("-o"        ,"",              "output histogram file name prefix");
         parser.getOptionParser("-process").addOption("-nevent"   ,"-1",            "maximum number of events to process");
-        parser.getOptionParser("-process").addRequired("-" + inputs[0],            "nominal geometry files");
-        for(int i=1; i<inputs.length; i++) parser.getOptionParser("-process").addOption("-" + inputs[i],"");
+        parser.getOptionParser("-process").addRequired("-" + inputs[0],            "nominal geometry hipo file or directory");
+        for(int i=1; i<inputs.length; i++) parser.getOptionParser("-process").addOption("-" + inputs[i], "", inputs[i] + " hipo file or directory");
         parser.getOptionParser("-process").addOption("-display"  ,"1",             "display histograms (0/1)");
-        parser.getOptionParser("-process").addOption("-stats"    ,"",              "set histogram stat option");
-        parser.getOptionParser("-process").addOption("-theta"    , "",             "theta bin limits, e.g. \"5:10:20:30\"");
-        parser.getOptionParser("-process").addOption("-phi"      , "",             "phi bin limits, e.g. \"-30:-15:0:15:30\"");
+        parser.getOptionParser("-process").addOption("-stats"    ,"",              "histogram stat option");
+        parser.getOptionParser("-process").addOption("-theta"    , "5:10:20",      "theta bin limits, e.g. \"5:10:20:30\"");
+        parser.getOptionParser("-process").addOption("-phi"      , "-30:0:30",     "phi bin limits, e.g. \"-30:-15:0:15:30\"");
         parser.getOptionParser("-process").addOption("-variation", "",             "database variation for constant test");
         parser.getOptionParser("-process").addOption("-fit"      , "1",            "fit residuals (1) or use mean (0)");
         parser.getOptionParser("-process").addOption("-sector"   , "0",            "sector-dependent derivatives (1) or average (0)");
