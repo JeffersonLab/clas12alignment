@@ -277,21 +277,28 @@ public class Histo {
                     for(int l=1; l<=nLayer; l++) {
                         H1F hres = residuals[is][it][ip].getH1F("hi_L"+l);
                         System.out.print(String.format("\tsector=%1d theta bin=%1d phi bin=%1d layer=%2d",s,it,ip,l));
-                        if(fit) {
-                            boolean fitStatus = Histo.fitResiduals(hres);
-                            if(fitStatus) {
-                                this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
-                                this.parErrors[is][it][ip][l] = hres.getFunction().parameter(1).error();
-                            }
-                            else {
-                                double integral = Histo.getIntegralIDataSet(hres, hres.getFunction().getMin(), hres.getFunction().getMin());
-                                this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
-                                this.parErrors[is][it][ip][l] = hres.getFunction().getParameter(2)/Math.sqrt(integral);
-                            }
+                        if(hres.getIntegral()==0) {
+                            this.parValues[is][it][ip][l] = 0; 
+                            this.parErrors[is][it][ip][l] = 0;
                         }
                         else {
-                            this.parValues[is][it][ip][l] = hres.getMean(); 
-                            this.parErrors[is][it][ip][l] = Math.max(hres.getRMS()/Math.sqrt(hres.getIntegral()),(this.resMax-this.resMin)/this.resBins);
+                            if(fit) {
+                                boolean fitStatus = Histo.fitResiduals(hres);
+                                if(fitStatus) {
+                                    this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
+                                    this.parErrors[is][it][ip][l] = hres.getFunction().parameter(1).error();
+                                }
+                                else {
+                                    double integral = Histo.getIntegralIDataSet(hres, hres.getFunction().getMin(), hres.getFunction().getMax());
+                                    this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
+                                    this.parErrors[is][it][ip][l] = hres.getFunction().getParameter(2)/Math.sqrt(integral);
+                                }
+                            }
+                            else {
+                                this.parValues[is][it][ip][l] = hres.getMean(); 
+                                this.parErrors[is][it][ip][l] = hres.getRMS()/Math.sqrt(hres.getIntegral());
+                            }
+                            this.parErrors[is][it][ip][l] = Math.max(this.parErrors[is][it][ip][l],(this.resMax-this.resMin)/this.resBins);
                         }
                         System.out.print("\r");
                     }
