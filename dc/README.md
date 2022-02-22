@@ -23,11 +23,12 @@ Specifically:
 Clone this repository and checkout the dcDev2 branch:
 ```  
   git clone https://github.com/JeffersonLab/clas12alignment
-  git check dcDev2
+  cd clas12alignment
+  git checkout dcDev2
 ```
 Go to the folder clas12alignment/dc/java/dc-alignment and compile with maven:
 ```
-  cd clas12alignment/dc/java/dc-alignment
+  cd dc/java/dc-alignment
   mvn install
 ```
 Run the code with:
