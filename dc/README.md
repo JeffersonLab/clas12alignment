@@ -137,10 +137,10 @@ If the ``-display`` option is set to 1 (default), a graphic window displaying hi
 The tab displays a summary of the extracted residuals and vertex shifts and derivatives. It includes the following sub-tabs:
 * nominal: graphs of the extracted residuals and vertex shifts for the nominal geometry. Each plot corresponds to a different sector and the color points to different polar angle bins; different symbols are used to display the phi bins. The vertex shifts are displayed as layer=0, in 10s of um.
 ![Plot_02-19-2022_10 20 52_PM](https://user-images.githubusercontent.com/7524926/154820094-0bca8488-a895-474d-b8e2-22e25f42e7a6.png)
-* nominal vs. theta: same as above but with the y-axis defined as the angular bin number plus the layer number. The different colors corresponds to the different DC superlayers and the black points show the vertex shifts.
+* nominal vs. theta: same as above but with the y-axis defined as the angular bin number plus the layer number. The different colors correspond to the different DC superlayers and the black points show the vertex shifts.
 ![Plot_02-19-2022_10 21 21_PM](https://user-images.githubusercontent.com/7524926/154819746-af0ee5bc-3e22-41b1-a00f-50f6d20d84c7.png)
 * corrected and corrected vs. theta: same as above but after applying the translations and rotations from the /geometry/dc/alignment table in the CCDB variation specified with the ``-variation`` option.
-* r1_x, ...r3_cy: graphs of the fit residuals and vertex derivatives for the corresponding translation or rotation. Each graph corresponds to a different angular bin. Colors corresponds to different sectors while the average is shown in black. An example is shown by the following graph.
+* r1_x, ...r3_cy: graphs of the fit residuals and vertex derivatives for the corresponding translation or rotation. Each graph corresponds to a different angular bin. Colors correspond to different sectors while the average is shown in black. An example is shown by the following graph.
 
 ![Plot_02-19-2022_10 22 13_PM](https://user-images.githubusercontent.com/7524926/154819842-7f8f4f72-ad4d-4d27-a0e3-ada02b65447a.png)
 * Fitted and fitted vs. theta: same as nominal or corrected, but after aplying the combination of shifts and rotations resulting from the global fit.
