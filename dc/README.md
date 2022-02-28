@@ -149,7 +149,7 @@ The tab displays a summary of the extracted residuals and vertex shifts and deri
 The tab displays the relevant distributions for the selected electron tracks.
 
 #### Nominal
-This tab display histogram of the z-vertex distribution, fit and time residuals for each angular bin and sector.
+This tab displays histograms of the z-vertex distributions, fit and time residuals for each angular bin and sector.
 * Z-vertex histograms: the picture below shows an example of a typical distribution for data taken with the 5cm-long LH2 target cell. The three peaks correspond to the cell windows and to a superinsulation foil. The distributionn is fit to the sum of three Gaussians corresponding describing the windows and foil, plus a fourth broader gaussian describing the background from residual gas or badly reconstructed tracks. To ensure a good fit convergence, the 3 peak sigma are set to be the same and the distance between the peaks is constrained to the known values from the target geometry. The fit parameters are:
   * amp: height of the downstream cell window peak,
   * mean: mean of the downstream cell window peak (to be compared with the nominal of 0.5 cm),
