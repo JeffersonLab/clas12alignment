@@ -107,8 +107,8 @@ The code will read the histograms from the specified file, analyze them, plot th
 By specifying ``-display 0``, the graphical window presenting the plotted results will not be opened.
 
 ### Input files
-Hipo event files used with the ``-process`` option should contain straight tracks matched to HTCC and ECAL and contain the banks ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits``
-The tracks selection to identify electrons is performed by the ``getElectron()`` method in the ``Histo`` class, using parameters from the ``Constants`` class
+Hipo event files used with the ``-process`` option should contain straight tracks matched to HTCC and ECAL and contain the banks ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits``.
+The tracks selection to identify electrons is performed by the ``getElectron()`` method in the ``Histo`` class, using parameters from the ``Constants`` class.
 
 To reduce the data volume and speed up the processing, files for each geometry variation can be filtered with:
 ```
