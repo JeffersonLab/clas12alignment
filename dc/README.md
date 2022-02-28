@@ -103,7 +103,7 @@ Check the command line options with:
 -variation : database variation for constant test (default = )
   -verbose : global fit verbosity (1/0 = on/off) (default = 0)
 ```
-The code will read the histograms from the specified file, analyze them, plot the results and printout the extract alignment constants. All histograms will be saved to an histogram file named ``prefix_histo.hipo``, with ``prefix`` being the string specified with the ```-o``` option, or ``histo.hipo`` if the option is not used. 
+The code will read the histograms from the specified file, analyze them, plot the results and printout the extracted alignment constants. All histograms will be saved to an histogram file named ``prefix_histo.hipo``, with ``prefix`` being the string specified with the ```-o``` option, or ``histo.hipo`` if the option is not used. 
 By specifying ``-display 0``, the graphical window presenting the plotted results will not be opened.
 
 ### Input files
@@ -120,7 +120,7 @@ where the vertex, nphe and energy cut should be selected according to the experi
 
 ### Output
 When the ``-process`` option is chosen, a file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` option.
-With both the ``-process`` and ``-analyze`` options, the extracted misalignment constants are prit out in a format consistent with the /geometry/dc/alignment CCDB table.
+With both the ``-process`` and ``-analyze`` options, the extracted misalignment constants are printed out in a format consistent with the /geometry/dc/alignment CCDB table.
 
 ### Parameters
 In addition to the parameters that can be selected from command line, the code uses parameters defined in the ``Constants`` class:
