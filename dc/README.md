@@ -83,7 +83,7 @@ Check the command line options with:
 -variation : database variation for constant test (default = )
   -verbose : global fit verbosity (1/0 = on/off) (default = 0)
 ```
-The code will process the input files specified with the ```-nominal``` or ```-r[123]_[c][xyz]``` options, create and fill histograms according to the selected theta and phi bins, run the analysis, plot the results and printout the extract alignment constants. All histograms will be saved to an histogram file named ``prefix_histo.hipo``, with ``prefix`` being the string specified with the ```-o``` option, or ``histo.hipo`` if the option is not used. 
+The code will process the input files specified with the ```-nominal``` or ```-r[123]_[c][xyz]``` options, create and fill histograms according to the selected theta and phi bins, run the analysis, plot the results and printout the extracted alignment constants. All histograms will be saved to an histogram file named ``prefix_histo.hipo``, with ``prefix`` being the string specified with the ```-o``` option, or ``histo.hipo`` if the option is not used. 
 By specifying ``-display 0``, the graphical window presenting the plotted results will not be opened.
 
 #### Analyze a histogram file
