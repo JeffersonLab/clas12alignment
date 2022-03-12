@@ -1,4 +1,4 @@
 target/
-jnotebook_plots/.ipynb_checkpoints/
+fmt/*.hipo
 *.class
 *.jar

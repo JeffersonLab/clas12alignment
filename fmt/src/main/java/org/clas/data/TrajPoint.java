@@ -1,15 +1,16 @@
-package org.clas.cross;
+package org.clas.data;
 
 import java.util.ArrayList;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.clas.analysis.Data;
 import org.clas.analysis.FiducialCuts;
 import org.clas.analysis.TrkSwim;
+import org.clas.test.Constants;
+import org.clas.test.HipoHandler;
 
+/** Class in charge of the Trajectory Point objects and importing them from their hipo bank. */
 public class TrajPoint {
-    // Trajectory point data:
     private int pi;       // Particle index.
     private int id;       // Track index.
     private int fmtLyr;   // FMT layer.
@@ -52,7 +53,7 @@ public class TrajPoint {
      * @param minTrjPoints Parameter defining the minimum number of trajectory points to define a
      *                     group. Can be 1, 2, or 3.
      * @param applyCuts    Boolean defining if fiducial cuts should be applied or not.
-     * @return ArrayList of a trio of trajectory points, each on a different layer.
+     * @return ArrayList of an array of trajectory points, each on a different layer.
      */
     public static ArrayList<TrajPoint[]> getTrajPoints(DataEvent event, TrkSwim swim,
             FiducialCuts fcuts, double[] fmtZ, double[] fmtAngle, double[][] shArr,
@@ -64,31 +65,34 @@ public class TrajPoint {
         }
 
         // Get data banks.
-        DataBank trjBank = Data.getBank(event, "REC::Traj");
-        DataBank ptcBank = Data.getBank(event, "REC::Particle");
-        DataBank trkBank = Data.getBank(event, "REC::Track");
+        DataBank trjBank = HipoHandler.getBank(event, "REC::Traj");
+        DataBank ptcBank = HipoHandler.getBank(event, "REC::Particle");
+        DataBank trkBank = HipoHandler.getBank(event, "REC::Track");
 
         if (trjBank==null || ptcBank==null || trkBank==null) return null;
 
         ArrayList<TrajPoint[]> trajPoints = new ArrayList<TrajPoint[]>();
 
         // Loop through trajectory points.
-        for (int trji=0; trji<trjBank.rows(); trji++) {
+        for (int trji=0; trji<trjBank.rows(); ++trji) {
             // Load trajectory variables.
             int detector = trjBank.getByte("detector", trji);
-            int id = trjBank.getShort("index", trji);
-            int li = trjBank.getByte("layer", trji)-1;
-            int pi = trjBank.getShort("pindex", trji);
-            int si = -1; // DC sector.
+            int id  = trjBank.getShort("index", trji);
+            int lyr = trjBank.getByte("layer", trji)-1;
+            int pi  = trjBank.getShort("pindex", trji);
+            int si  = -1;       // DC sector.
             double costh = -1; // track theta.
 
-            // Use only FMT layers 1, 2, and 3.
-            if (detector!=DetectorType.FMT.getDetectorId() || li<0
-                    || li> Constants.getNumberOfFMTLayers() -1)
+            // Use only FMT detector and valid FMT layers.
+            if (detector!=DetectorType.FMT.getDetectorId() || lyr<0 || lyr>Constants.FMTLAYERS-1)
                 continue;
 
-            // Bank integrity is being assumed in this line.
-            if (li == 0) trajPoints.add(new TrajPoint[]{null, null, null});
+            // Bank integrity is assumed from this point onward.
+            if (lyr == 0) {
+                trajPoints.add(new TrajPoint[Constants.FMTLAYERS]);
+                for (int li = 0; li < Constants.FMTLAYERS; ++li)
+                    trajPoints.get(trajPoints.size()-1)[li] = null;
+            }
 
             fcuts.increaseTrajCount();
 
@@ -98,8 +102,8 @@ public class TrajPoint {
             }
 
             // Get FMT layer's z coordinate and strips angle.
-            double zRef = fmtZ[li] + shArr[0][0] + shArr[li+1][0];
-            double phiRef = fmtAngle[li] - (shArr[0][3]+shArr[li+1][3]); // Apply phi shift.
+            double zRef   = fmtZ[lyr]     + shArr[lyr][2]; // Apply z shift.
+            double phiRef = fmtAngle[lyr] - shArr[lyr][5]; // Apply phi shift.
 
             // Get particle's kinematics.
             double x  = (double) ptcBank.getFloat("vx", pi);
@@ -113,8 +117,8 @@ public class TrajPoint {
             if (applyCuts && fcuts.downstreamTrackCheck(z, zRef)) continue;
             double[] V = swim.swimToPlane(x,y,z,px,py,pz,q,zRef);
 
-            x  = V[0] - (shArr[0][1]+shArr[li+1][1]); // Apply global x shift.
-            y  = V[1] - (shArr[0][2]+shArr[li+1][2]); // Apply global y shift.
+            x  = V[0] - shArr[lyr][0]; // Apply x shift.
+            y  = V[1] - shArr[lyr][1]; // Apply y shift.
             z  = V[2];
             px = V[3];
             py = V[4];
@@ -124,37 +128,22 @@ public class TrajPoint {
             costh = Math.acos(pz/Math.sqrt(px*px+py*py+pz*pz));
 
             // Apply track fiducial cuts.
-            if (applyCuts && fcuts.checkTrajCuts(z, x, y, zRef, costh)) continue;
+            if (applyCuts && fcuts.checkTrajCuts(x, y, z, zRef, costh)) continue;
 
             // Rotate (x,y) to FMT's local coordinate system.
-            double xLoc = x * Math.cos(Math.toRadians(phiRef))
-                    + y * Math.sin(Math.toRadians(phiRef));
-            double yLoc = y * Math.cos(Math.toRadians(phiRef))
-                    - x * Math.sin(Math.toRadians(phiRef));
+            double xLoc = x*Math.cos(Math.toRadians(phiRef)) + y*Math.sin(Math.toRadians(phiRef));
+            double yLoc = y*Math.cos(Math.toRadians(phiRef)) - x*Math.sin(Math.toRadians(phiRef));
 
-            trajPoints.get(trajPoints.size()-1)[li] =
-                    new TrajPoint(pi, id, li, si, z, xLoc, yLoc, costh);
+            trajPoints.get(trajPoints.size()-1)[lyr] =
+                    new TrajPoint(pi, id, lyr, si, z, xLoc, yLoc, costh);
         }
 
         // Clean trios.
-        for (int arri=trajPoints.size()-1; arri>=0; --arri) {
-            if (minTrjPoints==1) {
-                if (trajPoints.get(arri)[0]!=null) continue;
-                if (trajPoints.get(arri)[1]!=null) continue;
-                if (trajPoints.get(arri)[2]!=null) continue;
-            }
-            else if (minTrjPoints==2) {
-                if (trajPoints.get(arri)[0]!=null && trajPoints.get(arri)[1]!=null) continue;
-                if (trajPoints.get(arri)[1]!=null && trajPoints.get(arri)[2]!=null) continue;
-                if (trajPoints.get(arri)[2]!=null && trajPoints.get(arri)[0]!=null) continue;
-            }
-            else if (minTrjPoints==3) {
-                if (trajPoints.get(arri)[0]!=null
-                        && trajPoints.get(arri)[1]!=null
-                        && trajPoints.get(arri)[2]!=null)
-                    continue;
-            }
-
+        for (int arri = trajPoints.size()-1; arri >= 0; --arri) {
+            int count = 0;
+            for (int li = 0; li < Constants.FMTLAYERS; ++li)
+                if (trajPoints.get(arri)[li] != null) count++;
+            if (count >= minTrjPoints) continue;
             trajPoints.remove(arri);
         }
 
