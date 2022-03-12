@@ -119,6 +119,8 @@ Here is example of using the "analyze" option to analyze an already created hist
 Hipo event files used with the ``-process`` option should contain straight tracks matched to HTCC and ECAL and contain the banks ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits``.
 The tracks selection to identify electrons is performed by the ``getElectron()`` method in the ``Histo`` class, using parameters from the ``Constants`` class.
 
+Each shift and rotational variation should be processed with the same straight-track data.
+
 To reduce the data volume and speed up the processing, files for each geometry variation can be filtered with:
 ```
 hipo-utils -reduce -ct "REC::Particle://beta>0[GT]0,REC::Cherenkov://nphe>2[GT]0,REC::Calorimeter://energy>0[GT]0,TimeBasedTrkg::TBTracks://
