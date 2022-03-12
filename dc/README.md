@@ -88,7 +88,7 @@ By specifying ``-display 0``, the graphical window presenting the plotted result
 
 The following is an example of how one would process directories of the input data hipo files, utilizing 12 geometry variations (9 translations and 3 rotations). In this example, three theta bins are used (0 to 8, 8 to 14, and 14 to 22 [degrees]) and two bins in phi are used (-30 to 0, and 0 to 30 [degrees]).
 ```
-./bin/dc-alignment -process -nominal /path/to/noShift/ -r1_x /path/to/1_x_0p2cm -r1_y /path/to/r1_y_0p2cm -r1_z /path/to/1_z_0p2cm -r1_cy /path/to/r1_cy_0p2deg -r2_x /path/to/2_x_0p2cm -r2_y /path/to/2_y_0p2cm -r2_z /path/to/2_z_0p2cm -r2_cy /path/to/2_cy_0p2deg -r3_x /path/to/3_x_0p2cm -r3_y /path/to/3_y_0p2cm -r3_z /path/to/r3_z_0p2cm -r3_cy /path/to/r3_cy_0p2deg -theta "0:8:14:22" -phi "-30:0:30" -variation rga_fall2018 -fit 0 -o theta_0-8-14-22
+./bin/dc-alignment -process -nominal /path/to/noShift/ -r1_x /path/to/1_x_0p2cm -r1_y /path/to/r1_y_0p2cm -r1_z /path/to/1_z_0p2cm -r1_cy /path/to/r1_cy_0p2deg -r2_x /path/to/2_x_0p2cm -r2_y /path/to/2_y_0p2cm -r2_z /path/to/2_z_0p2cm -r2_cy /path/to/2_cy_0p2deg -r3_x /path/to/3_x_0p2cm -r3_y /path/to/3_y_0p2cm -r3_z /path/to/r3_z_0p2cm -r3_cy /path/to/r3_cy_0p2deg -theta "0:8:14:22" -phi "-30:0:30" -variation rga_fall2018 -fit 0 -o output_file_name
 ```
 #### Analyze a histogram file
 Check the command line options with:
@@ -109,6 +109,11 @@ Check the command line options with:
 ```
 The code will read the histograms from the specified file, analyze them, plot the results and printout the extracted alignment constants. All histograms will be saved to an histogram file named ``prefix_histo.hipo``, with ``prefix`` being the string specified with the ```-o``` option, or ``histo.hipo`` if the option is not used. 
 By specifying ``-display 0``, the graphical window presenting the plotted results will not be opened.
+
+Here is example of using the "analyze" option to analyze an already created histogram hipo file:
+```
+./bin/dc-alignment -analyze -variation rga_fall2018 -input /path/to/histo.hipo
+```
 
 ### Input files
 Hipo event files used with the ``-process`` option should contain straight tracks matched to HTCC and ECAL and contain the banks ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits``.
