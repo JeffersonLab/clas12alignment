@@ -446,8 +446,8 @@ public class Histo {
         double sigma = 0.5;
         double bg = histo.getBinContent((ibin1+ibin0)/2);
         
-        //F1D f1_vtx   = new F1D("f3vertex","[amp]*gaus(x,[mean]-[tl],[sigma])+[amp]*gaus(x,[mean],[sigma])+[amp]*gaus(x,[mean]+[wd],[sigma])/1.8+[bg]*gaus(x,[mean]-[tl]/2,[tl]*0.8)", -10, 10);
-	F1D f1_vtx   = new F1D("f3vertex","[amp]*gaus(x,[mean]-[tl],[sigma])+[amp]*gaus(x,[mean],[sigma])+[amp]*gaus(x,[mean]+[wd],[sigma])/1.8+[bg]*gaus(x,[mean]/2,[tl]*0.8)", -10, 10);
+        F1D f1_vtx   = new F1D("f3vertex","[amp]*gaus(x,[mean]-[tl],[sigma])+[amp]*gaus(x,[mean],[sigma])+[amp]*gaus(x,[mean]+[wd],[sigma])/1.8+[bg]*gaus(x,[mean]-[tl]/2,[tl]*0.8)", -10, 10);
+	//F1D f1_vtx   = new F1D("f3vertex","[amp]*gaus(x,[mean]-[tl],[sigma])+[amp]*gaus(x,[mean],[sigma])+[amp]*gaus(x,[mean]+[wd],[sigma])/1.8+[bg]*gaus(x,[mean]/2,[tl]*0.8)", -10, 10);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
         f1_vtx.setOptStat("11111111");
