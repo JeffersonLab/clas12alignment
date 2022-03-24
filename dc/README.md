@@ -18,6 +18,19 @@ Specifically:
 * Data:
   * Straight-track data (both solenoid and torus should be off) with electron tracks in the forward detector.
   * Reconstructed files from the data above, processed with nominal geometry (variation: default) and with individual translations or rotations in xyz for each of the DC regions. See clas12alignment/dc/original_scripts_and_docs/CLAS12___DC_Alignment_Github_Tutorial.pdf for the CCDB variations. 
+  * ### Input files
+    Hipo event files used with the ``-process`` option should contain straight tracks matched to HTCC and ECAL and contain the banks    ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits``.
+    The tracks selection to identify electrons is performed by the ``getElectron()`` method in the ``Histo`` class, using parameters from the ``Constants`` class.
+
+    * #### Each shift and rotational variation should be processed with the same straight-track data.
+
+    To reduce the data volume and speed up the processing, files for each geometry variation can be filtered with:
+    ```
+    hipo-utils -reduce -ct "REC::Particle://beta>0[GT]0,REC::Cherenkov://nphe>2[GT]0,REC::Calorimeter://energy>0[GT]0,TimeBasedTrkg::TBTracks://
+    Vtx0_z>-20&&Vtx0_z<10[GT]0" -r "TimeBasedTrkg::TBHits://trkID>0" -b "RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBased
+    Trkg::TBTracks,TimeBasedTrkg::TBHits" -o outputfilename inputfiles
+    ```
+    where the vertex, nphe and energy cut should be selected according to the experiment configuration (beam energy and target).
 
 ### Build and run
 Clone this repository and checkout the dcDev2 branch:
@@ -114,20 +127,6 @@ Here is example of using the "analyze" option to analyze an already created hist
 ```
 ./bin/dc-alignment -analyze -variation rga_fall2018 -input /path/to/histo.hipo
 ```
-
-### Input files
-Hipo event files used with the ``-process`` option should contain straight tracks matched to HTCC and ECAL and contain the banks ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits``.
-The tracks selection to identify electrons is performed by the ``getElectron()`` method in the ``Histo`` class, using parameters from the ``Constants`` class.
-
-Each shift and rotational variation should be processed with the same straight-track data.
-
-To reduce the data volume and speed up the processing, files for each geometry variation can be filtered with:
-```
-hipo-utils -reduce -ct "REC::Particle://beta>0[GT]0,REC::Cherenkov://nphe>2[GT]0,REC::Calorimeter://energy>0[GT]0,TimeBasedTrkg::TBTracks://
-Vtx0_z>-20&&Vtx0_z<10[GT]0" -r "TimeBasedTrkg::TBHits://trkID>0" -b "RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBased
-Trkg::TBTracks,TimeBasedTrkg::TBHits" -o outputfilename inputfiles
-```
-where the vertex, nphe and energy cut should be selected according to the experiment configuration (beam energy and target).
 
 ### Output
 When the ``-process`` option is chosen, a file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` option.
