@@ -68,9 +68,8 @@ public class Fitter  implements FCNBase {
                 for(int ip=0; ip<currentValues[0][0].length; ip++) {
                     
                     double norm = currentErrors[im][it][ip]*currentErrors[im][it][ip];
-//                    if(im==0) norm*=1E20;
                     if(norm>1E-12) {
-                        chi2 += Math.pow(this.value(im, it, ip, pars)-currentValues[im][it][ip],2)/norm;
+                        chi2 += Math.pow(this.value(im, it, ip, pars)-currentValues[im][it][ip],2)*Constants.MEASWEIGHT[im]/norm;
                         ndf++;
                     }
                 }

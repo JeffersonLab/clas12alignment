@@ -24,15 +24,17 @@ public class Constants {
     public static String[]   PARNAME = {"r1_x", "r1_y", "r1_z", "r1_cx", "r1_cy", "r1_cz",
                                         "r2_x", "r2_y", "r2_z", "r2_cx", "r2_cy", "r2_cz",
                                         "r3_x", "r3_y", "r3_z", "r3_cx", "r3_cy", "r3_cz"};
-    // parameter weight   
-    public static double[] PARWEIGHT = {     1,      1,      1,       1,       1,       1, 
-                                             1,      1,      1,       1,       1,       1, 
-                                             1,      1,      1,       1,       1,       1};
     // parameter step size: set to 0 to fix the parameter
     public static double[]   PARSTEP = {  0.01,      0.01,   0.01,       0,    0.01,       0,
                                           0.01,      0.01,   0.01,       0,    0.01,       0,
                                           0.01,      0.01,   0.01,       0,    0.01,       0};
-               
+    // measurements weight   
+    public static double[] MEASWEIGHT = { 1,  1,      1,      1,       1,       1,       1, 
+                                              1,      1,      1,       1,       1,       1, 
+                                              1,      1,      1,       1,       1,       1, 
+                                              1,      1,      1,       1,       1,       1, 
+                                              1,      1,      1,       1,       1,       1, 
+                                              1,      1,      1,       1,       1,       1};               
     
     // target parameters
     public static double TARGETPOS    = -0.5;

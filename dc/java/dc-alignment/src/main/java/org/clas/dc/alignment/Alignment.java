@@ -591,7 +591,7 @@ public class Alignment {
         parser.getOptionParser("-analyze").addRequired("-input"  ,                 "input histogram file");
         parser.getOptionParser("-analyze").addOption("-display"  ,"1",             "display histograms (0/1)");
         parser.getOptionParser("-analyze").addOption("-stats"    ,"",              "set histogram stat option");
-        parser.getOptionParser("-analyze").addOption("-variation", "",             "database variation for constant test");
+        parser.getOptionParser("-analyze").addOption("-variation", "default",      "database variation for constant test");
         parser.getOptionParser("-analyze").addOption("-fit"      , "1",            "fit residuals (1) or use mean (0)");
         parser.getOptionParser("-analyze").addOption("-sector"   , "0",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-analyze").addOption("-init"     , "0",            "init global fit from previous constants (1) or from zero shifts (0)");
