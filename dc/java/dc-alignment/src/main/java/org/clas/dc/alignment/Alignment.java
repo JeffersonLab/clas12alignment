@@ -251,16 +251,16 @@ public class Alignment {
             pad.getAxisX().setRange(-2000, 2000);
         
         System.out.println("\nPlotting corrected geometry residuals");        
-        canvas.addCanvas("corrected");
-        canvas.getCanvas("corrected").draw(this.getResidualGraphs(true));
+        canvas.addCanvas("CCDB corrected");
+        canvas.getCanvas("CCDB corrected").draw(this.getResidualGraphs(true));
         canvas.getCanvas().setFont(fontName);
-        for(EmbeddedPad pad : canvas.getCanvas("corrected").getCanvasPads())
+        for(EmbeddedPad pad : canvas.getCanvas("CCDB corrected").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
-        canvas.addCanvas("corrected vs. theta");
-        canvas.getCanvas("corrected vs. theta").draw(this.getAngularGraph(true));
+        canvas.addCanvas("CCDB corrected vs. theta");
+        canvas.getCanvas("CCDB corrected vs. theta").draw(this.getAngularGraph(true));
         canvas.getCanvas().setFont(fontName);
-        for(EmbeddedPad pad : canvas.getCanvas("corrected vs. theta").getCanvasPads())
+        for(EmbeddedPad pad : canvas.getCanvas("CCDB corrected vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
         // shifts
@@ -284,16 +284,16 @@ public class Alignment {
             }
             System.out.println("\nFinal alignment parameters\n" +this.alignment.toString());
 
-            canvas.addCanvas("fitted");
-            canvas.getCanvas("fitted").draw(this.getResidualGraphs(true));
+            canvas.addCanvas("corrected (with new parameters)");
+            canvas.getCanvas("corrected (with new parameters)").draw(this.getResidualGraphs(true));
             canvas.getCanvas().setFont(fontName);
-            for(EmbeddedPad pad : canvas.getCanvas("fitted").getCanvasPads())
+            for(EmbeddedPad pad : canvas.getCanvas("corrected (with new parameters)").getCanvasPads())
                 pad.getAxisX().setRange(-2000, 2000);
 
-            canvas.addCanvas("fitted vs. theta");
-            canvas.getCanvas("fitted vs. theta").draw(this.getAngularGraph(true));
+            canvas.addCanvas("corrected (with new parameters) vs. theta");
+            canvas.getCanvas("corrected (with new parameters) vs. theta").draw(this.getAngularGraph(true));
             canvas.getCanvas().setFont(fontName);
-            for(EmbeddedPad pad : canvas.getCanvas("fitted vs. theta").getCanvasPads())
+            for(EmbeddedPad pad : canvas.getCanvas("corrected (with new parameters) vs. theta").getCanvasPads())
                 pad.getAxisX().setRange(-2000, 2000); 
         }
         return canvas;
