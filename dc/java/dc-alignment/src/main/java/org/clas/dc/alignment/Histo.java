@@ -269,7 +269,7 @@ public class Histo {
     }
     
  
-    public void analyzeHisto(boolean fit) {
+    public void analyzeHisto(boolean fit, int vertexFit) {
         for(int is=0; is<nSector; is++) {
             int s = is +1;
             for(int it=0; it<thetaBins.length; it++) {
@@ -303,7 +303,7 @@ public class Histo {
                         System.out.print("\r");
                     }
                     H1F hvtx = vertex[it][ip].getH1F("hi_S"+s);
-                    Histo.fit3Vertex(hvtx);
+                    this.fitVertex(vertexFit, hvtx);
                     this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*Constants.SCALE-Constants.TARGETPOS*Constants.SCALE;
                     this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*Constants.SCALE;
                 }
@@ -388,6 +388,16 @@ public class Histo {
     }
     
     
+    private void fitVertex(int mode, H1F histo) {
+        if(mode == 1)
+            Histo.fitResiduals(histo);
+        else if(mode == 2)
+            Histo.fit1Vertex(histo);
+        else
+            Histo.fit3Vertex(histo);
+    }
+    
+    
     public static boolean fitResiduals(H1F histo) {
         double mean  = Histo.getMeanIDataSet(histo, histo.getMean()-histo.getRMS(), 
                                                     histo.getMean()+histo.getRMS());
@@ -419,6 +429,37 @@ public class Histo {
 //            f1.setRange(mean-2.0*sigma,mean+2.0*sigma);
 //            DataFitter.fit(f1, histo, "Q");
 //            System.out.print("2nd");
+            return true;
+        }
+        else {
+            histo.setFunction(f1);
+            return false;
+        }
+    }    
+
+    
+    public static boolean fit1Vertex(H1F histo) {
+        double mean  = Histo.getMeanIDataSet(histo, histo.getMean()-histo.getRMS(), 
+                                                    histo.getMean()+histo.getRMS());
+        double amp   = histo.getBinContent(histo.getMaximumBin());
+        double rms   = histo.getRMS();
+        double sigma = 0.5;
+        double min = histo.getDataX(0);
+        double max = histo.getDataX(histo.getDataSize(0)-1);
+        
+        F1D f1   = new F1D("f1res","[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", min, max);
+        f1.setLineColor(2);
+        f1.setLineWidth(2);
+        f1.setOptStat("1111");
+        f1.setParameter(0, amp);
+        f1.setParameter(1, mean);
+        f1.setParameter(2, sigma);
+            
+        if(amp>5) {
+            f1.setParLimits(0, amp*0.2,   amp*1.2);
+            f1.setParLimits(1, mean*0.5,  mean*1.5);
+            f1.setParLimits(2, sigma*0.2, sigma*2);
+            DataFitter.fit(f1, histo, "Q");
             return true;
         }
         else {

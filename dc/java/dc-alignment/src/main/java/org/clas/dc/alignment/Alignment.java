@@ -40,6 +40,7 @@ public class Alignment {
     private Table             alignment = null;
         
     private boolean           residualFit  = false;
+    private int               vertexFit    = 3;
     private boolean           sectorDeriv  = false;
     private boolean           initFitPar   = false;
     private boolean           fitVerbosity = false;
@@ -69,8 +70,9 @@ public class Alignment {
         }
     }
     
-    public void setFitOptions(boolean resFit, boolean sectorDer, boolean init, int iteration, boolean verbosity) {
+    public void setFitOptions(boolean resFit, int vertexFit, boolean sectorDer, boolean init, int iteration, boolean verbosity) {
         this.residualFit = resFit;
+        this.vertexFit = vertexFit;
         this.sectorDeriv = sectorDer;
         this.initFitPar  = init;
         this.fitIteration = iteration;
@@ -115,7 +117,7 @@ public class Alignment {
     public void analyzeHistos() {
         for(String key : histos.keySet()) {
             System.out.println("\nAnalyzing histos for variation " + key);
-            histos.get(key).analyzeHisto(this.residualFit);
+            histos.get(key).analyzeHisto(this.residualFit, this.vertexFit);
         }
     }
     
@@ -581,6 +583,7 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-phi"      , "-30:0:30",     "phi bin limits, e.g. \"-30:-15:0:15:30\"");
         parser.getOptionParser("-process").addOption("-variation", "",             "database variation for constant test");
         parser.getOptionParser("-process").addOption("-fit"      , "1",            "fit residuals (1) or use mean (0)");
+        parser.getOptionParser("-process").addOption("-vertex"   , "3",            "fit vertex plots with 3 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
         parser.getOptionParser("-process").addOption("-sector"   , "0",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-process").addOption("-init"     , "0",            "init global fit from previous constants (1) or from zero shifts (0)");
         parser.getOptionParser("-process").addOption("-iter"     , "1",            "number of global fit iterations");
@@ -593,6 +596,7 @@ public class Alignment {
         parser.getOptionParser("-analyze").addOption("-stats"    ,"",              "set histogram stat option");
         parser.getOptionParser("-analyze").addOption("-variation", "default",      "database variation for constant test");
         parser.getOptionParser("-analyze").addOption("-fit"      , "1",            "fit residuals (1) or use mean (0)");
+        parser.getOptionParser("-analyze").addOption("-vertex"   , "3",            "fit vertex plots with 3 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
         parser.getOptionParser("-analyze").addOption("-sector"   , "0",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-analyze").addOption("-init"     , "0",            "init global fit from previous constants (1) or from zero shifts (0)");
         parser.getOptionParser("-analyze").addOption("-iter"     , "1",            "number of global fit iterations");
@@ -615,6 +619,7 @@ public class Alignment {
             String optStats    = parser.getOptionParser("-process").getOption("-stats").stringValue();
             String variation   = parser.getOptionParser("-process").getOption("-variation").stringValue();
             boolean fit        = parser.getOptionParser("-process").getOption("-fit").intValue()!=0;
+            int     vertex     = parser.getOptionParser("-process").getOption("-vertex").intValue();
             boolean sector     = parser.getOptionParser("-process").getOption("-sector").intValue()!=0;
             boolean init       = parser.getOptionParser("-process").getOption("-init").intValue()!=0;
             int     iter       = parser.getOptionParser("-process").getOption("-iter").intValue();
@@ -623,7 +628,7 @@ public class Alignment {
             if(!openWindow) System.setProperty("java.awt.headless", "true");
 
             align.setAngularBins(thetaBins, phiBins);
-            align.setFitOptions(fit, sector, init, iter, verbose);
+            align.setFitOptions(fit, vertex, sector, init, iter, verbose);
             align.initConstants(11, variation);
             for(int i=0; i<inputs.length; i++) {
                 String input = parser.getOptionParser("-process").getOption("-" + inputs[i]).stringValue();
@@ -640,6 +645,7 @@ public class Alignment {
             String optStats    = parser.getOptionParser("-analyze").getOption("-stats").stringValue();
             String variation   = parser.getOptionParser("-analyze").getOption("-variation").stringValue();
             boolean fit        = parser.getOptionParser("-analyze").getOption("-fit").intValue()!=0;
+            int     vertex     = parser.getOptionParser("-analyze").getOption("-vertex").intValue();
             boolean sector     = parser.getOptionParser("-analyze").getOption("-sector").intValue()!=0;
             boolean init       = parser.getOptionParser("-analyze").getOption("-init").intValue()!=0;
             int     iter       = parser.getOptionParser("-analyze").getOption("-iter").intValue();
@@ -648,7 +654,7 @@ public class Alignment {
             if(!openWindow) System.setProperty("java.awt.headless", "true");
 
             String histoName   = parser.getOptionParser("-analyze").getOption("-input").stringValue();
-            align.setFitOptions(fit, sector, init, iter, verbose);
+            align.setFitOptions(fit, vertex, sector, init, iter, verbose);
             align.initConstants(11, variation);
             align.readHistos(histoName, optStats);
             align.analyzeHistos();
