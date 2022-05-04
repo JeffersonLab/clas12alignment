@@ -453,28 +453,53 @@ public class Histo {
 
     
     public static boolean fit1Vertex(H1F histo) {
-        double mean  = Histo.getMeanIDataSet(histo, histo.getMean()-histo.getRMS(), 
-                                                    histo.getMean()+histo.getRMS());
+        //double mean  = Histo.getMeanIDataSet(histo, histo.getMean()-histo.getRMS(), 
+        //                                            histo.getMean()+histo.getRMS());
+        double mean = histo.getDataX(histo.getMaximumBin());
         double amp   = histo.getBinContent(histo.getMaximumBin());
         double rms   = histo.getRMS();
         double sigma = 0.5;
         double min = histo.getDataX(0);
         double max = histo.getDataX(histo.getDataSize(0)-1);
+        int nbin = histo.getData().length;
         
         F1D f1   = new F1D("f1res","[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", min, max);
         f1.setLineColor(2);
         f1.setLineWidth(2);
         f1.setOptStat("1111");
-        f1.setParameter(0, amp);
-        f1.setParameter(1, mean);
-        f1.setParameter(2, sigma);
+        //f1.setParameter(0, amp);
+        //f1.setParameter(1, mean);
+        //f1.setParameter(2, sigma);
+        
+        //Fit a stand-alone gaussian to peak to get initial parameters for total fit function
+        //This is not plotted
+        F1D f1_gaus   = new F1D("f1gaus","[amp]*gaus(x,[mean],[sigma])", min, max);
+        f1_gaus.setParameter(0, amp);
+        f1_gaus.setParameter(1, mean);
+        f1_gaus.setParameter(2, sigma);
             
         if(amp>5) {
-            f1.setParLimits(0, amp*0.2,   amp*1.2);
-            f1.setParLimits(1, mean*0.5,  mean*1.5);
-            f1.setParLimits(2, sigma*0.2, sigma*2);
+            f1_gaus.setParLimits(0, amp*0.2,   amp*1.2);
+            f1_gaus.setParLimits(1, mean*0.9,  mean*1.1);
+            f1_gaus.setParLimits(2, sigma*0.2, sigma*2.5);
+            DataFitter.fit(f1_gaus, histo, "Q");
+            
+            double gaus_amp = f1_gaus.getParameter(0);
+            double gaus_mean = f1_gaus.getParameter(1);
+            double gaus_sigma = f1_gaus.getParameter(2);
+            
+            f1.setParameter(0, gaus_amp);
+            f1.setParameter(1, gaus_mean);
+            f1.setParameter(2, gaus_sigma);
+            
+            //f1.setParLimits(0, gaus_amp*0.2,   gaus_amp*1.2);
+            f1.setParLimits(1, gaus_mean*0.9,  gaus_mean*1.1);
+            f1.setParLimits(2, gaus_sigma*0.2, gaus_sigma*1.5);
             DataFitter.fit(f1, histo, "Q");
-            return true;
+            int npar = f1.getNPars();
+            double red_chi2 = f1.getChiSquare() / (nbin - npar);
+            
+            return true;         
         }
         else {
             histo.setFunction(f1);
