@@ -8,6 +8,7 @@ import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
+import org.jlab.groot.graphics.EmbeddedPad;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.jnp.hipo4.data.Bank;
@@ -26,6 +27,7 @@ public class Histo {
     private final int nLayer  = 36;
     
     private DataGroup       electron  = null; 
+    private DataGroup       binning   = null; 
     private DataGroup[][][] residuals = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][][] time      = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][]   vertex    = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains sectors
@@ -41,9 +43,9 @@ public class Histo {
     double resMin  = -5000;
     double resMax  =  5000;
     // histogram limits for vertex plots
-    int    vtxBins = 100;
-    double vtxMin = -15.0;
-    double vtxMax = 10.0;
+    int    vtxBins = 200;
+    double vtxMin = -50.0;
+    double vtxMax =  50.0;
     
     private List<String>  inputFiles = null;
     private int           maxEvents  = -1;
@@ -123,6 +125,14 @@ public class Histo {
         this.electron.addDataSet(hi_theta,    3);
         this.electron.addDataSet(hi_phi,      4);
         this.electron.addDataSet(hi_thetaphi, 5);
+        this.binning = new DataGroup(3,2);
+        for(int is=0; is<nSector; is++) {
+            int sector = is+1;
+            H2F hi_vtxtheta = new H2F("hi_S" + sector, "Sector " + sector, vtxBins, vtxMin, vtxMax, 100, 0., 35);
+            hi_vtxtheta.setTitleX("Vertex (cm)");
+            hi_vtxtheta.setTitleY("#theta (deg)");
+            this.binning.addDataSet(hi_vtxtheta, is);
+        }
     }
   
     private int getElectron(Event event) {
@@ -204,16 +214,17 @@ public class Histo {
                                              trackBank.getFloat("Vtx0_y", iele),
                                              trackBank.getFloat("Vtx0_z", iele));
 
+            int id     = trackBank.getInt("id", iele);
+            int sector = trackBank.getByte("sector", iele);
             
             this.electron.getH1F("hi_vtx").fill(electron.vz());
             this.electron.getH1F("hi_theta").fill(Math.toDegrees(electron.theta()));
             this.electron.getH1F("hi_phi").fill(Math.toDegrees(electron.phi()));
             this.electron.getH2F("hi_thetaphi").fill(Math.toDegrees(electron.phi()), Math.toDegrees(electron.theta()));
                         
-            int id     = trackBank.getInt("id", iele);
-            int sector = trackBank.getByte("sector", iele);
-            electron.vector().rotateZ(Math.toRadians(-60*(sector-1)));
+            this.binning.getH2F("hi_S" + sector).fill(electron.vz(), Math.toDegrees(electron.theta()));
             
+            electron.vector().rotateZ(Math.toRadians(-60*(sector-1)));
             double theta = Math.toDegrees(electron.theta());
             double phi   = Math.toDegrees(electron.phi());
 
@@ -333,10 +344,13 @@ public class Histo {
     }
     
     public EmbeddedCanvasTabbed getElectronPlots() {
-        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("electron");
-        canvas.getCanvas().draw(electron);
-        canvas.getCanvas().getPad(3).getAxisY().setLog(true);
-        canvas.getCanvas().getPad(5).getAxisZ().setLog(true);
+        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("electron", "binning");
+        canvas.getCanvas("electron").draw(electron);
+        canvas.getCanvas("electron").getPad(3).getAxisY().setLog(true);
+        canvas.getCanvas("electron").getPad(5).getAxisZ().setLog(true);
+        canvas.getCanvas("binning").draw(binning);
+        for(EmbeddedPad pad : canvas.getCanvas("binning").getCanvasPads())
+            pad.getAxisZ().setLog(true);
         return canvas;
     }
     
