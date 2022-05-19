@@ -37,16 +37,7 @@ public class Histo {
     
     private Bin[] thetaBins = null;
     private Bin[] phiBins  = null;
-    
-    // histogram limits for residuals
-    int    resBins = 200;
-    double resMin  = -5000;
-    double resMax  =  5000;
-    // histogram limits for vertex plots
-    int    vtxBins = 200;
-    double vtxMin = -50.0;
-    double vtxMax =  50.0;
-    
+        
     private List<String>  inputFiles = null;
     private int           maxEvents  = -1;
     private SchemaFactory schema     = null;
@@ -77,12 +68,12 @@ public class Histo {
                     this.time[is][it][ip] = new DataGroup(6,6);
                     for(int il=0; il<nLayer; il++) {
                         int layer = il+1;
-                        H1F hi_residual = new H1F("hi_L" + layer,"Layer " + layer + " Sector " + sector, resBins, resMin, resMax);
+                        H1F hi_residual = new H1F("hi_L" + layer,"Layer " + layer + " Sector " + sector, Constants.RESBINS, Constants.RESMIN, Constants.RESMAX);
                         hi_residual.setTitleX("Residuals (um)");
                         hi_residual.setTitleY("Counts");
                         hi_residual.setOptStat(optStats);
                         this.residuals[is][it][ip].addDataSet(hi_residual, il);
-                        H1F hi_time = new H1F("hi_L" + layer,"Layer " + layer + " Sector " + sector, resBins, resMin, resMax);
+                        H1F hi_time = new H1F("hi_L" + layer,"Layer " + layer + " Sector " + sector, Constants.RESBINS, Constants.RESMIN, Constants.RESMAX);
                         hi_time.setTitleX("Residuals (um)");
                         hi_time.setTitleY("Counts");
                         hi_time.setOptStat(optStats);
@@ -97,7 +88,7 @@ public class Histo {
                 this.vertex[it][ip] = new DataGroup(3,2);
                 for(int is=0; is<nSector; is++) {
                     int sector = is+1;
-                    H1F hi_vertex = new H1F("hi_S" + sector,"Sector " + sector, vtxBins, vtxMin, vtxMax);
+                    H1F hi_vertex = new H1F("hi_S" + sector,"Sector " + sector, Constants.VTXBINS, Constants.VTXMIN, Constants.VTMAX);
                     hi_vertex.setTitleX("Vertex (cm)");
                     hi_vertex.setTitleY("Counts");
                     hi_vertex.setOptStat(optStats);
@@ -110,7 +101,7 @@ public class Histo {
         hi_nphe.setFillColor(4);
         H1F hi_ecal  = new H1F("hi_ecal",  "ECAL E(GeV)", "Counts", 100, 0., 4.);
         hi_ecal.setFillColor(4);
-        H1F hi_vtx   = new H1F("hi_vtx",   "Vertex(cm)",  "Counts", vtxBins, vtxMin, vtxMax);
+        H1F hi_vtx   = new H1F("hi_vtx",   "Vertex(cm)",  "Counts",  Constants.VTXBINS, Constants.VTXMIN, Constants.VTMAX);
         hi_vtx.setFillColor(4);
         H1F hi_theta = new H1F("hi_theta", "#theta(deg)", "Counts", 100, 0., 40.);
         hi_theta.setFillColor(4);
@@ -128,7 +119,7 @@ public class Histo {
         this.binning = new DataGroup(3,2);
         for(int is=0; is<nSector; is++) {
             int sector = is+1;
-            H2F hi_vtxtheta = new H2F("hi_S" + sector, "Sector " + sector, vtxBins, vtxMin, vtxMax, 100, 0., 35);
+            H2F hi_vtxtheta = new H2F("hi_S" + sector, "Sector " + sector,  Constants.VTXBINS, Constants.VTXMIN, Constants.VTMAX, 100, 0., 35);
             hi_vtxtheta.setTitleX("Vertex (cm)");
             hi_vtxtheta.setTitleY("#theta (deg)");
             this.binning.addDataSet(hi_vtxtheta, is);
@@ -309,7 +300,7 @@ public class Histo {
                                 this.parValues[is][it][ip][l] = hres.getMean(); 
                                 this.parErrors[is][it][ip][l] = hres.getRMS()/Math.sqrt(hres.getIntegral());
                             }
-                            this.parErrors[is][it][ip][l] = Math.max(this.parErrors[is][it][ip][l],(this.resMax-this.resMin)/this.resBins);
+                            this.parErrors[is][it][ip][l] = Math.max(this.parErrors[is][it][ip][l],(Constants.RESMAX-Constants.RESMIN)/Constants.RESBINS/2.0);
                         }
                         System.out.print("\r");
                     }
@@ -317,6 +308,7 @@ public class Histo {
                     this.fitVertex(vertexFit, hvtx);
                     this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*Constants.SCALE-Constants.TARGETPOS*Constants.SCALE;
                     this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*Constants.SCALE;
+                    this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*(Constants.VTMAX-Constants.VTXMIN)/Constants.VTXBINS/2);
                 }
             }
         }

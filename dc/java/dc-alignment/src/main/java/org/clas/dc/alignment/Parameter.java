@@ -19,9 +19,18 @@ public class Parameter extends UserParameter {
         this.setStep(stepsize);
     }
     
-    public Parameter(String name, double value, double stepsize) {
+    public Parameter(String name, double value, double error, double stepsize) {
         super(name, value);
+        this.setError(error);
         this.setStep(stepsize);
+        this.initFromName(name);
+    }
+    
+    public Parameter(String name, double value, double error, double stepsize, double min, double max) {
+        super(name, value);
+        this.setError(error);
+        this.setStep(stepsize);
+        this.setLimits(min, max);
         this.initFromName(name);
     }
     
@@ -79,5 +88,11 @@ public class Parameter extends UserParameter {
             throw new IllegalArgumentException("Error: unknown parameter name");            
         }
     }    
+    
+    public Parameter copy() {
+        Parameter p = new Parameter(this.name(), this.value(), this.error(), this.getStep(), this.min(), this.max());
+        p.initFromName(p.name());
+        return p;
+    }
 
 }
