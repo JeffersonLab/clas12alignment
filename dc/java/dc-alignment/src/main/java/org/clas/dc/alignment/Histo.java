@@ -43,7 +43,7 @@ public class Histo {
     double resMin  = -5000;
     double resMax  =  5000;
     // histogram limits for vertex plots
-    int    vtxBins = 200;
+    int    vtxBins = 100;
     double vtxMin = -50.0;
     double vtxMax =  50.0;
     
@@ -521,10 +521,10 @@ public class Histo {
             fdouble_peak.setParameter(10, bckgr_p2);
             
             //Set parameter bounds for total fit function ("fdouble_peak")
-            fdouble_peak.setParLimits(1, mean*0.9,  mean*1.1);
             fdouble_peak.setParLimits(0, amp*0.5,   amp*1.5);
+            fdouble_peak.setParLimits(1, mean*0.9,  mean*1.1);            
             fdouble_peak.setParLimits(2, sigma*0.2, sigma*1.5);
-            fdouble_peak.setParLimits(2, second_gauss_amp_factor-1, second_gauss_amp_factor+1);
+            fdouble_peak.setParLimits(3, second_gauss_amp_factor-1, second_gauss_amp_factor+1);
             fdouble_peak.setParLimits(4, peak_separation*0.99, peak_separation*1.01);
             fdouble_peak.setParLimits(5, third_gauss_amp_factor-2, third_gauss_amp_factor+2);
             fdouble_peak.setParLimits(6, third_gauss_mean_offset-1, third_gauss_mean_offset+2);
