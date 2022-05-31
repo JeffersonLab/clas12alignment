@@ -287,7 +287,7 @@ public class Histo {
 
         Bank trackBank = new Bank(schema.getSchema("TimeBasedTrkg::TBTracks"));
 					
-        if(trackBank!=null)      event.read(trackBank);
+        if(trackBank!=null) event.read(trackBank);
         
         if(trackBank!=null && trackBank.getRows()>0) {
             Electron elec = new Electron(11,
@@ -390,8 +390,6 @@ public class Histo {
         ProgressPrintout progress = new ProgressPrintout();
 
         int counter=-1;
-        Event event = new Event();
-        Event shift = new Event();
         
         for(int i=0; i<this.nominalFiles.size(); i++){
             
@@ -542,12 +540,22 @@ public class Histo {
     
     
     private void fitVertex(int mode, H1F histo) {
-        if(mode == 1)
-            Histo.fitResiduals(histo);
-        else if(mode == 2)
-            Histo.fit1Vertex(histo);
-        else if(mode == 3)
-            Histo.fit3Vertex(histo);
+        switch (mode) {
+            case 1:
+                Histo.fitResiduals(histo);
+                break;
+            case 2:
+                Histo.fit1Vertex(histo);
+                break;
+            case 3:
+                Histo.fitDoublePeak(histo);
+                break;
+            case 4:    
+                Histo.fit3Vertex(histo);
+                break;
+            default:
+                break;
+        }
     }
     
     
@@ -593,29 +601,140 @@ public class Histo {
     }    
 
     
+    public static boolean fitDoublePeak(H1F histo) {
+        double mean = histo.getDataX(getMaximumBinBetween(histo, -50, 0));
+        double amp   = histo.getBinContent(getMaximumBinBetween(histo, -50, 0));
+        double sigma = 2;
+        double min = histo.getDataX(0);
+        double max = histo.getDataX(histo.getDataSize(0)-1);
+        int nbin = histo.getData().length;
+        double peak_separation = 2.4;    //distance in cm between two walls of upstream target window
+        double second_gauss_amp_factor = 3;
+        double third_gauss_mean_offset = 2.4;
+        double third_gauss_amp_factor = 8;
+        double third_gauss_sigma_factor = 3;
+        
+        //Fit a stand-alone gaussian to peak to get initial parameters for total fit function
+        //This is not plotted
+        F1D f1_gaus   = new F1D("f1gaus","[amp]*gaus(x,[mean],[sigma])", -50, -20);
+        f1_gaus.setLineColor(3);
+        f1_gaus.setLineWidth(2);
+        f1_gaus.setParameter(0, amp);
+        f1_gaus.setParameter(1, mean);
+        f1_gaus.setParameter(2, sigma);
+        f1_gaus.setOptStat("1111");
+        
+        //Fit a stand-alone quadtractic background to get initial parameters for total fit function
+        //This is not plotted
+        F1D f1_bckgr   = new F1D("f1background","[p0]+[p1]*x+[p2]*x*x", -20, 18);
+        f1_bckgr.setLineColor(4);
+        f1_bckgr.setLineWidth(2);
+        f1_bckgr.setOptStat("1111");
+        
+        
+        F1D fdouble_peak = new F1D("upStream_window","[amp]*gaus(x,[mean],[sigma])+[amp]/[secondGausAmpFactor]*gaus(x,[mean]-[peak_sep],[sigma])+[amp]/[thirdGaussAmpFactor]*gaus(x,[mean]+[thirdGausMeanOffset],[sigma]*[thirdGausSigmaFactor])+[p0]+[p1]*x+[p2]*x*x", -50, 0);
+        fdouble_peak.setLineColor(2);
+        fdouble_peak.setLineWidth(2);
+        fdouble_peak.setOptStat("1111");                
+        
+        if(amp > 5) {
+            //Do background-only fit
+            DataFitter.fit(f1_bckgr, histo, "Q");
+            //Get parameter results from background-only fit
+            double bckgr_p0 = f1_bckgr.getParameter(0);
+            double bckgr_p1 = f1_bckgr.getParameter(1);
+            double bckgr_p2 = f1_bckgr.getParameter(2);
+            
+            //Do single gaussian fit
+            f1_gaus.setParLimits(0, amp*0.8,   amp*1.2);
+            f1_gaus.setParLimits(1, mean*0.9,  mean*1.1);
+            f1_gaus.setParLimits(2, sigma*0.2, sigma*2.5);
+            DataFitter.fit(f1_gaus, histo, "Q");
+            //Get parameter results from single gaussian fit
+            double gaus_amp = f1_gaus.getParameter(0);
+            double gaus_mean = f1_gaus.getParameter(1);
+            double gaus_sigma = f1_gaus.getParameter(2);
+            
+            //Set initial parameters for the total fit function ("fdouble_peak")
+            fdouble_peak.setParameter(0, gaus_amp);
+            fdouble_peak.setParameter(1, gaus_mean);
+            fdouble_peak.setParameter(2, gaus_sigma);
+            fdouble_peak.setParameter(3, second_gauss_amp_factor);
+            fdouble_peak.setParameter(4, peak_separation);
+            fdouble_peak.setParameter(5, third_gauss_amp_factor);
+            fdouble_peak.setParameter(6, third_gauss_mean_offset);
+            fdouble_peak.setParameter(7, third_gauss_sigma_factor);
+            fdouble_peak.setParameter(8, bckgr_p0);
+            fdouble_peak.setParameter(9, bckgr_p1);
+            fdouble_peak.setParameter(10, bckgr_p2);
+            
+            //Set parameter bounds for total fit function ("fdouble_peak")
+            fdouble_peak.setParLimits(0, amp*0.5,   amp*1.5);
+            fdouble_peak.setParLimits(1, mean*0.9,  mean*1.1);            
+            fdouble_peak.setParLimits(2, sigma*0.2, sigma*1.5);
+            fdouble_peak.setParLimits(3, second_gauss_amp_factor-1, second_gauss_amp_factor+1);
+            fdouble_peak.setParLimits(4, peak_separation*0.99, peak_separation*1.01);
+            fdouble_peak.setParLimits(5, third_gauss_amp_factor-2, third_gauss_amp_factor+2);
+            fdouble_peak.setParLimits(6, third_gauss_mean_offset-1, third_gauss_mean_offset+2);
+            fdouble_peak.setParLimits(7, third_gauss_sigma_factor-0.5, third_gauss_sigma_factor+1);
+            
+            DataFitter.fit(fdouble_peak, histo, "Q");
+
+            return true;
+        }
+        else { 
+            //histo.setFunction(fdouble_peak);
+            return false;
+        }
+    }
+    
+    
     public static boolean fit1Vertex(H1F histo) {
-        double mean  = Histo.getMeanIDataSet(histo, histo.getMean()-histo.getRMS(), 
-                                                    histo.getMean()+histo.getRMS());
+        //double mean  = Histo.getMeanIDataSet(histo, histo.getMean()-histo.getRMS(), 
+        //                                            histo.getMean()+histo.getRMS());
+        double mean = histo.getDataX(histo.getMaximumBin());
         double amp   = histo.getBinContent(histo.getMaximumBin());
         double rms   = histo.getRMS();
         double sigma = 0.5;
         double min = histo.getDataX(0);
         double max = histo.getDataX(histo.getDataSize(0)-1);
+        int nbin = histo.getData().length;
         
         F1D f1   = new F1D("f1res","[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", min, max);
         f1.setLineColor(2);
         f1.setLineWidth(2);
         f1.setOptStat("1111");
-        f1.setParameter(0, amp);
-        f1.setParameter(1, mean);
-        f1.setParameter(2, sigma);
+        
+        //Fit a stand-alone gaussian to peak to get initial parameters for total fit function
+        //This is not plotted
+        F1D f1_gaus   = new F1D("f1gaus","[amp]*gaus(x,[mean],[sigma])", min, max);
+        f1_gaus.setParameter(0, amp);
+        f1_gaus.setParameter(1, mean);
+        f1_gaus.setParameter(2, sigma);
             
         if(amp>5) {
-            f1.setParLimits(0, amp*0.2,   amp*1.2);
-            f1.setParLimits(1, mean*0.5,  mean*1.5);
-            f1.setParLimits(2, sigma*0.2, sigma*2);
+            f1_gaus.setParLimits(0, amp*0.2,   amp*1.2);
+            f1_gaus.setParLimits(1, mean*0.9,  mean*1.1);
+            f1_gaus.setParLimits(2, sigma*0.2, sigma*2.5);
+            DataFitter.fit(f1_gaus, histo, "Q");
+            
+            double gaus_amp = f1_gaus.getParameter(0);
+            double gaus_mean = f1_gaus.getParameter(1);
+            double gaus_sigma = f1_gaus.getParameter(2);
+            
+            //Use parameters from stand-alone gaussian fit to initilaize the gaussian+background fit function parameters
+            f1.setParameter(0, gaus_amp);
+            f1.setParameter(1, gaus_mean);
+            f1.setParameter(2, gaus_sigma);
+            
+            //f1.setParLimits(0, gaus_amp*0.2,   gaus_amp*1.2);
+            f1.setParLimits(1, gaus_mean*0.9,  gaus_mean*1.1);
+            f1.setParLimits(2, gaus_sigma*0.2, gaus_sigma*2.5);
             DataFitter.fit(f1, histo, "Q");
-            return true;
+            int npar = f1.getNPars();
+            double red_chi2 = f1.getChiSquare() / (nbin - npar);
+            
+            return true;         
         }
         else {
             histo.setFunction(f1);
@@ -732,6 +851,26 @@ public class Histo {
         }
     }
 
+    public static int getMaximumBinBetween(H1F histo, double min, double max) { 
+        int nbin = histo.getData().length;
+        double x_val_temp;
+        double x_val;
+        double y_max_temp;
+        double y_max = 0;
+        int max_bin_num = histo.getMaximumBin();
+        for (int i = 0; i < nbin; i++) { 
+            x_val_temp = histo.getAxis().getBinCenter(i);
+            if (x_val_temp >= min && x_val_temp <= max) {
+                y_max_temp = histo.getBinContent(i);
+                if (y_max_temp > y_max) {
+                    y_max = y_max_temp;
+                    max_bin_num = i;
+                }
+            }
+        }
+        return max_bin_num;
+    }
+    
     private static double getIntegralIDataSet(IDataSet data, double min, double max) {
             double nEntries = 0;
             for (int i = 0; i < data.getDataSize(0); i++) {
