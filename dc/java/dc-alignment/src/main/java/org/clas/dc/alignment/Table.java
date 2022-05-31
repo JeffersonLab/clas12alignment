@@ -57,24 +57,8 @@ public class Table {
             value = this.alignment.getDoubleValue(prefix + "theta_" + axis, region, sector, 0);
         }
         else { // offset
-            Vector3D offset = new Vector3D(this.alignment.getDoubleValue(prefix + "x", region, sector, 0),
-                                           this.alignment.getDoubleValue(prefix + "y", region, sector, 0),
-                                           this.alignment.getDoubleValue(prefix + "z", region, sector, 0));
-            offset.rotateZ(Math.toRadians(-60*(sector-1)));
             String axis = key.split("_")[1];
-            switch (axis) {
-                case "x":
-                    value = offset.x();
-                    break;
-                case "y":
-                    value = offset.y();
-                    break;
-                case "z":
-                    value = offset.z();
-                    break;
-                default:
-                    break;
-            }
+            value = this.alignment.getDoubleValue(prefix + axis, region, sector, 0);
         }
         return value;
     }
@@ -108,24 +92,29 @@ public class Table {
         return pars;
     }
            
-    public GraphErrors getGraph(int sector, int icol) {
+    public GraphErrors getGraph(int sector, int icol, boolean rotation) {
         GraphErrors graph = new GraphErrors();
+        Parameter[] pars = this.getParameters(sector);
         for(int i=0; i<Constants.NPARS; i++) {
-            if(Constants.PARSTEP[i]>0)
-                graph.addPoint(this.getShiftSize(Constants.PARNAME[i], sector), i, 
-                               this.getShiftError(Constants.PARNAME[i], sector), 0);
+            if(Constants.PARACTIVE[i] && pars[i].isRotation()==rotation) {
+                int ix = i;
+                if(rotation) ix -= 3;
+                graph.addPoint(pars[i].value(), ix ,pars[i].error(), 0);
+            }
         }
         graph.setMarkerColor(icol);
         graph.setMarkerSize(4);
-        graph.setTitleX("Shift (cm/deg)");
+        if(rotation) graph.setTitleX("Shift (deg)");
+        else         graph.setTitleX("Shift (cm)");
         graph.setTitleY("Parameter");
         return graph;
     }
     
     public DataGroup getDataGroup(int icol) {
-        DataGroup dg = new DataGroup(Constants.NSECTOR, 1);
+        DataGroup dg = new DataGroup(Constants.NSECTOR, 2);
         for(int i=0; i<Constants.NSECTOR; i++) {
-            dg.addDataSet(this.getGraph(i+1, icol), i);
+            dg.addDataSet(this.getGraph(i+1, icol, false), i);
+            dg.addDataSet(this.getGraph(i+1, icol, true),  i+Constants.NSECTOR);
         }
         return dg;
     }
@@ -154,6 +143,7 @@ public class Table {
                                                        , n, ir+1, is+1, 0);
                     }
                 }
+                
             }
         }
         return summed;
@@ -183,6 +173,14 @@ public class Table {
                         this.alignment.setDoubleValue(table.getDoubleValue(n, ir+1, is+1, 0), n, ir+1, is+1, 0);
                     }
                 }
+                Vector3D offset = new Vector3D(this.alignment.getDoubleValue("dx", ir+1, is+1, 0),
+                                               this.alignment.getDoubleValue("dy", ir+1, is+1, 0),
+                                               this.alignment.getDoubleValue("dz", ir+1, is+1, 0));
+                offset.rotateZ(Math.toRadians(-60*is));
+                offset.rotateY(Math.toRadians(-25));
+                this.alignment.setDoubleValue(offset.x(), "dx", ir+1, is+1, 0);
+                this.alignment.setDoubleValue(offset.y(), "dy", ir+1, is+1, 0);
+                this.alignment.setDoubleValue(offset.z(), "dz", ir+1, is+1, 0);            
             }
         }
 
@@ -190,15 +188,12 @@ public class Table {
             
     public void update(int sector, Parameter[] pars) {
         for(int ir=0; ir<Constants.NREGION; ir++) {
-            Vector3D offset = new Vector3D(pars[ir*6+0].value(),pars[ir*6+1].value(),pars[ir*6+2].value());
-            Vector3D errors = new Vector3D(pars[ir*6+0].error(),pars[ir*6+1].error(),pars[ir*6+2].error());
-            offset.rotateZ(Math.toRadians(60*(sector-1)));
-            this.alignment.setDoubleValue(offset.x(), "dx", ir+1, sector, 0);
-            this.alignment.setDoubleValue(offset.y(), "dy", ir+1, sector, 0);
-            this.alignment.setDoubleValue(offset.z(), "dz", ir+1, sector, 0);
-            this.alignment.setDoubleValue(errors.x(), "ex", ir+1, sector, 0);
-            this.alignment.setDoubleValue(errors.y(), "ey", ir+1, sector, 0);
-            this.alignment.setDoubleValue(errors.z(), "ez", ir+1, sector, 0);
+            this.alignment.setDoubleValue(pars[ir*6+0].value(), "dx", ir+1, sector, 0);
+            this.alignment.setDoubleValue(pars[ir*6+1].value(), "dy", ir+1, sector, 0);
+            this.alignment.setDoubleValue(pars[ir*6+2].value(), "dz", ir+1, sector, 0);
+            this.alignment.setDoubleValue(pars[ir*6+0].error(), "ex", ir+1, sector, 0);
+            this.alignment.setDoubleValue(pars[ir*6+1].error(), "ey", ir+1, sector, 0);
+            this.alignment.setDoubleValue(pars[ir*6+2].error(), "ez", ir+1, sector, 0);
             this.alignment.setDoubleValue(pars[ir*6+3].value(), "dtheta_x", ir+1, sector, 0);
             this.alignment.setDoubleValue(pars[ir*6+4].value(), "dtheta_y", ir+1, sector, 0);
             this.alignment.setDoubleValue(pars[ir*6+5].value(), "dtheta_z", ir+1, sector, 0);
@@ -246,11 +241,14 @@ public class Table {
         String s = "";
         for(int ir=0; ir<Constants.NREGION; ir++) {
             for(int is=0; is<Constants.NSECTOR; is++) {
+                Vector3D offset = new Vector3D(this.alignment.getDoubleValue("dx", ir+1, is+1, 0),
+                                               this.alignment.getDoubleValue("dy", ir+1, is+1, 0),
+                                               this.alignment.getDoubleValue("dz", ir+1, is+1, 0));
+                offset.rotateY(Math.toRadians(25));
+                offset.rotateZ(Math.toRadians(60*is));
                 s += String.format("%4d %4d %4d   %10.4f %10.4f %10.4f   %10.4f %10.4f %10.4f\n",
                         (ir+1), (is+1), 0,
-                        this.alignment.getDoubleValue("dx", ir+1, is+1, 0),
-                        this.alignment.getDoubleValue("dy", ir+1, is+1, 0),
-                        this.alignment.getDoubleValue("dz", ir+1, is+1, 0),
+                        offset.x(), offset.y(), offset.z(),
                         this.alignment.getDoubleValue("dtheta_x", ir+1, is+1, 0),
                         this.alignment.getDoubleValue("dtheta_y", ir+1, is+1, 0),
                         this.alignment.getDoubleValue("dtheta_z", ir+1, is+1, 0));

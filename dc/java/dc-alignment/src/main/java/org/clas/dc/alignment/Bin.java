@@ -47,4 +47,15 @@ public class Bin {
     public String toString() {
         return "\tbin: " + low + "-" + high;
     }
+    
+    public static int findBin(Bin[] bins, double number) {
+        int ibin = -1;
+        for(int i=0; i<bins.length; i++) {
+            if(bins[i].contains(number)) {
+                ibin = i;
+                break;
+            }
+        }
+        return ibin;
+    }
 }

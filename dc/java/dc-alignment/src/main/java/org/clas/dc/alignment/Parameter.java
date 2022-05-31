@@ -12,7 +12,7 @@ public class Parameter extends UserParameter {
     private int axis;
     private static String[] axisNames = {"x", "y", "z"};
     private boolean rotation;
-    
+    private double[] range = new double[2];
     
     public Parameter(int region, int axis, boolean rotation, double stepsize) {
         super(Parameter.getName(region, axis, rotation), 0);
@@ -75,12 +75,12 @@ public class Parameter extends UserParameter {
     
     public final void initFromName(String name) {
         if(name.matches("r[123]_[xyz]")) {
-            boolean rotation = false;
+            this.rotation = false;
             this.region = Integer.parseInt(name.split("_")[0].split("r")[1]);
             this.axis   = this.getAxis(name.split("_")[1]);
         }
         else if(name.matches("r[123]_c[xyz]")) {
-            boolean rotation = true;
+            this.rotation = true;
             this.region = Integer.parseInt(name.split("_")[0].split("r")[1]);
             this.axis   = this.getAxis(name.split("_")[1].split("c")[1]);
         }
@@ -88,9 +88,27 @@ public class Parameter extends UserParameter {
             throw new IllegalArgumentException("Error: unknown parameter name");            
         }
     }    
+
+    public double[] getRange() {
+        return range;
+    }
+
+    public void setRange(double lower, double upper) {
+        this.range[0] = lower;
+        this.range[1] = upper;
+    }
     
+    public double lower() {
+        return this.range[0];
+    }
+    
+    public double upper() {
+        return this.range[1];
+    }
+        
     public Parameter copy() {
         Parameter p = new Parameter(this.name(), this.value(), this.error(), this.getStep(), this.min(), this.max());
+        p.setRange(this.lower(), this.upper());
         p.initFromName(p.name());
         return p;
     }

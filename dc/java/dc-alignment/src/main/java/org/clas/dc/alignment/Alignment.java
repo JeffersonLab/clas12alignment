@@ -1,6 +1,7 @@
 package org.clas.dc.alignment;
 
 
+import eu.mihosoft.vrl.v3d.Vector3d;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
@@ -10,7 +11,13 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
+import org.jlab.detector.base.DetectorType;
+import org.jlab.detector.base.GeometryFactory;
 import org.jlab.detector.calib.utils.ConstantsManager;
+import org.jlab.detector.geant4.v2.DCGeant4Factory;
+import org.jlab.geom.base.ConstantProvider;
+import org.jlab.geom.prim.Point3D;
+import org.jlab.geom.prim.Vector3D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.Directory;
 import org.jlab.groot.data.GraphErrors;
@@ -34,20 +41,18 @@ public class Alignment {
 
 
     private Map<String,Histo> histos           = new LinkedHashMap();
-    private String[]          inputs           = new String[19];
+    private String[]          inputs           = new String[Constants.NPARS+1];
     private Bin[]             thetaBins        = null;
     private Bin[]             phiBins          = null;
     private ConstantsManager  manager          = new ConstantsManager();
     private Table             compareAlignment = null;
-    private Table             testAlignment    = new Table();
     private Table             initAlignment    = new Table();
         
-    private boolean           residualFit  = false;
-    private int               vertexFit    = 3;
-    private boolean           sectorDeriv  = false;
-    private boolean           initFitPar   = false;
-    private boolean           fitVerbosity = false;
-    private int               fitIteration = 1;
+    private boolean           subtractedShifts = true;
+    private boolean           sectorShifts      = false;
+    private boolean           initFitPar       = false;
+    private boolean           fitVerbosity     = false;
+    private int               fitIteration     = 1;
     
     private int               markerSize = 4;
     private int[]             markerColor = {2,3,4,5,7,9};
@@ -62,20 +67,25 @@ public class Alignment {
         this.initInputs();
     }
     
-    private void initConstants(int run, String initVariation, String compareVariation, String testVariation) {
+    private void initConstants(int run, String initVariation, String compareVariation) {
         initAlignment    = this.getTable(run, initVariation);
         compareAlignment = this.getTable(run, compareVariation);
-        testAlignment    = this.getTable(run, testVariation);
     }
     
-    public void setFitOptions(boolean resFit, int vertexFit, boolean sectorDer, int iteration, boolean verbosity) {
-        this.residualFit = resFit;
-        this.vertexFit = vertexFit;
-        this.sectorDeriv = sectorDer;
+    public void setFitOptions(boolean sector, int iteration, boolean verbosity) {
+        this.sectorShifts = sector;
         this.fitIteration = iteration;
         this.fitVerbosity = verbosity;
+        this.printConfig(sectorShifts, "sectorShifts", "");
+        this.printConfig(fitIteration, "fitIteration", "");
+        this.printConfig(fitVerbosity, "fitVerbosity", "");
     }
     
+    private void setShiftsMode(boolean shifts) {
+        this.subtractedShifts = shifts;
+        this.printConfig(shifts, "subtractedShifts", "");
+    }
+
     private void initGraphics() {
         GStyle.getAxisAttributesX().setTitleFontSize(18);
         GStyle.getAxisAttributesX().setLabelFontSize(14);
@@ -92,19 +102,11 @@ public class Alignment {
         GStyle.getH1FAttributes().setLineWidth(2);
     }
     
-    // to be replaced by Constants array
     private void initInputs() {
-        String[] inputs = new String[19];
-        String[] coord = {"x", "y", "z"};
         inputs[0] = "nominal";
-        for(int ir=0; ir<3; ir++) {
-            int r = ir+1;
-            for(int ic=0; ic<3; ic++) {
-                inputs[ir*6+ic+1] = "r" + r + "_"  + coord[ic];
-                inputs[ir*6+ic+4] = "r" + r + "_c" + coord[ic];
-            }
+        for(int i=0; i<Constants.NPARS; i++) {
+            inputs[i+1] = Constants.PARNAME[i];
         }
-        this.inputs = inputs;
     }
     
     public Table getTable(int run, String variation) {
@@ -123,22 +125,35 @@ public class Alignment {
         return alignment;
     }
     
+    private void printConfig(Object o, String name, String message) {
+        String s = "[CONFIG] " + name + " set to " + o.toString();
+        if(!message.isEmpty()) s += ": " + message;
+        System.out.println(s);
+    }
+    
     public void addHistoSet(String name, Histo histo) {
         this.histos.put(name, histo);
     }
     
-    public void analyzeHistos() {
+    public void analyzeHistos(int resFit, int vertexFit) {
+        this.printConfig(resFit, "resFit", "");
+        this.printConfig(vertexFit, "vertexFit", "");
         for(String key : histos.keySet()) {
             System.out.println("\nAnalyzing histos for variation " + key);
-            histos.get(key).analyzeHisto(this.residualFit, this.vertexFit);
+            histos.get(key).analyzeHisto(resFit, vertexFit);
+            for(int i=0; i<Constants.NPARS; i++)
+                if(key.equals(Constants.PARNAME[i])) Constants.PARACTIVE[i] = true;
         }
     }
     
     private double getShift(String key, int sector, int layer, int itheta, int iphi) {
         double shift=0;
         if(histos.containsKey(key)) {
-            shift = histos.get("nominal").getParValues(sector, itheta, iphi)[layer]-
-                    histos.get(key).getParValues(sector, itheta, iphi)[layer];
+            if(subtractedShifts)
+                shift = -histos.get(key).getParValues(sector, itheta, iphi)[layer];
+            else
+                shift = histos.get("nominal").getParValues(sector, itheta, iphi)[layer]
+                       -histos.get(key).getParValues(sector, itheta, iphi)[layer];                
         }
         return shift;
     }
@@ -146,8 +161,11 @@ public class Alignment {
     private double getShiftError(String key, int sector, int layer, int itheta, int iphi) {
         double error=0;
         if(histos.containsKey(key)) {
-            error = Math.sqrt(Math.pow(histos.get(key).getParErrors(sector, itheta, iphi)[layer],2)+
-                              Math.pow(histos.get("nominal").getParErrors(sector, itheta, iphi)[layer],2));
+            if(subtractedShifts)
+                error = histos.get(key).getParErrors(sector, itheta, iphi)[layer];
+            else
+                error = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(sector, itheta, iphi)[layer], 2)
+                                 +Math.pow(histos.get(key).getParErrors(sector, itheta, iphi)[layer], 2));
         }
         return error;
     }
@@ -270,13 +288,13 @@ public class Alignment {
         
         System.out.println("\nPlotting corrected geometry residuals");        
         canvas.addCanvas("CCDB corrected");
-        canvas.getCanvas("CCDB corrected").draw(this.getResidualGraphs(testAlignment));
+        canvas.getCanvas("CCDB corrected").draw(this.getResidualGraphs(compareAlignment.subtract(initAlignment)));
         canvas.getCanvas().setFont(fontName);
         for(EmbeddedPad pad : canvas.getCanvas("CCDB corrected").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
         canvas.addCanvas("CCDB corrected vs. theta");
-        canvas.getCanvas("CCDB corrected vs. theta").draw(this.getAngularGraph(testAlignment));
+        canvas.getCanvas("CCDB corrected vs. theta").draw(this.getAngularGraph(compareAlignment.subtract(initAlignment)));
         canvas.getCanvas().setFont(fontName);
         for(EmbeddedPad pad : canvas.getCanvas("CCDB corrected vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
@@ -291,12 +309,13 @@ public class Alignment {
                 canvas.getCanvas(key).draw(this.getShiftsGraph(key));
                 canvas.getCanvas().setFont(fontName);
                 for(EmbeddedPad pad : canvas.getCanvas(key).getCanvasPads())
-                    pad.getAxisX().setRange(-1500, 1500);
+                    pad.getAxisX().setRange(-1000, 1000);
             }
         }
         if(compareAlignment!=null) {
             System.out.println("\nFitting residuals");
             System.out.println("\nInitial alignment parameters\n" + this.initAlignment.toString());
+            System.out.println("\nInitial alignment parameters\n" + this.initAlignment.toTextTable());
             Table fittedAlignment = new Table();
             if(this.setActiveParameters()>0) {
                 for(int is=0; is<Constants.NSECTOR; is++) {
@@ -307,7 +326,7 @@ public class Alignment {
                 Table finalAlignment = fittedAlignment.copy().add(initAlignment);
                 System.out.println("\nFitted alignment parameters\n" +fittedAlignment.toString());
                 System.out.println("\nFinal alignment parameters\n" +finalAlignment.toTextTable());
-                System.out.println("\nTo be compared to\n" +this.compareAlignment.toString());
+                System.out.println("\nTo be compared to\n" +this.compareAlignment.toTextTable());
                 
                 canvas.addCanvas("corrected (with new parameters)");
                 canvas.getCanvas("corrected (with new parameters)").draw(this.getResidualGraphs(fittedAlignment));
@@ -320,21 +339,94 @@ public class Alignment {
                 canvas.getCanvas().setFont(fontName);
                 for(EmbeddedPad pad : canvas.getCanvas("corrected (with new parameters) vs. theta").getCanvasPads())
                     pad.getAxisX().setRange(-2000, 2000); 
-                DataGroup oldAlignPars = this.compareAlignment.getDataGroup(1);
-                DataGroup oldResiduals = this.getSectorHistograms(testAlignment, 1);
+                DataGroup comAlignPars = this.compareAlignment.getDataGroup(1);
+                DataGroup preAlignPars = this.initAlignment.getDataGroup(3);
                 DataGroup newAlignPars = finalAlignment.getDataGroup(2);
                 canvas.addCanvas("before/after");
-                canvas.getCanvas("before/after").draw(oldResiduals);
+                canvas.getCanvas("before/after").draw(this.getSectorHistograms(null, 1));
+                canvas.getCanvas("before/after").draw(this.getSectorHistograms(compareAlignment.subtract(initAlignment), 3));
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms(fittedAlignment, 2));
                 canvas.addCanvas("misalignments");
-                canvas.getCanvas("misalignments").draw(oldAlignPars);
+                canvas.getCanvas("misalignments").draw(comAlignPars);
+//                canvas.getCanvas("misalignments").draw(preAlignPars);
                 canvas.getCanvas("misalignments").draw(newAlignPars);
-                for(EmbeddedPad pad : canvas.getCanvas("misalignments").getCanvasPads())
-                    pad.getAxisX().setRange(-0.4, 0.4);
+                for(int i=0; i<canvas.getCanvas("misalignments").getCanvasPads().size(); i++) {
+                    EmbeddedPad pad = canvas.getCanvas("misalignments").getCanvasPads().get(i);
+                    if(i<Constants.NSECTOR) 
+                        pad.getAxisX().setRange(-0.5, 0.5);
+                    else
+                        pad.getAxisX().setRange(-0.199, 0.201);
+                }
+                canvas.addCanvas("difference");
+                Table diffAlignment = finalAlignment.subtract(compareAlignment);
+                Table globalOffsets = this.getGlobalOffsets(diffAlignment);
+                canvas.getCanvas("difference").draw(globalOffsets.getDataGroup(3));
+                canvas.getCanvas("difference").draw(diffAlignment.subtract(globalOffsets).getDataGroup(2));
+                for(int i=0; i<canvas.getCanvas("difference").getCanvasPads().size(); i++) {
+                    EmbeddedPad pad = canvas.getCanvas("difference").getCanvasPads().get(i);
+                    if(i<Constants.NSECTOR) 
+                        pad.getAxisX().setRange(-0.199, 0.201);
+                    else
+                        pad.getAxisX().setRange(-0.199, 0.201);
+                }
             }
         }
         return canvas;
     }
+    
+    
+    private Parameter[] fit(int sector) {
+        String options = "";
+        if(fitVerbosity) options = "V";
+        double[][][][] shifts = new double[Constants.NPARS][Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
+        double[][][]   values = new double[Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
+        double[][][]   errors = new double[Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
+        for(int i=0; i<Constants.NPARS+1; i++) {
+            for(int il=0; il<=Constants.NLAYER; il++) {
+                for(int it=1; it<thetaBins.length; it ++) {
+                    for(int ip=1; ip<phiBins.length; ip++) {
+                        if(i==0) {
+                            values[il][it-1][ip-1] = histos.get("nominal").getParValues(sector, it, ip)[il];
+                            errors[il][it-1][ip-1] = histos.get("nominal").getParErrors(sector, it, ip)[il];
+                        }
+                        else {
+                            if(sectorShifts) {
+                                shifts[i-1][il][it-1][ip-1] = this.getShift(Constants.PARNAME[i-1], sector, il, it, ip)/Constants.UNITSHIFT[i-1];
+                            }
+                            else {
+                                shifts[i-1][il][it-1][ip-1] = this.getShift(Constants.PARNAME[i-1], il, it, ip)/Constants.UNITSHIFT[i-1];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Fitter residualFitter = new Fitter(shifts, values, errors);
+        if(initAlignment!=null) residualFitter.setPars(initAlignment.getParameters(sector));
+        System.out.println(String.format("\nSector %d", sector));
+        residualFitter.printChi2AndNDF();
+        double chi2 = Double.POSITIVE_INFINITY;
+        Parameter[] fittedPars = residualFitter.getParCopy();
+        String benchmark = "";
+        for(int i=0; i<fitIteration; i++) {
+            System.out.print("\r"+i + "\t" + benchmark);
+            residualFitter.randomizePars(fittedPars);
+//            residualFitter.printChi2AndNDF();
+            residualFitter.fit(options);
+//            residualFitter.printPars();
+            if(residualFitter.getChi2()< chi2 && residualFitter.getStatus()) {
+                chi2 = residualFitter.getChi2();
+                fittedPars = residualFitter.getParCopy();
+                benchmark = residualFitter.getBenchmarkString();
+            }
+        }
+        System.out.println();
+        residualFitter.setPars(fittedPars);
+        residualFitter.printChi2AndNDF();
+        residualFitter.printPars();
+        return fittedPars;
+    }
+
     
     private DataGroup getResidualGraphs(Table alignment) {
         double[] layers = new double[Constants.NLAYER+1];
@@ -440,72 +532,7 @@ public class Alignment {
         }
         return shifts;
     }
-    
-    private Parameter[] fit(int sector) {
-        String options = "";
-        if(fitVerbosity) options = "V";
-        double[][][][] shifts = new double[Constants.NPARS][Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
-        double[][][][] serror = new double[Constants.NPARS][Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
-        double[][][]   values = new double[Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
-        double[][][]   errors = new double[Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
-        for(int i=0; i<Constants.NPARS+1; i++) {
-            for(int il=0; il<=Constants.NLAYER; il++) {
-                for(int it=1; it<thetaBins.length; it ++) {
-                    for(int ip=1; ip<phiBins.length; ip++) {
-                        if(i==0) {
-                            values[il][it-1][ip-1] = histos.get("nominal").getParValues(sector, it, ip)[il];
-                            errors[il][it-1][ip-1] = histos.get("nominal").getParErrors(sector, it, ip)[il];
-                        }
-                        else {
-                            if(sectorDeriv) {
-                                shifts[i-1][il][it-1][ip-1] = this.getShift(Constants.PARNAME[i-1], sector, il, it, ip)/Constants.UNITSHIFT[i-1];
-                                serror[i-1][il][it-1][ip-1] = this.getShiftError(Constants.PARNAME[i-1], sector, il, it, ip)/Constants.UNITSHIFT[i-1];
-                            }
-                            else {
-                                shifts[i-1][il][it-1][ip-1] = this.getShift(Constants.PARNAME[i-1], il, it, ip)/Constants.UNITSHIFT[i-1];
-                                serror[i-1][il][it-1][ip-1] = this.getShiftError(Constants.PARNAME[i-1], il, it, ip)/Constants.UNITSHIFT[i-1];
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Fitter residualFitter = new Fitter(shifts, serror, values, errors);
-        if(initAlignment!=null) residualFitter.setPars(initAlignment.getParameters(sector));
-        System.out.println(String.format("\nSector %d", sector));
-        residualFitter.printChi2AndNDF();
-        double chi2 = Double.POSITIVE_INFINITY;
-        Parameter[] fittedPars = null;
-        String benchmark = "";
-        for(int i=0; i<fitIteration; i++) {
-            System.out.print("\r"+i + "\t" + benchmark);
-            residualFitter.randomizePars(fittedPars);
-//            residualFitter.printChi2AndNDF();
-            residualFitter.fit(options, 0);
-//            residualFitter.printPars();
-            if(residualFitter.getChi2()< chi2) {
-                chi2 = residualFitter.getChi2();
-                fittedPars = residualFitter.getParCopy();
-                benchmark = residualFitter.getBenchmarkString() + String.format("\tchi2 = %.3f", chi2);
-            }
-        }
-        System.out.println();
-        residualFitter.setPars(fittedPars);
-        residualFitter.printChi2AndNDF();
-        return fittedPars;
-    }
 
-    
-    private int setActiveParameters() {
-        int nActive =0;
-        for(int i=0; i<Constants.NPARS; i++) {
-            if(!this.histos.containsKey(Constants.PARNAME[i]))
-                Constants.PARSTEP[i] = 0;
-            else
-                nActive++;
-        }
-        return nActive;
-    }
     
     private DataGroup getAngularGraph(Table alignment) {
         double[] zeros  = new double[thetaBins.length-1];
@@ -548,6 +575,7 @@ public class Alignment {
         for(int is=0; is<Constants.NSECTOR; is++ ) {
             int sector = is+1;
             H1F hi_res = new H1F("hi_res_S" + sector, "Residual (um)", "Counts", 100, -300, 300);
+            hi_res.setTitle("Sector " + sector);
             hi_res.setLineColor(icol);
             residuals.addDataSet(hi_res, is);
             for(int it=1; it<thetaBins.length; it++) {
@@ -592,11 +620,22 @@ public class Alignment {
         }
         return binString;
     }
+    
+    private int setActiveParameters() {
+        int nActive =0;
+        for(int i=0; i<Constants.NPARS; i++) {
+            if(!this.histos.containsKey(Constants.PARNAME[i]))
+                Constants.PARSTEP[i] = 0;
+            else
+                nActive++;
+        }
+        return nActive;
+    }
 
     private void setAngularBins(String thetabins, String phibins) {
-        System.out.println("Setting theta bins to:");
+        System.out.println("[CONFIG] Setting theta bins to:");
         thetaBins = this.getBins(thetabins);
-        System.out.println("Setting phi bins to:");
+        System.out.println("[CONFIG] Setting phi bins to:");
         phiBins   = this.getBins(phibins);
     }
 
@@ -639,9 +678,57 @@ public class Alignment {
         return inputs;
     }
     
-    public void processFiles() {
+    public Table getGlobalOffsets(Table table) {
+            
+        Point3D target = new Point3D(0,0,0);
+        ConstantProvider provider = GeometryFactory.getConstants(DetectorType.DC, 11, "default");
+        DCGeant4Factory dcDetector = new DCGeant4Factory(provider, DCGeant4Factory.MINISTAGGERON, false);
+        
+        Point3D[] idealRegion   = new Point3D[3];
+        Vector3D[] toIdealRegion = new Vector3D[3];
+        for(int ir=0; ir<Constants.NREGION; ir++) {
+            Vector3d p = dcDetector.getRegionMidpoint(ir);
+            idealRegion[ir] = new Point3D(p.x*0, p.y, p.z);
+            toIdealRegion[ir] = target.vectorTo(idealRegion[ir]);
+        }
+        
+        Table global = table.copy();
+        for(int is=0; is<Constants.NSECTOR; is++) {
+            int sector = is+1;
+            Parameter[] pars = table.getParameters(sector);
+            Point3D[] shiftedRegion = new Point3D[3];
+            Vector3D[] toShiftedRegion = new Vector3D[3];
+            for(int ir=0; ir<Constants.NREGION; ir++) {
+                shiftedRegion[ir] = new Point3D(pars[ir*6+0].value()+idealRegion[ir].x(), 
+                                                pars[ir*6+1].value()+idealRegion[ir].y(), 
+                                                pars[ir*6+2].value()+idealRegion[ir].z());
+                toShiftedRegion[ir] = target.vectorTo(shiftedRegion[ir]);               
+            }
+            // apply scale factor based on region 1 position
+            int refRegion = 1;
+            Vector3D[] refRegionScaled = new Vector3D[3];
+            for(int ir=0; ir<Constants.NREGION; ir++) {
+                refRegionScaled[ir] = toShiftedRegion[refRegion-1].multiply(toShiftedRegion[ir].mag()/toShiftedRegion[refRegion-1].mag());
+                System.out.println(toIdealRegion[ir]);
+                System.out.println(refRegionScaled[ir]);
+                System.out.println(toShiftedRegion[ir]);
+                pars[ir*6 + 0].setValue(refRegionScaled[ir].x()-toIdealRegion[ir].x());
+                pars[ir*6 + 1].setValue(refRegionScaled[ir].y()-toIdealRegion[ir].y());
+                pars[ir*6 + 2].setValue(refRegionScaled[ir].z()-toIdealRegion[ir].z());
+                for(int ic=0; ic<3; ic++) {
+                    pars[ir*6 + ic].setError(0);
+                    pars[ir*6 + ic+3].setValue(0);
+                    pars[ir*6 + ic+3].setError(0);
+                }
+            }
+            global.update(sector, pars);
+        }       
+        return global;
+    }
+    
+    public void processFiles(int maxEvents) {
         for(String key : histos.keySet()) {
-            if(histos.containsKey(key)) histos.get(key).processFiles();
+            if(histos.containsKey(key)) histos.get(key).processFiles(maxEvents);
         }
     }
 
@@ -661,7 +748,8 @@ public class Alignment {
         for(Object entry : dir.getDir().getDirectoryMap().entrySet()) {
             Map.Entry<String,Directory> object = (Map.Entry<String,Directory>) entry;
             String key = object.getKey();
-            this.addHistoSet(key, new Histo(null, thetaBins, phiBins, optStats));
+            boolean shift = !key.equals("nominal") && subtractedShifts;
+            this.addHistoSet(key, new Histo(shift, thetaBins, phiBins, optStats));
             histos.get(key).readDataGroup(folder+"/"+key, dir);
         }
         System.setOut(outStream);
@@ -704,11 +792,12 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-stats"    ,"",              "histogram stat option");
         parser.getOptionParser("-process").addOption("-theta"    , "5:10:20",      "theta bin limits, e.g. \"5:10:20:30\"");
         parser.getOptionParser("-process").addOption("-phi"      , "-30:0:30",     "phi bin limits, e.g. \"-30:-15:0:15:30\"");
-        parser.getOptionParser("-process").addOption("-compare"  , "default",      "database variation for constant comparison");
-        parser.getOptionParser("-process").addOption("-test"     , "default",      "database variation for constant test");
-        parser.getOptionParser("-process").addOption("-fit"      , "1",            "fit residuals (1) or use mean (0)");
+        parser.getOptionParser("-process").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
+        parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
+        parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (2)");
         parser.getOptionParser("-process").addOption("-vertex"   , "3",            "fit vertex plots with 3 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
-        parser.getOptionParser("-process").addOption("-sector"   , "0",            "sector-dependent derivatives (1) or average (0)");
+        parser.getOptionParser("-process").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
+        parser.getOptionParser("-process").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-process").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
         parser.getOptionParser("-process").addOption("-iter"     , "1",            "number of global fit iterations");
         parser.getOptionParser("-process").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
@@ -718,14 +807,26 @@ public class Alignment {
         parser.getOptionParser("-analyze").addRequired("-input"  ,                 "input histogram file");
         parser.getOptionParser("-analyze").addOption("-display"  ,"1",             "display histograms (0/1)");
         parser.getOptionParser("-analyze").addOption("-stats"    ,"",              "set histogram stat option");
-        parser.getOptionParser("-analyze").addOption("-compare"  , "default",      "database variation for constant comparison");
-        parser.getOptionParser("-analyze").addOption("-test"     , "default",      "database variation for constant test");
-        parser.getOptionParser("-analyze").addOption("-fit"      , "1",            "fit residuals (1) or use mean (0)");
+        parser.getOptionParser("-analyze").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
+        parser.getOptionParser("-analyze").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
         parser.getOptionParser("-analyze").addOption("-vertex"   , "3",            "fit vertex plots with 3 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
-        parser.getOptionParser("-analyze").addOption("-sector"   , "0",            "sector-dependent derivatives (1) or average (0)");
+        parser.getOptionParser("-analyze").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
+        parser.getOptionParser("-analyze").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-analyze").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
         parser.getOptionParser("-analyze").addOption("-iter"     , "1",            "number of global fit iterations");
         parser.getOptionParser("-analyze").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
+        
+        // valid options for final minuit-fit
+        parser.addCommand("-fit", "perform misalignment fit");
+        parser.getOptionParser("-fit").addRequired("-input"  ,                 "input histogram file");
+        parser.getOptionParser("-fit").addOption("-display"  ,"1",             "display histograms (0/1)");
+        parser.getOptionParser("-fit").addOption("-stats"    ,"",              "set histogram stat option");
+        parser.getOptionParser("-fit").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
+        parser.getOptionParser("-fit").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
+        parser.getOptionParser("-fit").addOption("-compare"  , "default",      "database variation for constant comparison");
+        parser.getOptionParser("-fit").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
+        parser.getOptionParser("-fit").addOption("-iter"     , "1",            "number of global fit iterations");
+        parser.getOptionParser("-fit").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
         
         parser.parse(args);
         
@@ -739,41 +840,52 @@ public class Alignment {
             if(!namePrefix.isEmpty()) {
                 histoName  = namePrefix + "_" + histoName;
             }
+            String nominal     = parser.getOptionParser("-process").getOption("-nominal").stringValue();
             String thetaBins   = parser.getOptionParser("-process").getOption("-theta").stringValue();
             String phiBins     = parser.getOptionParser("-process").getOption("-phi").stringValue();
             String optStats    = parser.getOptionParser("-process").getOption("-stats").stringValue();
-            String compareVar  = parser.getOptionParser("-process").getOption("-compare").stringValue();
-            String testVar     = parser.getOptionParser("-process").getOption("-test").stringValue();
-            boolean fit        = parser.getOptionParser("-process").getOption("-fit").intValue()!=0;
+            boolean time       = parser.getOptionParser("-process").getOption("-time").intValue()!=0;
+            int     residuals  = parser.getOptionParser("-process").getOption("-residuals").intValue();
             int     vertex     = parser.getOptionParser("-process").getOption("-vertex").intValue();
             boolean sector     = parser.getOptionParser("-process").getOption("-sector").intValue()!=0;
+            boolean shifts     = parser.getOptionParser("-process").getOption("-shifts").intValue()!=0;
+            String  compareVar = parser.getOptionParser("-process").getOption("-compare").stringValue();
             String  initVar    = parser.getOptionParser("-process").getOption("-init").stringValue();
             int     iter       = parser.getOptionParser("-process").getOption("-iter").intValue();
             boolean verbose    = parser.getOptionParser("-process").getOption("-verbose").intValue()!=0;
             openWindow         = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
-
+            
+            align.setShiftsMode(shifts);
             align.setAngularBins(thetaBins, phiBins);
-            align.setFitOptions(fit, vertex, sector, iter, verbose);
-            align.initConstants(11, initVar, compareVar, testVar);
-            for(int i=0; i<inputs.length; i++) {
+            align.setFitOptions(sector, iter, verbose);
+            align.initConstants(11, initVar, compareVar);
+            
+            align.addHistoSet(inputs[0], new Histo(Alignment.getFileNames(nominal),align.getThetaBins(),align.getPhiBins(), time, optStats));
+            for(int i=1; i<inputs.length; i++) {
                 String input = parser.getOptionParser("-process").getOption("-" + inputs[i]).stringValue();
-                if(!input.isEmpty()) {                    
-                    align.addHistoSet(inputs[i], new Histo(Alignment.getFileNames(input),align.getThetaBins(),align.getPhiBins(),optStats));
+                if(!input.isEmpty()) { 
+                    if(shifts)
+                        align.addHistoSet(inputs[i], new Histo(Alignment.getFileNames(input), 
+                                                               Alignment.getFileNames(nominal), 
+                                                               align.getThetaBins(),align.getPhiBins(),optStats));
+                    else 
+                        align.addHistoSet(inputs[i], new Histo(Alignment.getFileNames(input), 
+                                                               align.getThetaBins(),align.getPhiBins(),optStats));
                 }
             }
-            align.processFiles();
-            align.analyzeHistos();
+            align.processFiles(maxEvents);
+            align.analyzeHistos(residuals, vertex);
             align.saveHistos(histoName);
         }
         
         if(parser.getCommand().equals("-analyze")) {
-            String optStats    = parser.getOptionParser("-analyze").getOption("-stats").stringValue();
-            String compareVar  = parser.getOptionParser("-analyze").getOption("-compare").stringValue();
-            String testVar     = parser.getOptionParser("-analyze").getOption("-test").stringValue();
-            boolean fit        = parser.getOptionParser("-analyze").getOption("-fit").intValue()!=0;
+            String  optStats   = parser.getOptionParser("-analyze").getOption("-stats").stringValue();
+            int     residuals  = parser.getOptionParser("-analyze").getOption("-residuals").intValue();
             int     vertex     = parser.getOptionParser("-analyze").getOption("-vertex").intValue();
             boolean sector     = parser.getOptionParser("-analyze").getOption("-sector").intValue()!=0;
+            boolean shifts     = parser.getOptionParser("-analyze").getOption("-shifts").intValue()!=0;
+            String  compareVar = parser.getOptionParser("-analyze").getOption("-compare").stringValue();
             String  initVar    = parser.getOptionParser("-analyze").getOption("-init").stringValue();
             int     iter       = parser.getOptionParser("-analyze").getOption("-iter").intValue();
             boolean verbose    = parser.getOptionParser("-analyze").getOption("-verbose").intValue()!=0;
@@ -781,10 +893,32 @@ public class Alignment {
             if(!openWindow) System.setProperty("java.awt.headless", "true");
 
             String histoName   = parser.getOptionParser("-analyze").getOption("-input").stringValue();
-            align.setFitOptions(fit, vertex, sector, iter, verbose);
-            align.initConstants(11, initVar, compareVar, testVar);
+
+            align.setShiftsMode(shifts);
+            align.setFitOptions(sector, iter, verbose);
+            align.initConstants(11, initVar, compareVar);
             align.readHistos(histoName, optStats);
-            align.analyzeHistos();
+            align.analyzeHistos(residuals, vertex);
+        }
+        
+        if(parser.getCommand().equals("-fit")) {
+            String  optStats   = parser.getOptionParser("-fit").getOption("-stats").stringValue();
+            boolean shifts     = parser.getOptionParser("-fit").getOption("-shifts").intValue()!=0;
+            boolean sector     = parser.getOptionParser("-fit").getOption("-sector").intValue()!=0;
+            String  compareVar = parser.getOptionParser("-fit").getOption("-compare").stringValue();
+            String  initVar    = parser.getOptionParser("-fit").getOption("-init").stringValue();
+            int     iter       = parser.getOptionParser("-fit").getOption("-iter").intValue();
+            boolean verbose    = parser.getOptionParser("-fit").getOption("-verbose").intValue()!=0;
+            openWindow         = parser.getOptionParser("-fit").getOption("-display").intValue()!=0;
+            if(!openWindow) System.setProperty("java.awt.headless", "true");
+
+            String histoName   = parser.getOptionParser("-fit").getOption("-input").stringValue();
+
+            align.setShiftsMode(shifts);
+            align.setFitOptions(sector, iter, verbose);
+            align.initConstants(11, initVar, compareVar);
+            align.readHistos(histoName, optStats);
+            align.analyzeHistos(0, 0);
         }
 
         if(openWindow) {
