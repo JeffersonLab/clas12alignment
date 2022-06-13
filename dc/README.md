@@ -24,7 +24,7 @@ Specifically:
     ```
     ./generateYamls.csh <base-yaml-file> <base-variation>
     ```
-    where the base yaml file will be dcalign.yaml and the variation will be default. The generated yaml files will be in the folder ``yamls``.
+      where the base yaml file will be dcalign.yaml and the variation will be default. The generated yaml files will be in the folder ``yamls``.
     * Generate and run one cooking workflow for each yaml file to process the straigth track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation). Use as output directory name for the workflow the same name of the yaml file without the extention (e.g. the output of the data processed with r1_cz.yaml should be in a directory named r1_cz). Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks)
 * Alignment input files:
   * To reduce the data volume and speed up the processing, files for each geometry variation can be filtered with:
@@ -34,8 +34,11 @@ Specifically:
     Trkg::TBTracks,TimeBasedTrkg::TBHits" -o outputfilename inputfiles
     ```
     where the vertex, nphe and energy cut should be selected according to the experiment configuration (beam energy and target).
-    To facilitate this step, the script, ``createSkims.csh`` 
-  * The tracks selection is further refined by the alignment code to identify electrons. See the ``getElectron()`` method in the ``Histo`` class, using parameters from the ``Constants`` class.
+    To facilitate this step, use the script [``createSkims.csh``](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/createSkims.csh):
+    ```
+    createSkims.sh <reconstructed-files-directory> [<output-directory>]
+    ```
+    The tracks selection is further refined by the alignment code to identify electrons. See the ``getElectron()`` method in the ``Histo`` class, using     parameters from the ``Constants`` class.
 
 ### Build and run
 Clone this repository and checkout the dcDev2 branch:
