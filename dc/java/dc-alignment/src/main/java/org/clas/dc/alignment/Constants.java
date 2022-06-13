@@ -13,7 +13,7 @@ public class Constants {
     
     // electron cuts
     public static double NPHEMIN = 2;
-    public static double ECALMIN = 0.2;
+    public static double ECALMIN = 0.5;
     
     // histogram limits for residuals
     public static int    RESBINS = 200;
@@ -25,8 +25,8 @@ public class Constants {
     public static double DIFMAX  =  1000;
     // histogram limits for vertex plots
     public static int    VTXBINS = 500;
-    public static double VTXMIN = -15.0;
-    public static double VTXMAX =  5.0;
+    public static double VTXMIN = -20.0;
+    public static double VTXMAX =  15.0;
     // histogram limits for vertex difference plots
     public static int    VDFBINS = 200;
     public static double VDFMIN = -5.0;
@@ -37,6 +37,9 @@ public class Constants {
     public static int NPARS = 18;
     
     // size of unit shift (cm for ri_xyz, deg for ri_cxyz
+//    public static double[] UNITSHIFT = {   0.1,    0.8,    0.2,     0.2,     0.2,     0.4,
+//                                           0.05,   0.4,    0.1,     0.2,     0.1,     0.2,
+//                                           0.1,    0.8,    0.2,     0.2,     0.1,     0.4};
     public static double[] UNITSHIFT = {   0.1,    0.8,    0.2,     0.2,     0.2,     0.2,
                                            0.1,    0.8,    0.2,     0.2,     0.2,     0.2,
                                            0.1,    0.8,    0.2,     0.2,     0.2,     0.2};
@@ -60,7 +63,7 @@ public class Constants {
     
     
     // measurements weight   
-    public static double[] MEASWEIGHT = {36,  1,      1,      1,       1,       1,       1, 
+    public static double[] MEASWEIGHT = { 1,  1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 

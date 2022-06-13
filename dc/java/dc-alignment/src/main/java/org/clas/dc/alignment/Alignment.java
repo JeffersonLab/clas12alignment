@@ -47,6 +47,7 @@ public class Alignment {
     private ConstantsManager  manager          = new ConstantsManager();
     private Table             compareAlignment = null;
     private Table             initAlignment    = new Table();
+    private DCGeant4Factory   dcDetector       = null;
         
     private boolean           subtractedShifts = true;
     private boolean           sectorShifts      = false;
@@ -65,11 +66,17 @@ public class Alignment {
     
     public Alignment() {
         this.initInputs();
+        this.initGeometry();
     }
     
     private void initConstants(int run, String initVariation, String compareVariation) {
         initAlignment    = this.getTable(run, initVariation);
         compareAlignment = this.getTable(run, compareVariation);
+    }
+    
+    public void initGeometry() {
+        ConstantProvider provider  = GeometryFactory.getConstants(DetectorType.DC, 11, "default");
+        dcDetector = new DCGeant4Factory(provider, DCGeant4Factory.MINISTAGGERON, false);
     }
     
     public void setFitOptions(boolean sector, int iteration, boolean verbosity) {
@@ -348,7 +355,6 @@ public class Alignment {
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms(fittedAlignment, 2));
                 canvas.addCanvas("misalignments");
                 canvas.getCanvas("misalignments").draw(comAlignPars);
-//                canvas.getCanvas("misalignments").draw(preAlignPars);
                 canvas.getCanvas("misalignments").draw(newAlignPars);
                 for(int i=0; i<canvas.getCanvas("misalignments").getCanvasPads().size(); i++) {
                     EmbeddedPad pad = canvas.getCanvas("misalignments").getCanvasPads().get(i);
@@ -357,15 +363,15 @@ public class Alignment {
                     else
                         pad.getAxisX().setRange(-0.199, 0.201);
                 }
-                canvas.addCanvas("difference");
-                Table diffAlignment = finalAlignment.subtract(compareAlignment);
-                Table globalOffsets = this.getGlobalOffsets(diffAlignment);
-                canvas.getCanvas("difference").draw(globalOffsets.getDataGroup(3));
-                canvas.getCanvas("difference").draw(diffAlignment.subtract(globalOffsets).getDataGroup(2));
-                for(int i=0; i<canvas.getCanvas("difference").getCanvasPads().size(); i++) {
-                    EmbeddedPad pad = canvas.getCanvas("difference").getCanvasPads().get(i);
+                canvas.addCanvas("internal-only");
+                Table compareInternal = compareAlignment.subtract(this.getGlobalOffsets(compareAlignment));
+                Table finalInternal   = finalAlignment.subtract(this.getGlobalOffsets(finalAlignment));
+                canvas.getCanvas("internal-only").draw(compareInternal.getDataGroup(1));
+                canvas.getCanvas("internal-only").draw(finalInternal.getDataGroup(2));
+                for(int i=0; i<canvas.getCanvas("internal-only").getCanvasPads().size(); i++) {
+                    EmbeddedPad pad = canvas.getCanvas("internal-only").getCanvasPads().get(i);
                     if(i<Constants.NSECTOR) 
-                        pad.getAxisX().setRange(-0.199, 0.201);
+                        pad.getAxisX().setRange(-0.5, 0.5);
                     else
                         pad.getAxisX().setRange(-0.199, 0.201);
                 }
@@ -402,15 +408,18 @@ public class Alignment {
             }
         }
         Fitter residualFitter = new Fitter(shifts, values, errors);
-        if(initAlignment!=null) residualFitter.setPars(initAlignment.getParameters(sector));
+        // check chi2 of "compare" misalignments
+        residualFitter.setPars(compareAlignment.getParameters(sector));
         System.out.println(String.format("\nSector %d", sector));
         residualFitter.printChi2AndNDF();
+        // reinit
+        residualFitter.zeroPars();
         double chi2 = Double.POSITIVE_INFINITY;
         Parameter[] fittedPars = residualFitter.getParCopy();
         String benchmark = "";
         for(int i=0; i<fitIteration; i++) {
-            System.out.print("\r"+i + "\t" + benchmark);
-            residualFitter.randomizePars(fittedPars);
+            System.out.print("\riteration "+i + "\t" + benchmark);
+//            residualFitter.randomizePars(fittedPars);
 //            residualFitter.printChi2AndNDF();
             residualFitter.fit(options);
 //            residualFitter.printPars();
@@ -681,9 +690,6 @@ public class Alignment {
     public Table getGlobalOffsets(Table table) {
             
         Point3D target = new Point3D(0,0,0);
-        ConstantProvider provider = GeometryFactory.getConstants(DetectorType.DC, 11, "default");
-        DCGeant4Factory dcDetector = new DCGeant4Factory(provider, DCGeant4Factory.MINISTAGGERON, false);
-        
         Point3D[] idealRegion   = new Point3D[3];
         Vector3D[] toIdealRegion = new Vector3D[3];
         for(int ir=0; ir<Constants.NREGION; ir++) {
@@ -726,6 +732,41 @@ public class Alignment {
         return global;
     }
     
+    public Parameter[] removeGlobalComponent(Parameter[] pars) {
+            
+        Point3D target = new Point3D(0,0,0);
+        Point3D[] idealRegion   = new Point3D[3];
+        Vector3D[] toIdealRegion = new Vector3D[3];
+        for(int ir=0; ir<Constants.NREGION; ir++) {
+            Vector3d p = dcDetector.getRegionMidpoint(ir);
+            idealRegion[ir] = new Point3D(p.x*0, p.y, p.z);
+            toIdealRegion[ir] = target.vectorTo(idealRegion[ir]);
+        }
+        
+        Point3D[] shiftedRegion = new Point3D[3];
+        Vector3D[] toShiftedRegion = new Vector3D[3];
+        for(int ir=0; ir<Constants.NREGION; ir++) {
+            shiftedRegion[ir] = new Point3D(pars[ir*6+0].value()+idealRegion[ir].x(), 
+                                            pars[ir*6+1].value()+idealRegion[ir].y(), 
+                                            pars[ir*6+2].value()+idealRegion[ir].z());
+            toShiftedRegion[ir] = target.vectorTo(shiftedRegion[ir]);               
+        }
+        
+        // apply scale factor based on region 1 position
+        Parameter[] relativePars = new Parameter[Constants.NPARS];
+        for(int i=0; i<Constants.NPARS; i++) relativePars[i] = pars[i].copy();
+        int refRegion = 1;
+        Vector3D[] refRegionScaled = new Vector3D[3];
+        for(int ir=0; ir<Constants.NREGION; ir++) {
+            refRegionScaled[ir] = toShiftedRegion[refRegion-1].multiply(toShiftedRegion[ir].mag()/toShiftedRegion[refRegion-1].mag());
+            relativePars[ir+6 + 0].setValue(pars[ir*6 + 0].value() - (refRegionScaled[ir].x()-toIdealRegion[ir].x()));
+            relativePars[ir+6 + 1].setValue(pars[ir*6 + 1].value() - (refRegionScaled[ir].y()-toIdealRegion[ir].y()));
+            relativePars[ir+6 + 2].setValue(pars[ir*6 + 2].value() - (refRegionScaled[ir].z()-toIdealRegion[ir].z()));
+        }              
+        return relativePars;
+    }
+
+
     public void processFiles(int maxEvents) {
         for(String key : histos.keySet()) {
             if(histos.containsKey(key)) histos.get(key).processFiles(maxEvents);

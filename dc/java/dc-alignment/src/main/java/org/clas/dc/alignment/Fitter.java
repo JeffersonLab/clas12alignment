@@ -173,6 +173,13 @@ public class Fitter  implements FCNBase {
         this.getChi2(parArray);
     }
     
+    public void zeroPars() {
+        for(int i=0; i<pars.length; i++) {
+            pars[i].setValue(0);
+        }
+        this.getChi2(this.getParArray());
+    }
+
     public void fit(String options, int nTry) {
                 
         if(nTry <= 0) {
@@ -190,8 +197,8 @@ public class Fitter  implements FCNBase {
         
         
         try{
-	        	        
-	        MnUserParameters upar = new MnUserParameters();
+
+            MnUserParameters upar = new MnUserParameters();
 	        for(int loop = 0; loop < pars.length; loop++){
                     UserParameter par = this.pars[loop];
 	            upar.add(par.name(),par.value(),par.getStep());
@@ -206,10 +213,12 @@ public class Fitter  implements FCNBase {
 	        
 	        MnScan  scanner = new MnScan(this,upar);
                 for(int i = 0; i < pars.length; i++){
-                    List<Point> points = scanner.scan(i);
-                    if(options.contains("V") && pars[i].getStep()>EPS) {
-                        MnPlot plot = new MnPlot();
-                        plot.plot(points);
+                    if(pars[i].getStep()>EPS) {
+                        List<Point> points = scanner.scan(i);
+                        if(options.contains("V") && pars[i].getStep()>EPS) {
+                            MnPlot plot = new MnPlot();
+                            plot.plot(points);
+                        }
                     }
                 }
 	        FunctionMinimum scanmin = scanner.minimize(); 
@@ -280,7 +289,7 @@ public class Fitter  implements FCNBase {
     
     public void printPars() {
         for(int i=0; i<pars.length; i++) {
-            if(pars[i].getStep()>0) System.out.println(String.format("   %s: %.4f +/- %.4f (%.4f - %.4f)", pars[i].name(), pars[i].value(), pars[i].error(), pars[i].lower(), pars[i].upper()));
+            System.out.println(String.format("   %s: %.4f +/- %.4f (%.4f - %.4f)", pars[i].name(), pars[i].value(), pars[i].error(), pars[i].lower(), pars[i].upper()));
         }
         System.out.println();
     }
