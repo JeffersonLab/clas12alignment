@@ -71,7 +71,7 @@ public class Constants {
                                               1,      1,      1,       1,       1,       1};               
     
     // target parameters
-    public static double TARGETPOS    = -0.55;
+    public static double TARGETPOS    = -0.5;
     public static double TARGETLENGTH =  5;   //target length
     public static double WINDOWDIST   =  2.8; //distance between the mylar foil and the downstream window
     public static double SCALE        = 1000;
