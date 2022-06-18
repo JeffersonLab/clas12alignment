@@ -775,7 +775,7 @@ public class Histo {
         f1_vtx.setParLimits(4, Constants.WINDOWDIST*0.9, Constants.WINDOWDIST*1.1);
         f1_vtx.setParameter(5, bg);
 //        f1_vtx.setParameter(4, sigma*3);
-        f1_vtx.setRange(mean-Constants.TARGETLENGTH*1.5,mean+Constants.TARGETLENGTH);
+        f1_vtx.setRange(mean-Constants.TARGETLENGTH*1.5,mean+Constants.WINDOWDIST+Constants.TARGETLENGTH/2);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
     }
 
