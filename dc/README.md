@@ -206,8 +206,6 @@ The tab displays a summary of the extracted residuals and vertex shifts and deri
 ![Plot_07-05-2022_07 05 37_PM](https://user-images.githubusercontent.com/7524926/177382868-88ae1ed1-d3b7-4245-9764-4ff90fb9ee65.png)
 
 
-
-
 #### Electron
 The tab displays the relevant distributions for the selected electron tracks.
 
@@ -227,3 +225,4 @@ This tab displays histograms of the z-vertex distributions, fit and time residua
 
 Equivalent sub-tabs and plots are shown for each translation and rotation in the r1_c, r1_y, ...,r3_cy tabs.
 
+#### Terminal output
