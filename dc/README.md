@@ -5,12 +5,12 @@ This code implements the CLAS12 DC alignment procedure developed by T. Hayward a
 The algorithm is based on the assumption that the *real* DC geometry is close to the nominal and that the transformation between the two can be described as a linear combination of translations and rotations in x, y and z of each DC region. The size of these translations and rotations is determined studying how the tracking fit residuals and the z vertex distribution for straight tracks varies as a function of individual translations or rotations and finding the set that minimize the residuals and the difference between the z vertex distribution and the known target position.
 Specifically:
 * Straight electron tracks are reconstructed and histograms of fit residuals for each DC layer and of the z-vertex distribution are made in bins of sector, polar and azimuthal angles. These histograms are analyzed to extract the shifts from zero of the fit residuals and the shifts of the z-vertex from the known target position. Since straight track runs are usually on empty target, the z-vertex histograms show peaks corresponding to the target cell windows that can be fit and compared to the installation position.
-* The same tracks are reconstructed applying a single translation or rotation. The size of these is chosen to be large enough to have a measureable effect on fit residuals and vertex distributions, while being small compared to the DC cell size. The values used so far are 0.1-0.8 cm for shifts and 0.2 deg for rotations. Translations and rotations are applied in the tilted-sector coordinate frame (y axis along the DC wires and z axis perpendicular to the DC layers, i.e. at 25 deg from the beamline axis). The total number of shifts and rotation is 18, 3 translations and 3 rotations for each of the 3 regions. Note that rotations in x are ignored because they are not supported by the current tracking software.
+* The same tracks are reconstructed applying a single translation or rotation. The size of these is chosen to be large enough to have a measureable effect on fit residuals and vertex distributions, while being small compared to the DC cell size. The values used so far are 0.1-0.8 cm for shifts and 0.2 deg for rotations. Translations and rotations are applied in the tilted-sector coordinate frame (y axis along the DC wires and z axis perpendicular to the DC layers, i.e. at 25 deg from the beamline axis). Currently, the x rotation is not supported by tracking software. Therefore, the total number of shifts and rotation is 15, 3 translations and 2 rotations for each of the 3 regions. 
 * The derivatives of the fit residuals and z-vertex versus each translation and rotation are extracted comparing the fit residuals and z-vertex for that geometry to the nominal geometry. 
 * The nominal-geometry residual and vertex shifts with respect to the desired positions are fit to a linear combinations of the derivatives to extract the translations and rotation sizes. This global fit is performed with Minuit, minimizing a chi2 defined as the sum of squares of the residual and vertex shift normalized to their uncertainties. 
 * The fit parameters are printout in a format corresponding to the /geometry/dc/alignment CCDB table used by reconstruction. Here translations are defined in the CLAS12 frame while rotations are defined in the tilted-sector coordinate system.
 
-### Prerequisites:
+### Prerequisites
 * Software:
   * A Linux or Mac computer
   * Java Development Kit 11 or newer
@@ -19,12 +19,19 @@ Specifically:
   * Straight-track data (both solenoid and torus should be off) with electron tracks in the forward detector.
 
 ### Data processing
-  * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry (variation: default) and each of the individual translations or rotations in xyz for each of the DC regions.  This will results in up to 18 sets of reconstructed files that will be the input of the alignment code. 
-    * The reconstruction configuration files or yaml files to produced these sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (currently supported in the coatjava branch ``iss805-dcAlignMinimal``), using the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/generateYamls.csh):
+  * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry (variation: default) and each of the individual translations or rotations in xyz for each of the DC regions.  This will results in up to 15 sets of reconstructed files that will be the input of the alignment code. 
+    * The reconstruction configuration files or yaml files to produce these sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.1.2), using the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/generateYamls.csh):
     ```
-    ./generateYamls.csh <base-yaml-file> <base-variation>
+    ./generateYamls.csh <base-yaml-file> <base-variation>  <output-directory>
     ```
-      where the base yaml file will be dcalign.yaml and the variation will be default. The generated yaml files will be in the folder ``yamls``.
+      where the base yaml file will be dcalign.yaml and the variation will be default. 
+    * The generated yaml files will be in the folder specified when running the command. In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
+      ```
+      dcGeometryVariation: "default"
+      alignmentShifts: "r1_cz:0.2"
+      ```
+      specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected.
+      
     * Generate and run one cooking workflow for each yaml file to process the straigth track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation). Use as output directory name for the workflow the same name of the yaml file without the extention (e.g. the output of the data processed with r1_cz.yaml should be in a directory named r1_cz). Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks)
 * Alignment input files:
   * To reduce the data volume and speed up the processing, files for each geometry variation can be filtered with:
