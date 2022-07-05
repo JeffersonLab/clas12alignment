@@ -87,7 +87,7 @@ Check the command line options with:
      -iter : number of global fit iterations (default = 1)
    -nevent : maximum number of events to process (default = -1)
         -o : output histogram file name prefix (default = )
-      -phi : phi bin limits, e.g. "-30:-15:0:15:30" (default = -30:0:30)
+      -phi : phi bin limits, e.g. "-30:-10:0:10:30" (default = -30:0:30)
     -r1_cx : r1_cx hipo file or directory (default = )
     -r1_cy : r1_cy hipo file or directory (default = )
     -r1_cz : r1_cz hipo file or directory (default = )
