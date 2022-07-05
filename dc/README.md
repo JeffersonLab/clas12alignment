@@ -184,7 +184,7 @@ These can be modified according to the needs before compiling and running the co
 
 ### Plots and results
 If the ``-display`` option is set to 1 (default), a graphic window displaying histograms and relevant graphs is opened. 
-![Screen Shot 2022-02-19 at 21 22 06](https://user-images.githubusercontent.com/7524926/154817793-a9ab8c07-5bab-4dd2-8699-f1888b54e17d.png)
+![Screenshot 2022-07-05 at 18 55 23](https://user-images.githubusercontent.com/7524926/177378621-92170209-c0bc-4d68-aa38-7caf9f72cc66.png)
 
 #### Analysis tab
 The tab displays a summary of the extracted residuals and vertex shifts and derivatives. It includes the following sub-tabs:
@@ -192,11 +192,21 @@ The tab displays a summary of the extracted residuals and vertex shifts and deri
 ![Plot_02-19-2022_10 20 52_PM](https://user-images.githubusercontent.com/7524926/154820094-0bca8488-a895-474d-b8e2-22e25f42e7a6.png)
 * nominal vs. theta: same as above but with the y-axis defined as the angular bin number plus the layer number. The different colors correspond to the different DC superlayers and the black points show the vertex shifts. See screenshot of graph below.
 ![Plot_02-19-2022_10 21 21_PM](https://user-images.githubusercontent.com/7524926/154819746-af0ee5bc-3e22-41b1-a00f-50f6d20d84c7.png)
-* corrected and corrected vs. theta: same as above but after applying the translations and rotations from the /geometry/dc/alignment table in the CCDB variation specified with the ``-variation`` option. (Example not shown.)
+* corrected and corrected vs. theta: same as above but after applying the translations and rotations from the /geometry/dc/alignment table in the CCDB variation specified with the ``-compare`` option. (Example not shown.)
+* * shift magnitude: histogram of the residual and vertex shifts associated with the chosen translations and rotations. The top histograms shows the average change of the track residual for translations and rotations of region 1 (x:1-6), region 2 (x:7-12), and region 3 (x:13-18). Within each region range, the first 3 x values coresponds to the xyz translations and the second 3 x values to xyz rotations. The missing bins at x=4 are due to the x rotations not being used. The different colors correspond t the theta bins (black is all theta) and the different color shadows to the phi bins. The bottom histogram shows the same information for vertex shifts.
+![Plot_07-05-2022_07 06 10_PM](https://user-images.githubusercontent.com/7524926/177380554-d91f0da9-29c7-412d-b429-796c22653b6f.png)
 * r1_x, ...r3_cy: graphs of the fit residuals and vertex derivatives for the corresponding translation or rotation. Each graph corresponds to a different angular bin. Colors correspond to different sectors while the average is shown in black. An example is shown by the following graph.
-
 ![Plot_02-19-2022_10 22 13_PM](https://user-images.githubusercontent.com/7524926/154819842-7f8f4f72-ad4d-4d27-a0e3-ada02b65447a.png)
-* Fitted and fitted vs. theta: same as nominal or corrected, but after aplying the combination of shifts and rotations resulting from the global fit. (Example not shown.)
+* corrected(with new parameters) and ocrrected(with new parameters) vs. theta: same as nominal or corrected, but after aplying the combination of shifts and rotations resulting from the global fit. (Example not shown.)
+* before/after: shows the distribution of all tracking and vertex residuals corrected with the fitted misalignements 9red), with the misalignments specified iwth the ``-compare`` option (green) and with nominal geometry (black). In the example below, the nominal residuals are almost completely out of scale while the comparison between the new and old parameters shows the level of improvement.
+![Plot_07-05-2022_07 05 04_PM](https://user-images.githubusercontent.com/7524926/177380199-77dec15e-95b8-41b5-8ed5-75dc42662ec5.png)
+* misalignments: shows the comparison of the current analysis and minuit fit (red) and of the constants from the /geometry/dc/alignment table in the CCDB variation specified with the ``-compare`` option (black). If the ``-compare`` option is not specified, the black points will be at x=0. Each column correspomnds to a sector. Top and bottom corresponds to translations and rotations, respectively. The y coordinate identifies the DC region and translation/rotation coordinate. For example, points at y 0, 1 and 2 correspond to region 1, x, y and z translation or rotations.
+![Plot_07-05-2022_07 05 21_PM](https://user-images.githubusercontent.com/7524926/177382223-27eb9b1b-44fa-4405-87de-f1f777bb5beb.png)
+* internal-only: same as the previous tab but after removing ''global'' geometry transformation that cannot be constrained with the current straight track alignment. These so-called weak modes are overall contraction or expansions in size of the detector and rotations of whole sector. The displayed parameters are corrected by normalizing the region1 position to the nominal one.
+![Plot_07-05-2022_07 05 37_PM](https://user-images.githubusercontent.com/7524926/177382868-88ae1ed1-d3b7-4245-9764-4ff90fb9ee65.png)
+
+
+
 
 #### Electron
 The tab displays the relevant distributions for the selected electron tracks.
