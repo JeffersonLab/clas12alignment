@@ -21,23 +21,22 @@ Specifically:
 ### Data processing
   * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry (variation: default) and each of the individual translations or rotations in xyz for each of the DC regions.  This will results in up to 15 sets of reconstructed files that will be the input of the alignment code. 
     * The reconstruction configuration files or yaml files to produce these sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.1.2), using the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/generateYamls.csh):
-    ```
-    ./generateYamls.csh <base-yaml-file> <base-variation>  <output-directory>
-    ```
+      ```
+      ./generateYamls.csh <base-yaml-file> <base-variation>  <output-directory>
+      ```
       where the base yaml file will be dcalign.yaml and the variation will be default. 
     * The generated yaml files will be in the folder specified when running the command. In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
       ```
       dcGeometryVariation: "default"
       alignmentShifts: "r1_cz:0.2"
       ```
-      specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected.
-      
+      specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected with the variablee ```dcGeometryVariation```.
     * Generate and run one cooking workflow for each yaml file to process the straigth track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation). Use as output directory name for the workflow the same name of the yaml file without the extention (e.g. the output of the data processed with r1_cz.yaml should be in a directory named r1_cz). Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks)
 * Alignment input files:
   * To reduce the data volume and speed up the processing, files for each geometry variation can be filtered with:
     ```
     hipo-utils -reduce -ct "REC::Particle://beta>0[GT]0,REC::Cherenkov://nphe>2[GT]0,REC::Calorimeter://energy>0[GT]0,TimeBasedTrkg::TBTracks://
-    Vtx0_z>-20&&Vtx0_z<10[GT]0" -r "TimeBasedTrkg::TBHits://trkID>0" -b "RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBased
+    Vtx0_z>-15&&Vtx0_z<35[GT]0" -r "TimeBasedTrkg::TBHits://trkID>0" -b "RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBased
     Trkg::TBTracks,TimeBasedTrkg::TBHits" -o outputfilename inputfiles
     ```
     where the vertex, nphe and energy cut should be selected according to the experiment configuration (beam energy and target).
@@ -48,11 +47,11 @@ Specifically:
     The tracks selection is further refined by the alignment code to identify electrons. See the ``getElectron()`` method in the ``Histo`` class, using     parameters from the ``Constants`` class.
 
 ### Build and run
-Clone this repository and checkout the dcDev2 branch:
+Clone this repository and checkout the dcDev3 branch:
 ```  
   git clone https://github.com/JeffersonLab/clas12alignment
   cd clas12alignment
-  git checkout dcDev2
+  git checkout dcDev3
 ```
 Go to the folder clas12alignment/dc/java/dc-alignment and compile with maven:
 ```
@@ -65,13 +64,15 @@ Run the code with:
   
     Usage : dc-alignment [commands] [options]
 
+
     commands:
           -process : process event files
+              -fit : perform misalignment fit
           -analyze : analyze histogram files
 ```
   
 ### Usage 
-The code supports two main usage options to either process the hipo files with the reconstructed events using the nominal geometry and translated/rotated geometry or analyze a pre-existing histogram file.
+The code supports three main usage options to either process the hipo files with the reconstructed events using the nominal geometry and translated/rotated geometry or analyze a pre-existing histogram file starting from the fit of residuals and vertex distributions or performing only the final minimization to extract the misalignments.
 #### Process hipo event files
 Check the command line options with:
 ```
@@ -80,9 +81,9 @@ Check the command line options with:
      Usage : dc-alignment -nominal [nominal geometry hipo file or directory]  [input1] [input2] ....
 
    Options :
+  -compare : database variation for constant comparison (default = default)
   -display : display histograms (0/1) (default = 1)
-      -fit : fit residuals (1) or use mean (0) (default = 1)
-     -init : init global fit from previous constants (1) or from zero shifts (0) (default = 0)
+     -init : init global fit from previous constants from the selected variation (default = default)
      -iter : number of global fit iterations (default = 1)
    -nevent : maximum number of events to process (default = -1)
         -o : output histogram file name prefix (default = )
@@ -105,18 +106,20 @@ Check the command line options with:
      -r3_x : r3_x hipo file or directory (default = )
      -r3_y : r3_y hipo file or directory (default = )
      -r3_z : r3_z hipo file or directory (default = )
-   -sector : sector-dependent derivatives (1) or average (0) (default = 0)
+-residuals : fit residuals (2) or use mean (1) (default = 2)
+   -sector : sector-dependent derivatives (1) or average (0) (default = 1)
     -stats : histogram stat option (default = )
     -theta : theta bin limits, e.g. "5:10:20:30" (default = 5:10:20)
--variation : database variation for constant test (default = )
+     -time : make time residual histograms (1=true, 0=false) (default = 0)
   -verbose : global fit verbosity (1/0 = on/off) (default = 0)
+   -vertex : fit vertex plots with 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1) (default = 4)
 ```
 The code will process the input files specified with the ```-nominal``` or ```-r[123]_[c][xyz]``` options, create and fill histograms according to the selected theta and phi bins, run the analysis, plot the results and printout the extracted alignment constants. All histograms will be saved to an histogram file named ``prefix_histo.hipo``, with ``prefix`` being the string specified with the ```-o``` option, or ``histo.hipo`` if the option is not used. 
 By specifying ``-display 0``, the graphical window presenting the plotted results will not be opened.
 
-The following is an example of how one would process directories of the input data hipo files, utilizing 12 geometry variations (9 translations and 3 rotations). In this example, three theta bins are used (0 to 8, 8 to 14, and 14 to 22 [degrees]) and two bins in phi are used (-30 to 0, and 0 to 30 [degrees]).
+The following is an example of how one would process directories of the input data hipo files, utilizing 12 geometry variations (9 translations and 3 rotations). In this example, three theta bins are used (8 to 14, and 14 to 22 [degrees]) and two bins in phi are used (-30 to 0, and 0 to 30 [degrees]).
 ```
-./bin/dc-alignment -process -nominal /path/to/noShift/ -r1_x /path/to/1_x_0p2cm -r1_y /path/to/r1_y_0p2cm -r1_z /path/to/1_z_0p2cm -r1_cy /path/to/r1_cy_0p2deg -r2_x /path/to/2_x_0p2cm -r2_y /path/to/2_y_0p2cm -r2_z /path/to/2_z_0p2cm -r2_cy /path/to/2_cy_0p2deg -r3_x /path/to/3_x_0p2cm -r3_y /path/to/3_y_0p2cm -r3_z /path/to/r3_z_0p2cm -r3_cy /path/to/r3_cy_0p2deg -theta "0:8:14:22" -phi "-30:0:30" -variation rga_fall2018 -fit 0 -o output_file_name
+./bin/dc-alignment -process -nominal /path/to/noShift/ -r1_x /path/to/1_x_0p2cm -r1_y /path/to/r1_y_0p2cm -r1_z /path/to/1_z_0p2cm -r1_cy /path/to/r1_cy_0p2deg -r2_x /path/to/2_x_0p2cm -r2_y /path/to/2_y_0p2cm -r2_z /path/to/2_z_0p2cm -r2_cy /path/to/2_cy_0p2deg -r3_x /path/to/3_x_0p2cm -r3_y /path/to/3_y_0p2cm -r3_z /path/to/r3_z_0p2cm -r3_cy /path/to/r3_cy_0p2deg -theta "8:14:22" -phi "-30:0:30" -compare rga_fall2018 -fit 0 -o output_file_name
 ```
 #### Analyze a histogram file
 Check the command line options with:
@@ -126,26 +129,51 @@ Check the command line options with:
      Usage : dc-alignment -input [input histogram file]  [input1] [input2] ....
 
    Options :
+  -compare : database variation for constant comparison (default = default)
   -display : display histograms (0/1) (default = 1)
-      -fit : fit residuals (1) or use mean (0) (default = 1)
-     -init : init global fit from previous constants (1) or from zero shifts (0) (default = 0)
+     -init : init global fit from previous constants from the selected variation (default = default)
      -iter : number of global fit iterations (default = 1)
-   -sector : sector-dependent derivatives (1) or average (0) (default = 0)
+-residuals : fit residuals (2) or use mean (1) (default = 2)
+   -sector : sector-dependent derivatives (1) or average (0) (default = 1)
+   -shifts : use event-by-event subtraction for unit shifts (1=on, 0=off) (default = 0)
     -stats : set histogram stat option (default = )
--variation : database variation for constant test (default = )
   -verbose : global fit verbosity (1/0 = on/off) (default = 0)
+   -vertex : fit vertex plots with 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1) (default = 4)
 ```
-The code will read the histograms from the specified file, analyze them, plot the results and printout the extracted alignment constants. All histograms will be saved to an histogram file named ``prefix_histo.hipo``, with ``prefix`` being the string specified with the ```-o``` option, or ``histo.hipo`` if the option is not used. 
-By specifying ``-display 0``, the graphical window presenting the plotted results will not be opened.
+The code will read the histograms from the specified file, analyze them, compute the unit derivatives and nominal residuals and vertex values, perform themisalignment fit,plot the results and print the extracted alignment constants. 
 
 Here is example of using the "analyze" option to analyze an already created histogram hipo file:
 ```
-./bin/dc-alignment -analyze -variation rga_fall2018 -input /path/to/histo.hipo
+./bin/dc-alignment -analyze -compare rga_fall2018 -input /path/to/histo.hipo
+```
+
+#### Fit misalignments from a histogram file
+Check the command line options with:
+```
+./bin/dc-alignment -fit
+
+     Usage : dc-alignment -input [input histogram file]  [input1] [input2] ....
+
+   Options :
+  -compare : database variation for constant comparison (default = default)
+  -display : display histograms (0/1) (default = 1)
+     -init : init global fit from previous constants from the selected variation (default = default)
+     -iter : number of global fit iterations (default = 1)
+   -sector : sector-dependent derivatives (1) or average (0) (default = 1)
+   -shifts : use event-by-event subtraction for unit shifts (1=on, 0=off) (default = 0)
+    -stats : set histogram stat option (default = )
+  -verbose : global fit verbosity (1/0 = on/off) (default = 0)
+  ```
+The code will read the histograms from the specified file, retrieve the relevant parameters from the histograms or fits, compute the unit derivatives and nominal residuals and vertex values, perform themisalignment fit,plot the results and print the extracted alignment constants. 
+
+Here is example of using the "fit" option to extract misalignments an already created histogram hipo file:
+```
+./bin/dc-alignment -fit -compare rga_fall2018 -input /path/to/histo.hipo
 ```
 
 ### Output
-When the ``-process`` option is chosen, a file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` option.
-With both the ``-process`` and ``-analyze`` options, the extracted misalignment constants are printed out in a format consistent with the /geometry/dc/alignment CCDB table.
+When the ``-process`` option is chosen, a file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` or eith the ``-fit`` options.
+With all options, the extracted misalignment constants are printed out in a format consistent with the /geometry/dc/alignment CCDB table.
 
 ### Parameters
 In addition to the parameters that can be selected from command line, the code uses parameters defined in the ``Constants`` class:
