@@ -553,6 +553,9 @@ public class Histo {
             case 4:    
                 Histo.fit3Vertex(histo);
                 break;
+            case 5:    
+                Histo.fit4Vertex(histo);
+                break;
             default:
                 break;
         }
@@ -776,6 +779,43 @@ public class Histo {
         f1_vtx.setParameter(5, bg);
 //        f1_vtx.setParameter(4, sigma*3);
         f1_vtx.setRange(mean-Constants.TARGETLENGTH*1.5,mean+Constants.WINDOWDIST+Constants.TARGETLENGTH/2);
+        DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
+    }
+
+    public static void fit4Vertex(H1F histo) {
+        int nbin = histo.getData().length;
+        double dx = histo.getDataX(1)-histo.getDataX(0);
+        //find downstream window
+        int ibin0 = histo.getMaximumBin();
+        //check if the found maximum is the first or second peak, ibin is tentative upstream window
+        int ibin1 = Math.max(0, histo.getMaximumBin() - (int)(Constants.TARGETLENGTH/dx));
+        int ibin2 = Math.min(nbin-1, histo.getMaximumBin() + (int)(Constants.TARGETLENGTH/dx));
+        if(histo.getBinContent(ibin1)<histo.getBinContent(ibin2)) {
+            ibin1 = ibin0;
+            ibin0 = ibin2;
+        }
+        
+        double mean  = histo.getDataX(ibin0);
+        double amp   = histo.getBinContent(ibin0);
+        double sigma = 0.5;
+        double bg = histo.getBinContent((ibin1+ibin0)/2);
+        
+        F1D f1_vtx   = new F1D("f3vertex","[amp]*gaus(x,[mean]-[tl],[sigma])+[amp]*gaus(x,[mean],[sigma])+[amp]*gaus(x,[mean]+[wd],[sigma])/1.8+[bg]*gaus(x,[mean]-[tl]/2,[tl]*0.8)+[sc]*gaus(x,[mean]+[dext],[sigma])", -10, 10);
+        f1_vtx.setLineColor(2);
+        f1_vtx.setLineWidth(2);
+        f1_vtx.setOptStat("111111111");
+        f1_vtx.setParameter(0, amp/2);
+        f1_vtx.setParameter(1, mean);
+        f1_vtx.setParameter(2, Constants.TARGETLENGTH);
+        f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.99, Constants.TARGETLENGTH*1.01);
+        f1_vtx.setParameter(3, sigma);
+        f1_vtx.setParameter(4, Constants.WINDOWDIST);
+        f1_vtx.setParLimits(4, Constants.WINDOWDIST*0.9, Constants.WINDOWDIST*1.1);
+        f1_vtx.setParameter(5, bg);
+        f1_vtx.setParameter(6, amp/2);
+        f1_vtx.setParameter(7, Constants.SCEXIT-Constants.TARGETPOS);
+        f1_vtx.setParLimits(7, (Constants.SCEXIT-Constants.TARGETPOS)*0.9, (Constants.SCEXIT-Constants.TARGETPOS)*1.1);
+        f1_vtx.setRange(mean-Constants.TARGETLENGTH*1.5,Constants.SCEXIT+Constants.TARGETLENGTH/2);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
     }
 

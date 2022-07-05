@@ -66,17 +66,13 @@ public class Alignment {
     
     public Alignment() {
         this.initInputs();
-        this.initGeometry();
     }
     
     private void initConstants(int run, String initVariation, String compareVariation) {
-        initAlignment    = this.getTable(run, initVariation);
-        compareAlignment = this.getTable(run, compareVariation);
-    }
-    
-    public void initGeometry() {
         ConstantProvider provider  = GeometryFactory.getConstants(DetectorType.DC, 11, "default");
         dcDetector = new DCGeant4Factory(provider, DCGeant4Factory.MINISTAGGERON, false);
+        initAlignment    = this.getTable(run, initVariation);
+        compareAlignment = this.getTable(run, compareVariation);
     }
     
     public void setFitOptions(boolean sector, int iteration, boolean verbosity) {
@@ -835,7 +831,7 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-phi"      , "-30:0:30",     "phi bin limits, e.g. \"-30:-15:0:15:30\"");
         parser.getOptionParser("-process").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
-        parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (2)");
+        parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
         parser.getOptionParser("-process").addOption("-vertex"   , "4",            "fit vertex plots with 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
         parser.getOptionParser("-process").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-process").addOption("-compare"  , "default",      "database variation for constant comparison");
