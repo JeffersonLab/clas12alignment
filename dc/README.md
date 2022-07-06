@@ -28,7 +28,8 @@ Specifically:
       where:
       * The base yaml file will be dcalign.yaml.
       * The variation will be the one containing the chosen *nominal* geometry as discussed above. 
-      * The generated yaml files will be in the folder specified when running the command. In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
+      * The generated yaml files will be in the folder specified when running the command. The folder will contain the 15 yaml files correspnding to the translations and rotations described above, the yaml file ```r0.yaml```, corresponding to the nominal geometry, and rga_fall2018.yaml, corresponding to the original alignment results by T. Haywards.
+      In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
         ```
         dcGeometryVariation: "default"
         alignmentShifts: "r1_cz:0.2"
@@ -39,24 +40,24 @@ Specifically:
        *  Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks).
        *  Use the --ccdbsqlite workflow option to oint to the Sqlite snapshot that is being used for the alignment.
        *  Notes:
-         *   Since the workflows that should be generated have the same configuration except for the selected yaml file, the tag, and the output directory, an easy way to generate all of then with a single command is to use a command-line for-loop. In cshell or tcshell, this would look like:
-             ```
-             foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
+          * Since the workflows that should be generated have the same configuration except for the selected yaml file, the tag, and the output directory, an easy way to generate all of then with a single command is to use a command-line for-loop. In cshell or tcshell, this would look like:
+              ```
+              foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
                  clas12-workflow.py --runGroup rgb --model rec --tag myTag-$var --inputs /mss/clas12/rg-b/production/decoded/6.5.6/006342 --runs 6342 --clara /group/clas12/packages/clara/5.0.2_8.1.2 --outDir /my-ouput-drectory-path/$var --reconYaml path-to-yamls-directory/$var".yaml" --ccdbsqlite path-to-sqlite-file --reconSize 1 --threads 16
-             end
-             ```
-             Similarly, the workflows submission can be done as follows:
-             ```
-             foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018_am_nc_i2 )
+              end
+              ```
+              Similarly, the workflows submission can be done as follows:
+              ```
+              foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018_am_nc_i2 )
                  swif2 import -file rgb-r-myTag-$var"-6342.json"
                  swif2 run -workflow  rgb-r-myTag-$var"-6342"
-             end
-             ```
-             Note that the above workflow creation command is just an example and should be modified depending on the current workflow tools options and the data set.
-
+              end
+              ```
+              Note that the above workflow creation command is just an example and should be modified depending on the current workflow tools options and the data set.
+          * Since the alignment procedure requires processing the same data multiple times, it may be convenient to prefilter the events in the alignment run to select the ones of interest for the FD. This applies in particular to recent alignment runs where the trigger included a FD electron trigger and a CD trigger, with the latter having much higher rate than the former. The selection could be done on decoded files, saving only the events where the FD trigger bit is set or that have HTCC/ECAL banks.
              
 * Alignment input files:
-  * To reduce the data volume and speed up the processing, files for each geometry variation can be filtered with:
+  * To reduce the reconstructed data volume and speed up the analysis, files for each geometry variation can be filtered with the command:
     ```
     hipo-utils -reduce -ct "REC::Particle://beta>0[GT]0,REC::Cherenkov://nphe>2[GT]0,REC::Calorimeter://energy>0[GT]0,TimeBasedTrkg::TBTracks://
     Vtx0_z>-15&&Vtx0_z<35[GT]0" -r "TimeBasedTrkg::TBHits://trkID>0" -b "RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBased
@@ -80,6 +81,10 @@ Go to the folder clas12alignment/dc/java/dc-alignment and compile with maven:
 ```
   cd dc/java/dc-alignment
   mvn install
+```
+Set the CCDB connection environment variable to point with the Sqlite file that is being used for alignment:
+```
+  setenv CCDB_CONNECTION sqlite:///path-to-sqlite-file
 ```
 Run the code with:
 ```
@@ -140,9 +145,10 @@ Check the command line options with:
 The code will process the input files specified with the ```-nominal``` or ```-r[123]_[c][xyz]``` options, create and fill histograms according to the selected theta and phi bins, run the analysis, plot the results and printout the extracted alignment constants. All histograms will be saved to an histogram file named ``prefix_histo.hipo``, with ``prefix`` being the string specified with the ```-o``` option, or ``histo.hipo`` if the option is not used. 
 By specifying ``-display 0``, the graphical window presenting the plotted results will not be opened.
 
-The following is an example of how one would process directories of the input data hipo files, utilizing 12 geometry variations (9 translations and 3 rotations). In this example, three theta bins are used (8 to 14, and 14 to 22 [degrees]) and two bins in phi are used (-30 to 0, and 0 to 30 [degrees]).
+The following is an example of how one would process directories of the reconstructed data files, utilizing 12 geometry variations (9 translations and 3 rotations). In this example, three theta bins are used (8 to 14, and 14 to 22 [degrees]) and two bins in phi are used (-30 to 0, and 0 to 30 [degrees]).
 ```
-./bin/dc-alignment -process -nominal /path/to/noShift/ -r1_x /path/to/1_x_0p2cm -r1_y /path/to/r1_y_0p2cm -r1_z /path/to/1_z_0p2cm -r1_cy /path/to/r1_cy_0p2deg -r2_x /path/to/2_x_0p2cm -r2_y /path/to/2_y_0p2cm -r2_z /path/to/2_z_0p2cm -r2_cy /path/to/2_cy_0p2deg -r3_x /path/to/3_x_0p2cm -r3_y /path/to/3_y_0p2cm -r3_z /path/to/r3_z_0p2cm -r3_cy /path/to/r3_cy_0p2deg -theta "8:14:22" -phi "-30:0:30" -compare rga_fall2018 -fit 0 -o output_file_name
+./bin/dc-alignment -process -nominal path-to-r0-files -r1_x path-to-r1_x -r1_y path-to-r1_y/ -r1_z path-to-r1_z -r1_cy path-to-r1_cy -r1_cz path-to-r1_cz -r2_x path-to-r2_x -r2_y path-to-r2_y -r2_z path-to-r2_z -r2_cy path-to-r2_cy -r2_cz path-to-r2_cz -r3_x path-to-r3_x -r3_y path-to-r3_y -r3_z path-to-r3_z -r3_cy path-to-r3_cy -r3_cz path-to-r3_cz -theta 6:8:12:36 -phi -30:-10:0:10:30 -vertex 4 -residuals 2  -compare rga_fall2018 -o output_file_name_prefix
+
 ```
 #### Analyze a histogram file
 Check the command line options with:
@@ -163,7 +169,7 @@ Check the command line options with:
   -verbose : global fit verbosity (1/0 = on/off) (default = 0)
    -vertex : fit vertex plots with 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1) (default = 4)
 ```
-The code will read the histograms from the specified file, analyze them, compute the unit derivatives and nominal residuals and vertex values, perform themisalignment fit,plot the results and print the extracted alignment constants. 
+The code will read the histograms from the specified file, analyze them, compute the unit derivatives and nominal residuals and vertex values, perform the misalignment fit,plot the results and print the extracted alignment constants. 
 
 Here is example of using the "analyze" option to analyze an already created histogram hipo file:
 ```
@@ -194,16 +200,16 @@ Here is example of using the "fit" option to extract misalignments an already cr
 ./bin/dc-alignment -fit -compare rga_fall2018 -input /path/to/histo.hipo
 ```
 
-### Output
-When the ``-process`` option is chosen, a file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` or eith the ``-fit`` options.
-With all options, the extracted misalignment constants are printed out in a format consistent with the /geometry/dc/alignment CCDB table.
-
 ### Parameters
 In addition to the parameters that can be selected from command line, the code uses parameters defined in the ``Constants`` class:
 * the electron selection cuts,
 * target parameters relevant for the vertex fits,
 * global fit parameters initialization values and step size.
 These can be modified according to the needs before compiling and running the code.
+
+### Output
+When the ``-process`` option is chosen, a file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` or with the ``-fit`` options.
+With all options, the extracted misalignment constants are printed out in a format consistent with the /geometry/dc/alignment CCDB table.
 
 ### Plots and results
 If the ``-display`` option is set to 1 (default), a graphic window displaying histograms and relevant graphs is opened. 
@@ -230,7 +236,9 @@ The tab displays a summary of the extracted residuals and vertex shifts and deri
 
 
 #### Electron
-The tab displays the relevant distributions for the selected electron tracks.
+The tab displays the relevant distributions for the selected electron tracks. Examples of the plots are shown in the following two figures. These are meant to facilitate the choice of angular bins for the alignment, since having enough statistics in each bin is critical for the fits to converge.
+![Plot_07-06-2022_12 32 00_PM](https://user-images.githubusercontent.com/7524926/177531547-8cd47d41-52d9-4834-aea8-de0644820fa0.png)
+![Plot_07-06-2022_12 32 20_PM](https://user-images.githubusercontent.com/7524926/177531572-964c21c9-4b42-4ee2-907b-3e11382118b4.png)
 
 #### Nominal
 This tab displays histograms of the z-vertex distributions, fit and time residuals for each angular bin and sector.
@@ -249,3 +257,68 @@ This tab displays histograms of the z-vertex distributions, fit and time residua
 Equivalent sub-tabs and plots are shown for each translation and rotation in the r1_c, r1_y, ...,r3_cy tabs.
 
 #### Terminal output
+When launched, the alignment code will print-out relevant information as it goes through the various steps. These include:
+* printouts of the chosen alignment configuration parameters, as for example:
+  ```
+  [CONFIG] subtractedShifts set to false
+  [CONFIG] sectorShifts set to true
+  [CONFIG] fitIteration set to 1
+  [CONFIG] fitVerbosity set to false
+  ...
+  Opening file: iss805-dcAlMin-oldCalib-iter1.hipo
+  [CONFIG] Setting theta bins to:
+	   bin: 6.0-8.0
+	   bin: 8.0-12.0
+	   bin: 12.0-36.0
+  [CONFIG] Setting phi bins to:
+   	bin: -30.0--10.0
+	   bin: -10.0-0.0
+	   bin: 0.0-10.0
+	   bin: 10.0-30.0
+  [CONFIG] resFit set to 0
+  [CONFIG] vertexFit set to 0
+  ```
+* printouts of the CCDB connection logs, as for example:
+  ```
+  [DB] --->  open connection with : sqlite:////Users/devita/Work/clas12/simulations/dcalign/data_fall18/ccdb_20220529_newt2d.sqlite
+  [DB] --->  database variation   : default
+  [DB] --->  database run number  : 11
+  [DB] --->  database time stamp  : Tue Jul 05 22:39:55 CEST 2022
+  [DB] --->  database connection  : success
+  [DB LOAD] ---> loading data table : /geometry/dc/dc
+  [DB LOAD] ---> number of columns  : 2
+  [DB LOAD] ---> loading data table : /geometry/dc/region
+  [DB LOAD] ---> number of columns  : 9
+  [DB LOAD] ---> loading data table : /geometry/dc/superlayer
+  [DB LOAD] ---> number of columns  : 8
+  [DB LOAD] ---> loading data table : /geometry/dc/layer
+  [DB LOAD] ---> number of columns  : 2
+  [DB LOAD] ---> loading data table : /geometry/dc/alignment
+  [DB LOAD] ---> number of columns  : 9
+  [DB LOAD] ---> loading data table : /geometry/dc/ministagger
+  [DB LOAD] ---> number of columns  : 4
+  [DB LOAD] ---> loading data table : /geometry/dc/endplatesbow
+  [DB LOAD] ---> number of columns  : 4
+  [DB] --->  database disconnect  : success
+  [ConstantsManager] --->  loading table for run = 11
+  [DB] --->  open connection with : sqlite:////Users/devita/Work/clas12/simulations/dcalign/data_fall18/ccdb_20220529_newt2d.sqlite
+  [DB] --->  database variation   : rgb_spring19_am_oc_i0
+  [DB] --->  database run number  : 11
+  [DB] --->  database time stamp  : Tue Jul 05 22:39:59 CEST 2022
+  [DB] --->  database connection  : success
+  ***** >>> adding : /geometry/dc/alignment / table = /geometry/dc/alignment
+  [DB] --->  database disconnect  : success
+  [RCDB] --->  open connection with : mysql://rcdb@clasdb.jlab.org/rcdb
+  [RCDB] --->  database connection  : success
+  [RCDB] --->  database disconnect  : success
+  [ConstantsManager] --->  loading table for run = 11
+  [DB] --->  open connection with : sqlite:////Users/devita/Work/clas12/simulations/dcalign/data_fall18/ccdb_20220529_newt2d.sqlite
+  [DB] --->  database variation   : rga_fall2018
+  [DB] --->  database run number  : 11
+  [DB] --->  database time stamp  : Tue Jul 05 22:40:06 CEST 2022
+  [DB] --->  database connection  : success
+  ***** >>> adding : /geometry/dc/alignment / table = /geometry/dc/alignment
+  [DB] --->  database disconnect  : success
+  where the first connections will always be to variation default, to download the design geometry parameters and the folloing connections will be to the variations selected with the command line options.
+  ```
+* printouts of the
