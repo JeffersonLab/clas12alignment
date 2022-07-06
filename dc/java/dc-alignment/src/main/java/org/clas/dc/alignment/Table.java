@@ -218,7 +218,7 @@ public class Table {
         String s = "";
         for(int ir=0; ir<Constants.NREGION; ir++) {
             for(int is=0; is<Constants.NSECTOR; is++) {
-                s += String.format("%4d %4d %4d   %10.4f/%.4f %10.4f/%.4f %10.4f/%.4f   %10.4f/%.4f %10.4f/%.4f %10.4f/%.4f\n",
+                s += String.format("%4d %4d %4d   %10.4f \u00B1 %.4f %10.4f \u00B1 %.4f %10.4f \u00B1 %.4f   %10.4f \u00B1 %.4f %10.4f \u00B1 %.4f %10.4f \u00B1 %.4f\n",
                         (ir+1), (is+1), 0,
                         this.alignment.getDoubleValue("dx", ir+1, is+1, 0),
                         this.alignment.getDoubleValue("ex", ir+1, is+1, 0),

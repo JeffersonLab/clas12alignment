@@ -289,7 +289,7 @@ public class Fitter  implements FCNBase {
     
     public void printPars() {
         for(int i=0; i<pars.length; i++) {
-            System.out.println(String.format("   %s: %.4f +/- %.4f (%.4f - %.4f)", pars[i].name(), pars[i].value(), pars[i].error(), pars[i].lower(), pars[i].upper()));
+            System.out.println(String.format("   %6s: %7.4f \u00B1 %.4f (%7.4f - %.4f)", pars[i].name(), pars[i].value(), pars[i].error(), pars[i].lower(), pars[i].upper()));
         }
         System.out.println();
     }
@@ -300,7 +300,7 @@ public class Fitter  implements FCNBase {
             System.out.print(im);
             for(int it=0; it<currentValues[0].length; it++) {
                 for(int ip=0; ip<currentValues[0][0].length; ip++) {
-                    System.out.print(String.format("\t%6.2f+/-%6.2f", currentValues[im][it][ip], currentErrors[im][it][ip]));
+                    System.out.print(String.format("\t%7.2f \u00B1 %7.2f", currentValues[im][it][ip], currentErrors[im][it][ip]));
                 }
             }
             System.out.println();
@@ -313,7 +313,7 @@ public class Fitter  implements FCNBase {
             System.out.print(im);
             for(int it=0; it<unitShifts[key][0].length; it++) {
                 for(int ip=0; ip<unitShifts[key][0][0].length; ip++) {
-                    System.out.print(String.format("\t%6.2f", unitShifts[key][im][it][ip], unitShifts[key][im][it][ip]));
+                    System.out.print(String.format("\t%7.2f", unitShifts[key][im][it][ip], unitShifts[key][im][it][ip]));
                 }
             }
             System.out.println();

@@ -45,6 +45,8 @@ public class Alignment {
     private Bin[]             thetaBins        = null;
     private Bin[]             phiBins          = null;
     private ConstantsManager  manager          = new ConstantsManager();
+    private String            compareVariation = null;
+    private String            initVariation    = null;
     private Table             compareAlignment = null;
     private Table             initAlignment    = new Table();
     private DCGeant4Factory   dcDetector       = null;
@@ -71,6 +73,8 @@ public class Alignment {
     private void initConstants(int run, String initVariation, String compareVariation) {
         ConstantProvider provider  = GeometryFactory.getConstants(DetectorType.DC, 11, "default");
         dcDetector = new DCGeant4Factory(provider, DCGeant4Factory.MINISTAGGERON, false);
+        this.compareVariation = compareVariation;
+        this.initVariation    = initVariation;
         initAlignment    = this.getTable(run, initVariation);
         compareAlignment = this.getTable(run, compareVariation);
     }
@@ -317,8 +321,8 @@ public class Alignment {
         }
         if(compareAlignment!=null) {
             System.out.println("\nFitting residuals");
-            System.out.println("\nInitial alignment parameters\n" + this.initAlignment.toString());
-            System.out.println("\nInitial alignment parameters\n" + this.initAlignment.toTextTable());
+            System.out.println("\nInitial alignment parameters (variation: " + this.initVariation + ") in the DC tilted sector frame\n" + this.initAlignment.toString());
+            System.out.println("\nInitial alignment parameters (variation: " + this.initVariation + ") in CCDB format\n" + this.initAlignment.toTextTable());
             Table fittedAlignment = new Table();
             if(this.setActiveParameters()>0) {
                 for(int is=0; is<Constants.NSECTOR; is++) {
@@ -327,9 +331,9 @@ public class Alignment {
                     fittedAlignment.update(sector, par);
                 }
                 Table finalAlignment = fittedAlignment.copy().add(initAlignment);
-                System.out.println("\nFitted alignment parameters\n" +fittedAlignment.toString());
-                System.out.println("\nFinal alignment parameters\n" +finalAlignment.toTextTable());
-                System.out.println("\nTo be compared to\n" +this.compareAlignment.toTextTable());
+                System.out.println("\nFitted alignment parameters in the DC tilted sector frame\n" +fittedAlignment.toString());
+                System.out.println("\nFinal alignment parameters in CCDB format (sum of this and previous iteration costants)\n" +finalAlignment.toTextTable());
+                System.out.println("\nCompare to " +this.compareVariation + " variation constants\n" +this.compareAlignment.toTextTable());
                 
                 canvas.addCanvas("corrected (with new parameters)");
                 canvas.getCanvas("corrected (with new parameters)").draw(this.getResidualGraphs(fittedAlignment));
@@ -405,10 +409,12 @@ public class Alignment {
         }
         Fitter residualFitter = new Fitter(shifts, values, errors);
         // check chi2 of "compare" misalignments
-        residualFitter.setPars(compareAlignment.getParameters(sector));
+        residualFitter.setPars(compareAlignment.subtract(initAlignment).getParameters(sector));
         System.out.println(String.format("\nSector %d", sector));
+        System.out.println("Chi2 and benchmark with constants from variation " + this.compareVariation + ":");
         residualFitter.printChi2AndNDF();
         // reinit
+        System.out.println("Current minuit results:");
         residualFitter.zeroPars();
         double chi2 = Double.POSITIVE_INFINITY;
         Parameter[] fittedPars = residualFitter.getParCopy();
