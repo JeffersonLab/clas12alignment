@@ -6,7 +6,7 @@
 
 if ($#argv != 3) then
  
-  echo "Usage: generateYamls <base-yaml-file> <base-variation> <output-directory>"
+  echo "Usage: generateYamls <base-yaml-file> <variation> <output-directory>"
   exit 0
  
 endif

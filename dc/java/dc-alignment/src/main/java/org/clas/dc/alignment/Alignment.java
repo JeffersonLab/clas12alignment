@@ -828,7 +828,7 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-display"  ,"1",             "display histograms (0/1)");
         parser.getOptionParser("-process").addOption("-stats"    ,"",              "histogram stat option");
         parser.getOptionParser("-process").addOption("-theta"    , "5:10:20",      "theta bin limits, e.g. \"5:10:20:30\"");
-        parser.getOptionParser("-process").addOption("-phi"      , "-30:0:30",     "phi bin limits, e.g. \"-30:-15:0:15:30\"");
+        parser.getOptionParser("-process").addOption("-phi"      , "-30:0:30",     "phi bin limits, e.g. \"-30:-10:0:10:30\"");
         parser.getOptionParser("-process").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
         parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
