@@ -2,7 +2,7 @@
 
 This code implements the CLAS12 DC alignment procedure developed by T. Hayward and documented at clas12alignment/dc/original_scripts_and_docs/CLAS12___DC_Alignment_Github_Tutorial.pdf.
 
-The algorithm is based on the assumption that the *real* DC geometry is close to the nominal and that the transformation between the two can be described as a linear combination of translations and rotations in x, y and z of each DC region. The size of these translations and rotations is determined studying how the tracking fit residuals and the z vertex distribution for straight tracks varies as a function of individual translations or rotations and finding the set that minimize the residuals and the difference between the z vertex distribution and the known target position.
+The algorithm is based on the assumption that the *real* DC geometry is close to the *nominal* geometry and that the transformation between the two can be described as a linear combination of translations and rotations in x, y and z of each DC region. The size of these translations and rotations is determined studying how the tracking fit residuals and the z vertex distribution for straight tracks vary as a function of individual translations or rotations and finding the set that minimize the residuals and the difference between the z vertex distribution and the known target position.
 Specifically:
 * Straight electron tracks are reconstructed and histograms of fit residuals for each DC layer and of the z-vertex distribution are made in bins of sector, polar and azimuthal angles. These histograms are analyzed to extract the shifts from zero of the fit residuals and the shifts of the z-vertex from the known target position. Since straight track runs are usually on empty target, the z-vertex histograms show peaks corresponding to the target cell windows that can be fit and compared to the installation position.
 * The same tracks are reconstructed applying a single translation or rotation. The size of these is chosen to be large enough to have a measureable effect on fit residuals and vertex distributions, while being small compared to the DC cell size. The values used so far are 0.1-0.8 cm for shifts and 0.2 deg for rotations. Translations and rotations are applied in the tilted-sector coordinate frame (y axis along the DC wires and z axis perpendicular to the DC layers, i.e. at 25 deg from the beamline axis). Currently, the x rotation is not supported by tracking software. Therefore, the total number of shifts and rotation is 15, 3 translations and 2 rotations for each of the 3 regions. 
@@ -16,22 +16,45 @@ Specifically:
   * Java Development Kit 11 or newer
   * maven 
 * Data:
-  * Straight-track data (both solenoid and torus should be off) with electron tracks in the forward detector.
+  * Straight-track data (both solenoid and torus should be off) with electron tracks in the forward detector
+  * Recent sqlite snapshot of CCDB (see https://clasweb.jlab.org/clas12offline/sqlite/ccdb/)
 
 ### Data processing
-  * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry (variation: default) and each of the individual translations or rotations in xyz for each of the DC regions.  This will results in up to 15 sets of reconstructed files that will be the input of the alignment code. 
-    * The reconstruction configuration files or yaml files to produce these sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.1.2), using the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/generateYamls.csh):
+  * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry for the chosen data set and each of the individual translations or rotations in xyz for each of the DC regions. This will results in up to 15 sets of reconstructed files that will be the input of the alignment code.  The nominal geometry can be the DC design geometry (CCDB variation: default) or a geometry determined from previous alignment results with non-zero shifts compared to the ideal case. 
+    * The reconstruction configuration files (yaml files) to produce these sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.1.2), using the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/generateYamls.csh):
       ```
-      ./generateYamls.csh <base-yaml-file> <base-variation>  <output-directory>
+      ./generateYamls.csh <base-yaml-file> <variation>  <output-directory>
       ```
-      where the base yaml file will be dcalign.yaml and the variation will be default. 
-    * The generated yaml files will be in the folder specified when running the command. In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
-      ```
-      dcGeometryVariation: "default"
-      alignmentShifts: "r1_cz:0.2"
-      ```
-      specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected with the variablee ```dcGeometryVariation```.
-    * Generate and run one cooking workflow for each yaml file to process the straigth track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation). Use as output directory name for the workflow the same name of the yaml file without the extention (e.g. the output of the data processed with r1_cz.yaml should be in a directory named r1_cz). Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks)
+      where:
+      * The base yaml file will be dcalign.yaml.
+      * The variation will be the one containing the chosen *nominal* geometry as discussed above. 
+      * The generated yaml files will be in the folder specified when running the command. In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
+        ```
+        dcGeometryVariation: "default"
+        alignmentShifts: "r1_cz:0.2"
+        ```
+        specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected with the variable ```dcGeometryVariation```. This allows to perform multiple iterations by selecting a variation where the /geometry/dc/alignment table contains the results of the previous iteration.
+    *  For each yaml file, generate and run one cooking workflow to process the straigth track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation):
+       *  Use as output directory name for the workflow the same name of the yaml file without the extention (e.g. the output of the data processed with r1_cz.yaml should be in a directory named r1_cz). 
+       *  Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks).
+       *  Use the --ccdbsqlite workflow option to oint to the Sqlite snapshot that is being used for the alignment.
+       *  Notes:
+         *   Since the workflows that should be generated have the same configuration except for the selected yaml file, the tag, and the output directory, an easy way to generate all of then with a single command is to use a command-line for-loop. In cshell or tcshell, this would look like:
+             ```
+             foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
+                 clas12-workflow.py --runGroup rgb --model rec --tag myTag-$var --inputs /mss/clas12/rg-b/production/decoded/6.5.6/006342 --runs 6342 --clara /group/clas12/packages/clara/5.0.2_8.1.2 --outDir /my-ouput-drectory-path/$var --reconYaml path-to-yamls-directory/$var".yaml" --ccdbsqlite path-to-sqlite-file --reconSize 1 --threads 16
+             end
+             ```
+             Similarly, the workflows submission can be done as follows:
+             ```
+             foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018_am_nc_i2 )
+                 swif2 import -file rgb-r-myTag-$var"-6342.json"
+                 swif2 run -workflow  rgb-r-myTag-$var"-6342"
+             end
+             ```
+             Note that the above workflow creation command is just an example and should be modified depending on the current workflow tools options and the data set.
+
+             
 * Alignment input files:
   * To reduce the data volume and speed up the processing, files for each geometry variation can be filtered with:
     ```
