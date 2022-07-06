@@ -258,7 +258,7 @@ Equivalent sub-tabs and plots are shown for each translation and rotation in the
 
 #### Terminal output
 When launched, the alignment code will print-out relevant information as it goes through the various steps. These include:
-* printouts of the chosen alignment configuration parameters, as for example:
+* The chosen alignment configuration parameters, as for example:
   ```
   [CONFIG] subtractedShifts set to false
   [CONFIG] sectorShifts set to true
@@ -278,7 +278,7 @@ When launched, the alignment code will print-out relevant information as it goes
   [CONFIG] resFit set to 0
   [CONFIG] vertexFit set to 0
   ```
-* printouts of the CCDB connection logs, as for example:
+* The CCDB connection logs, as for example:
   ```
   [DB] --->  open connection with : sqlite:////Users/devita/Work/clas12/simulations/dcalign/data_fall18/ccdb_20220529_newt2d.sqlite
   [DB] --->  database variation   : default
@@ -321,4 +321,49 @@ When launched, the alignment code will print-out relevant information as it goes
   [DB] --->  database disconnect  : success
   where the first connections will always be to variation default, to download the design geometry parameters and the folloing connections will be to the variations selected with the command line options.
   ```
-* printouts of the
+* The pre-existing misalignments set with the ```-init``` command-line option. These are printed twice, the first in the local frame and the second in the CCDB-compliant format.
+* The minuit fit results for each sector:
+  ```
+  Sector 1
+  Chi2 and benchmark with constants from variation rga_fall2018:
+  chi2 = 7336.928 NDF = 426
+  [fit-benchmark] Time = 0.000 , Iterations = 0, Status = false, Chi2/NDF = 7336.928/426
+  Current minuit results:
+  iteration 0	
+  chi2 = 1278.164 NDF = 426
+  [fit-benchmark] Time = 0.277 , Iterations = 4797, Status = true, Chi2/NDF = 1278.164/426
+     r1_x: -0.1083 ± 0.0059 (-0.0059 - 0.0059)
+     r1_y: -0.0495 ± 0.0369 (-0.0370 - 0.0370)
+     r1_z:  0.2277 ± 0.0182 (-0.0182 - 0.0182)
+    r1_cx:  0.0000 ± 0.0000 ( 0.0000 - 0.0000)
+    r1_cy:  0.0197 ± 0.0056 (-0.0056 - 0.0056)
+    r1_cz:  0.0072 ± 0.0154 (-0.0155 - 0.0154)
+     r2_x: -0.0172 ± 0.0063 (-0.0063 - 0.0063)
+     r2_y:  0.0533 ± 0.0367 (-0.0367 - 0.0367)
+     r2_z:  0.0075 ± 0.0151 (-0.0151 - 0.0151)
+    r2_cx:  0.0000 ± 0.0000 ( 0.0000 - 0.0000)
+    r2_cy:  0.0116 ± 0.0033 (-0.0033 - 0.0033)
+    r2_cz:  0.0584 ± 0.0102 (-0.0102 - 0.0102)
+     r3_x:  0.0363 ± 0.0094 (-0.0094 - 0.0094)
+     r3_y:  0.0712 ± 0.0555 (-0.0556 - 0.0556)
+     r3_z: -0.0494 ± 0.0212 (-0.0212 - 0.0212)
+    r3_cx:  0.0000 ± 0.0000 ( 0.0000 - 0.0000)
+    r3_cy: -0.0107 ± 0.0025 (-0.0025 - 0.0025)
+    r3_cz:  0.0268 ± 0.0138 (-0.0138 - 0.0138)
+  ```
+  A good fit should have status set to true, indicating minuit converged.
+* The fitted misalignment constants from the current analysis, the final constants obtained as the sum of this and previous iteration and the pre-existing constants to compare to. The second of this table is the one to be loaded into the sqlite file for testing or for proceeding with a subsequent iteration.
+
+
+#### Loading alignment constants to sqlite/CCDB
+The final constants can be loaded to a new variation in the sqlite file for testing purpose or to proceed with a new iteration. The constants should be loaded to CCDB only when really finalized and vetted.
+To load them to sqlite:
+* Create a new variation using *rga_fall2018* as a parent to inherit the correct geometry for all other detectors:
+  ```ccdb -c sqlite:///path-to-sqlite-file mkvar variation-name -p rga_fall2018```
+* Create a text file with the constants from this analysis.
+* Load the constants:
+  ```ccdb -c sqlite:///path-to-sqlite-file add /geometry/dc/alignment file-with-constants.txt -v variation-name```
+The sqlite file can then be used for a new iteration by repeating the all procedure, using the new variation as the nominal.
+
+  
+
