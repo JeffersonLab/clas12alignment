@@ -222,7 +222,7 @@ The tab displays a summary of the extracted residuals and vertex shifts and deri
 * nominal vs. theta: same as above but with the y-axis defined as the angular bin number plus the layer number. The different colors correspond to the different DC superlayers and the black points show the vertex shifts. See screenshot of graph below.
 ![Plot_02-19-2022_10 21 21_PM](https://user-images.githubusercontent.com/7524926/154819746-af0ee5bc-3e22-41b1-a00f-50f6d20d84c7.png)
 * corrected and corrected vs. theta: same as above but after applying the translations and rotations from the /geometry/dc/alignment table in the CCDB variation specified with the ``-compare`` option. (Example not shown.)
-* * shift magnitude: histogram of the residual and vertex shifts associated with the chosen translations and rotations. The top histograms shows the average change of the track residual for translations and rotations of region 1 (x:1-6), region 2 (x:7-12), and region 3 (x:13-18). Within each region range, the first 3 x values coresponds to the xyz translations and the second 3 x values to xyz rotations. The missing bins at x=4 are due to the x rotations not being used. The different colors correspond t the theta bins (black is all theta) and the different color shadows to the phi bins. The bottom histogram shows the same information for vertex shifts.
+* shift magnitude: histogram of the residual and vertex shifts associated with the chosen translations and rotations. The top histograms shows the average change of the track residual for translations and rotations of region 1 (x:1-6), region 2 (x:7-12), and region 3 (x:13-18). Within each region range, the first 3 x values coresponds to the xyz translations and the second 3 x values to xyz rotations. The missing bins at x=4 are due to the x rotations not being used. The different colors correspond t the theta bins (black is all theta) and the different color shadows to the phi bins. The bottom histogram shows the same information for vertex shifts.
 ![Plot_07-05-2022_07 06 10_PM](https://user-images.githubusercontent.com/7524926/177380554-d91f0da9-29c7-412d-b429-796c22653b6f.png)
 * r1_x, ...r3_cy: graphs of the fit residuals and vertex derivatives for the corresponding translation or rotation. Each graph corresponds to a different angular bin. Colors correspond to different sectors while the average is shown in black. An example is shown by the following graph.
 ![Plot_02-19-2022_10 22 13_PM](https://user-images.githubusercontent.com/7524926/154819842-7f8f4f72-ad4d-4d27-a0e3-ada02b65447a.png)
@@ -319,8 +319,8 @@ When launched, the alignment code will print-out relevant information as it goes
   [DB] --->  database connection  : success
   ***** >>> adding : /geometry/dc/alignment / table = /geometry/dc/alignment
   [DB] --->  database disconnect  : success
-  where the first connections will always be to variation default, to download the design geometry parameters and the folloing connections will be to the variations selected with the command line options.
   ```
+  where the first connections will always be to variation default, to download the design geometry parameters and the folloing connections will be to the variations selected with the command line options.
 * The pre-existing misalignments set with the ```-init``` command-line option. These are printed twice, the first in the local frame and the second in the CCDB-compliant format.
 * The minuit fit results for each sector:
   ```
@@ -359,10 +359,14 @@ When launched, the alignment code will print-out relevant information as it goes
 The final constants can be loaded to a new variation in the sqlite file for testing purpose or to proceed with a new iteration. The constants should be loaded to CCDB only when really finalized and vetted.
 To load them to sqlite:
 * Create a new variation using *rga_fall2018* as a parent to inherit the correct geometry for all other detectors:
-  ```ccdb -c sqlite:///path-to-sqlite-file mkvar variation-name -p rga_fall2018```
+  ```
+  ccdb -c sqlite:///path-to-sqlite-file mkvar variation-name -p rga_fall2018
+  ```
 * Create a text file with the constants from this analysis.
 * Load the constants:
-  ```ccdb -c sqlite:///path-to-sqlite-file add /geometry/dc/alignment file-with-constants.txt -v variation-name```
+  ```
+  ccdb -c sqlite:///path-to-sqlite-file add /geometry/dc/alignment file-with-constants.txt -v variation-name
+  ```
 The sqlite file can then be used for a new iteration by repeating the all procedure, using the new variation as the nominal.
 
   
