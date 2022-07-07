@@ -10,6 +10,7 @@ public class Constants {
     public static int NLAYER  = 36;
     public static int NREGION = 3;
     public static double THTHILT = 25;
+    public static int NTARGET = 2;
     
     // electron cuts
     public static double NPHEMIN = 2;
@@ -68,7 +69,7 @@ public class Constants {
                                               1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 
-                                              1,      1,      1,       1,       1,       1};               
+                                              1,      1,      1,       1,       1,       1, 0};               
     
     // target parameters
     public static double TARGETPOS    = -0.5;

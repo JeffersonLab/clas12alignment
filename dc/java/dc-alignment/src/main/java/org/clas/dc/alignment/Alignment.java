@@ -200,32 +200,32 @@ public class Alignment {
     }
 
     private double[] getShifts(String key, int sector, int itheta, int iphi) {
-        double[] shifts = new double[Constants.NLAYER+1];
-        for(int layer=0; layer<=Constants.NLAYER; layer++) {
+        double[] shifts = new double[Constants.NLAYER+Constants.NTARGET];
+        for(int layer=0; layer<Constants.NLAYER+Constants.NTARGET; layer++) {
            shifts[layer] = this.getShift(key, sector, layer, itheta, iphi);
         }
         return shifts;
     }
     
     private double[] getShiftsError(String key, int sector, int itheta, int iphi) {
-        double[] errors = new double[Constants.NLAYER+1];
-        for(int layer=0; layer<=Constants.NLAYER; layer++) {
+        double[] errors = new double[Constants.NLAYER+Constants.NTARGET];
+        for(int layer=0; layer<Constants.NLAYER+Constants.NTARGET; layer++) {
            errors[layer] = this.getShiftError(key, sector, layer, itheta, iphi);
         }
         return errors;
     }
     
     private double[] getShifts(String key, int itheta, int iphi) {
-        double[] shifts = new double[Constants.NLAYER+1];
-        for(int layer=0; layer<=Constants.NLAYER; layer++) {
+        double[] shifts = new double[Constants.NLAYER+Constants.NTARGET];
+        for(int layer=0; layer<Constants.NLAYER+Constants.NTARGET; layer++) {
            shifts[layer] = this.getShift(key, layer, itheta, iphi);
         }
         return shifts;
     }
     
     private double[] getShiftsError(String key, int itheta, int iphi) {
-        double[] errors = new double[Constants.NLAYER+1];
-        for(int layer=0; layer<=Constants.NLAYER; layer++) {
+        double[] errors = new double[Constants.NLAYER+Constants.NTARGET];
+        for(int layer=0; layer<Constants.NLAYER+Constants.NTARGET; layer++) {
            errors[layer] = this.getShiftError(key, layer, itheta, iphi);
         }
         return errors;
@@ -260,16 +260,16 @@ public class Alignment {
     }
 
     private double[] getFittedResidual(Table alignment, int sector, int itheta, int iphi) {
-        double[] shift = new double[Constants.NLAYER+1];
-        for(int layer=0; layer<=Constants.NLAYER; layer++) {
+        double[] shift = new double[Constants.NLAYER+Constants.NTARGET];
+        for(int layer=0; layer<=Constants.NLAYER+Constants.NTARGET; layer++) {
            shift[layer] = this.getFittedResidual(alignment, sector, layer, itheta, iphi);
         }
         return shift;
     }
     
     private double[] getFittedResidualError(Table alignment, int sector, int itheta, int iphi) {
-        double[] shift = new double[Constants.NLAYER+1];
-        for(int layer=0; layer<=Constants.NLAYER; layer++) {
+        double[] shift = new double[Constants.NLAYER+Constants.NTARGET];
+        for(int layer=0; layer<=Constants.NLAYER+Constants.NTARGET; layer++) {
            shift[layer] = this.getFittedResidualError(alignment,sector, layer, itheta, iphi);
         }
         return shift;
@@ -384,11 +384,11 @@ public class Alignment {
     private Parameter[] fit(int sector) {
         String options = "";
         if(fitVerbosity) options = "V";
-        double[][][][] shifts = new double[Constants.NPARS][Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
-        double[][][]   values = new double[Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
-        double[][][]   errors = new double[Constants.NLAYER+1][thetaBins.length-1][phiBins.length-1];
+        double[][][][] shifts = new double[Constants.NPARS][Constants.NLAYER+Constants.NTARGET][thetaBins.length-1][phiBins.length-1];
+        double[][][]   values = new double[Constants.NLAYER+Constants.NTARGET][thetaBins.length-1][phiBins.length-1];
+        double[][][]   errors = new double[Constants.NLAYER+Constants.NTARGET][thetaBins.length-1][phiBins.length-1];
         for(int i=0; i<Constants.NPARS+1; i++) {
-            for(int il=0; il<=Constants.NLAYER; il++) {
+            for(int il=0; il<Constants.NLAYER+Constants.NTARGET; il++) {
                 for(int it=1; it<thetaBins.length; it ++) {
                     for(int ip=1; ip<phiBins.length; ip++) {
                         if(i==0) {
@@ -440,18 +440,18 @@ public class Alignment {
 
     
     private DataGroup getResidualGraphs(Table alignment) {
-        double[] layers = new double[Constants.NLAYER+1];
-        double[] zeros  = new double[Constants.NLAYER+1];
-        for(int il=0; il<=Constants.NLAYER; il++) layers[il]=il;
+        double[] layers = new double[Constants.NLAYER+Constants.NTARGET];
+        double[] zeros  = new double[Constants.NLAYER+Constants.NTARGET];
+        for(int il=0; il<Constants.NLAYER+Constants.NTARGET; il++) layers[il]=il;
 
         DataGroup residuals = new DataGroup(2,3);
         for(int it=1; it<thetaBins.length; it ++) {
             for(int ip=1; ip<phiBins.length; ip++) {
                 for(int is=0; is<Constants.NSECTOR; is++ ) {
                     int sector = is+1;
-                    double[] shiftRes = new double[Constants.NLAYER+1];
-                    double[] errorRes = new double[Constants.NLAYER+1];
-                    for (int il = 0; il <= Constants.NLAYER; il++) {
+                    double[] shiftRes = new double[Constants.NLAYER+Constants.NTARGET];
+                    double[] errorRes = new double[Constants.NLAYER+Constants.NTARGET];
+                    for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
                         shiftRes[il] = histos.get("nominal").getParValues(sector, it, ip)[il]
                                      - this.getFittedResidual(alignment, sector, it, ip)[il];
                         errorRes[il] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(sector, it, ip)[il], 2)
@@ -473,9 +473,9 @@ public class Alignment {
     }  
     
     private DataGroup getShiftsGraph(String key) {
-        double[] layers = new double[Constants.NLAYER+1];
-        double[] zeros  = new double[Constants.NLAYER+1];
-        for(int il=0; il<=Constants.NLAYER; il++) layers[il]=il;
+        double[] layers = new double[Constants.NLAYER+Constants.NTARGET];
+        double[] zeros  = new double[Constants.NLAYER+Constants.NTARGET];
+        for(int il=0; il<Constants.NLAYER+Constants.NTARGET; il++) layers[il]=il;
         
         DataGroup shifts = new DataGroup(thetaBins.length,phiBins.length);
         for(int it=0; it<thetaBins.length; it ++) {
@@ -552,7 +552,7 @@ public class Alignment {
         for(int is=0; is<Constants.NSECTOR; is++ ) {
             int sector = is+1;
             for(int ip=1; ip<phiBins.length; ip++) {
-                for (int il = 0; il <= Constants.NLAYER; il++) {
+                for (int il = 0; il <= Constants.NLAYER+Constants.NTARGET; il++) {
                     double[] shiftRes = new double[thetaBins.length-1];
                     double[] errorRes = new double[thetaBins.length-1];
                     double[] angles   = new double[thetaBins.length-1];          
@@ -591,7 +591,7 @@ public class Alignment {
             residuals.addDataSet(hi_res, is);
             for(int it=1; it<thetaBins.length; it++) {
                 for(int ip=1; ip<phiBins.length; ip++) {
-                    for (int il = 0; il <= Constants.NLAYER; il++) {
+                    for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
                         double shift = histos.get("nominal").getParValues(sector, it, ip)[il]
                                      - this.getFittedResidual(alignment, sector, it, ip)[il];
                         hi_res.fill(shift);

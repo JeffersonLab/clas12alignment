@@ -24,8 +24,9 @@ import org.jlab.utils.benchmark.ProgressPrintout;
  */
 public class Histo {
     
-    private final int nSector = 6;
-    private final int nLayer  = 36;
+    private final int nSector = Constants.NSECTOR;
+    private final int nLayer  = Constants.NLAYER;
+    private final int nTarget = Constants.NTARGET;
     
     private DataGroup       electron  = null; 
     private DataGroup       binning   = null; 
@@ -85,8 +86,8 @@ public class Histo {
         this.residuals = new DataGroup[nSector][thetaBins.length][phiBins.length];
         if(tres) this.time = new DataGroup[nSector][thetaBins.length][phiBins.length];
         this.vertex    = new DataGroup[thetaBins.length][phiBins.length];
-        this.parValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+1];
-        this.parErrors = new double[nSector][thetaBins.length][phiBins.length][nLayer+1];
+        this.parValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
+        this.parErrors = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         
         int nbinsRes  = Constants.RESBINS;
         double minRes = Constants.RESMIN;
