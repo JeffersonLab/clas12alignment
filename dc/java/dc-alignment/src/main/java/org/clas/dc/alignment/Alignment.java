@@ -261,7 +261,7 @@ public class Alignment {
 
     private double[] getFittedResidual(Table alignment, int sector, int itheta, int iphi) {
         double[] shift = new double[Constants.NLAYER+Constants.NTARGET];
-        for(int layer=0; layer<=Constants.NLAYER+Constants.NTARGET; layer++) {
+        for(int layer=0; layer<Constants.NLAYER+Constants.NTARGET; layer++) {
            shift[layer] = this.getFittedResidual(alignment, sector, layer, itheta, iphi);
         }
         return shift;
@@ -269,7 +269,7 @@ public class Alignment {
     
     private double[] getFittedResidualError(Table alignment, int sector, int itheta, int iphi) {
         double[] shift = new double[Constants.NLAYER+Constants.NTARGET];
-        for(int layer=0; layer<=Constants.NLAYER+Constants.NTARGET; layer++) {
+        for(int layer=0; layer<Constants.NLAYER+Constants.NTARGET; layer++) {
            shift[layer] = this.getFittedResidualError(alignment,sector, layer, itheta, iphi);
         }
         return shift;
@@ -552,7 +552,7 @@ public class Alignment {
         for(int is=0; is<Constants.NSECTOR; is++ ) {
             int sector = is+1;
             for(int ip=1; ip<phiBins.length; ip++) {
-                for (int il = 0; il <= Constants.NLAYER+Constants.NTARGET; il++) {
+                for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
                     double[] shiftRes = new double[thetaBins.length-1];
                     double[] errorRes = new double[thetaBins.length-1];
                     double[] angles   = new double[thetaBins.length-1];          
@@ -569,7 +569,7 @@ public class Alignment {
                     gr_fit.setTitle("Sector " + sector);
                     gr_fit.setTitleX("Residual (um)");
                     gr_fit.setTitleY("#theta bin/layer");
-                    if(il==0) gr_fit.setMarkerColor(1);
+                    if(il==0 || il==Constants.NLAYER+Constants.NTARGET-1) gr_fit.setMarkerColor(1);
                     else      gr_fit.setMarkerColor(this.markerColor[(il-1)/6]);
                     gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
                     gr_fit.setMarkerSize(this.markerSize);
