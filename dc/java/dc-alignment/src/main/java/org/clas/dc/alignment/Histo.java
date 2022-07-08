@@ -453,9 +453,10 @@ public class Histo {
                     if(!shift) {
                         this.parValues[is][it][ip][0] -= Constants.TARGETPOS*Constants.SCALE;
                         this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*(Constants.VTXMAX-Constants.VTXMIN)/Constants.VTXBINS/2);
-                        if(vertexFit==5) {
-                            this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] = (hvtx.getFunction().getParameter(7)-
-                                                                                                (Constants.SCEXIT-Constants.TARGETPOS))*Constants.SCALE;
+                        if(hvtx.getFunction().getName().equals("f4vertex") && 
+                           hvtx.getFunction().getNPars()>7 && 
+                           hvtx.getFunction().parameter(7).name().equals("scw")) {
+                            this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] = (hvtx.getFunction().getParameter(7)-Constants.SCEXIT)*Constants.SCALE;
                             this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] =  hvtx.getFunction().parameter(7).error()*Constants.SCALE;
                         }
                     }
@@ -805,12 +806,12 @@ public class Histo {
         double amp   = histo.getBinContent(ibin0);
         double sigma = 0.5;
         double bg = histo.getBinContent((ibin1+ibin0)/2);
-        String function = "[amp]*gaus(x,[mean]-[tl],[sigma])+"
-                        + "[amp]*gaus(x,[mean],[sigma])+"
-                        + "[amp]*gaus(x,[mean]+[wd],[sigma])/1.8+"
-                        + "[bg]*gaus(x,[mean]-[tl]/2,[tl]*0.6)+"
-                        + "[sc]*gaus(x,[mean]+[dext],[sigma])+"
-                        + "[air]*landau(x,[mean]+[dext]+[sigma]*2,[sigma]*4)";
+        String function = "[amp]*gaus(x,[exw]-[tl],[sigma])+"
+                        + "[amp]*gaus(x,[exw],[sigma])+"
+                        + "[amp]*gaus(x,[exw]+[wd],[sigma])/1.8+"
+                        + "[bg]*gaus(x,[exw]-[tl]/2,[tl]*0.6)+"
+                        + "[sc]*gaus(x,[exw]+[scw]-[tl]/2,[sigma])+"
+                        + "[air]*landau(x,[exw]+[scw]-[tl]/2+[sigma]*2,[sigma]*4)";
         F1D f1_vtx   = new F1D("f4vertex", function, -10, 10);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
@@ -1009,7 +1010,9 @@ public class Histo {
                         Func1D dsf = ((H1F) dsread).getFunction();
                         dsf.setLineColor(2);
                         dsf.setLineWidth(2);
-                        dsf.setOptStat("1111");
+                        String opts = "11";
+                        for(int k=0; k<dsf.getNPars(); k++) opts += "1";
+                        dsf.setOptStat(opts);
                     }
                     newGroup.addDataSet(dsread,i);                        
                 }
