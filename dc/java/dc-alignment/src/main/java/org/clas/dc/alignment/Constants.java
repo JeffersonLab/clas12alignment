@@ -69,7 +69,7 @@ public class Constants {
                                               1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 
-                                              1,      1,      1,       1,       1,       1, 0};               
+                                              1,      1,      1,       1,       1,       1,   1};               
     
     // target parameters
     public static double TARGETPOS    = -0.5;
