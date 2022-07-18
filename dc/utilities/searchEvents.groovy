@@ -13,7 +13,7 @@ if(args.length<2) {
 }
 
 // read event list
-FileReader fileReader = new FileReader($1);
+FileReader fileReader = new FileReader(args[0]);
 BufferedReader bufferedReader = new BufferedReader(fileReader);
 
 Map<Integer, ArrayList<Integer>> eventMap = new HashMap<>();
@@ -31,7 +31,7 @@ while ((line = bufferedReader.readLine()) != null) {
 }
 bufferedReader.close();
 
-String inputpath = $2;
+String inputpath = args[1];
 
 HipoDataSync writer = new HipoDataSync();
 writer.open("skim4.hipo");
