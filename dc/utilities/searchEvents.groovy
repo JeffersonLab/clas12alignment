@@ -101,7 +101,7 @@ for(Integer run : eventMap.keySet()) {
                 if(fileEvents.contains(ev)) {
                     writer.writeEvent(event);
 	            nfound++;
-                    if(nfound%10000) System.out.println("Found event " + ev + "(" + nfound + "/" + eventMap.get(run).size() + ") in run " + run);
+                    if(nfound%10000==0) System.out.println("Found event " + ev + "(" + nfound + "/" + eventMap.get(run).size() + ") in run " + run);
                 }
             }
         }    
