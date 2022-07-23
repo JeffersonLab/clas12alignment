@@ -537,7 +537,6 @@ public class Kinematics {
         rmin = mean - 4.0 * Math.abs(sigma);
         hiw.setFunction(null);
         f1w = new F1D("f1_w", "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x", rmin, rmax);
-                System.out.println(mean + " " + sigma + " " + rmin + " " + rmax);
         f1w.setParameter(0, amp);
         f1w.setParameter(1, mean);
         f1w.setParameter(2, sigma);
