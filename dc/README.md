@@ -8,7 +8,7 @@ Specifically:
 * The same tracks are reconstructed applying a single translation or rotation. The size of these is chosen to be large enough to have a measureable effect on fit residuals and vertex distributions, while being small compared to the DC cell size. The values used so far are 0.1-0.8 cm for shifts and 0.2 deg for rotations. Translations and rotations are applied in the tilted-sector coordinate frame (y axis along the DC wires and z axis perpendicular to the DC layers, i.e. at 25 deg from the beamline axis). Currently, the x rotation is not supported by tracking software. Therefore, the total number of shifts and rotation is 15, 3 translations and 2 rotations for each of the 3 regions. 
 * The derivatives of the fit residuals and z-vertex versus each translation and rotation are extracted comparing the fit residuals and z-vertex for that geometry to the nominal geometry. 
 * The nominal-geometry residual and vertex shifts with respect to the desired positions are fit to a linear combinations of the derivatives to extract the translations and rotation sizes. This global fit is performed with Minuit, minimizing a chi2 defined as the sum of squares of the residual and vertex shift normalized to their uncertainties. 
-* The fit parameters are printout in a format corresponding to the /geometry/dc/alignment CCDB table used by reconstruction. Here translations are defined in the CLAS12 frame while rotations are defined in the tilted-sector coordinate system.
+* The fit parameters are printed out in a format corresponding to the /geometry/dc/alignment CCDB table used by reconstruction. Here translations are defined in the CLAS12 frame while rotations are defined in the tilted-sector coordinate system.
 
 ### Prerequisites
 * Software:
@@ -20,7 +20,7 @@ Specifically:
   * Recent sqlite snapshot of CCDB (see https://clasweb.jlab.org/clas12offline/sqlite/ccdb/)
 
 ### Data processing
-  * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry for the chosen data set and each of the individual translations or rotations in xyz for each of the DC regions. This will results in up to 15 sets of reconstructed files that will be the input of the alignment code.  The nominal geometry can be the DC design geometry (CCDB variation: default) or a geometry determined from previous alignment results with non-zero shifts compared to the ideal case. 
+  * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry for the chosen data set and each of the individual translations or rotations in xyz for each of the DC regions. This will result in up to 15 sets of reconstructed files that will be the input of the alignment code.  The nominal geometry can be the DC design geometry (CCDB variation: default) or a geometry determined from previous alignment results with non-zero shifts compared to the ideal case. 
     * The reconstruction configuration files (yaml files) to produce these sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.1.2), using the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/generateYamls.csh):
       ```
       ./generateYamls.csh <base-yaml-file> <variation>  <output-directory>
@@ -28,32 +28,34 @@ Specifically:
       where:
       * The base yaml file will be dcalign.yaml.
       * The variation will be the one containing the chosen *nominal* geometry as discussed above. 
-      * The generated yaml files will be in the folder specified when running the command. The folder will contain the 15 yaml files correspnding to the translations and rotations described above, the yaml file ```r0.yaml```, corresponding to the nominal geometry, and rga_fall2018.yaml, corresponding to the original alignment results by T. Haywards.
+      * The generated yaml files will be in the folder specified when running the command. The folder will contain the 15 yaml files corresponding to the translations and rotations described above, the yaml file ```r0.yaml```, corresponding to the nominal geometry, and rga_fall2018.yaml, corresponding to the original alignment results by T. Haywards.
       In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
         ```
         dcGeometryVariation: "default"
         alignmentShifts: "r1_cz:0.2"
         ```
         specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected with the variable ```dcGeometryVariation```. This allows to perform multiple iterations by selecting a variation where the /geometry/dc/alignment table contains the results of the previous iteration.
-    *  For each yaml file, generate and run one cooking workflow to process the straigth track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation):
+    *  For each yaml file, generate and run one cooking workflow to process the straight track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation):
        *  Use as output directory name for the workflow the same name of the yaml file without the extention (e.g. the output of the data processed with r1_cz.yaml should be in a directory named r1_cz). 
-       *  Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks).
-       *  Use the --ccdbsqlite workflow option to oint to the Sqlite snapshot that is being used for the alignment.
+       *  Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks. The dst schema directory can be found at $COATJAVA/etc/bankdefs/hipo4/singles/dst)
+       *  Use the --ccdbsqlite workflow option to point to the Sqlite snapshot that is being used for the alignment.
        *  Notes:
           * Since the workflows that should be generated have the same configuration except for the selected yaml file, the tag, and the output directory, an easy way to generate all of then with a single command is to use a command-line for-loop. In cshell or tcshell, this would look like:
               ```
               foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
-                 clas12-workflow.py --runGroup rgb --model rec --tag myTag-$var --inputs /mss/clas12/rg-b/production/decoded/6.5.6/006342 --runs 6342 --clara /group/clas12/packages/clara/5.0.2_8.1.2 --outDir /my-ouput-drectory-path/$var --reconYaml path-to-yamls-directory/$var".yaml" --ccdbsqlite path-to-sqlite-file --reconSize 1 --threads 16
+                 clas12-workflow.py --runGroup rgb --model rec --tag myTag_$var --inputs /mss/clas12/rg-b/production/decoded/6.5.6/006342 --runs 6342 --clara /group/clas12/packages/clara/5.0.2_8.1.2 --outDir /my-ouput-drectory-path/$var --reconYaml path-to-yamls-directory/$var".yaml" --ccdbsqlite path-to-sqlite-file --reconSize 1 --threads 16
               end
               ```
               Similarly, the workflows submission can be done as follows:
               ```
-              foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018_am_nc_i2 )
-                 swif2 import -file rgb-r-myTag-$var"-6342.json"
-                 swif2 run -workflow  rgb-r-myTag-$var"-6342"
+              foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
+                 swif2 import -file rgb-r-myTag_$var"-6342.json"
+                 swif2 run -workflow  rgb-r-myTag_$var"-6342"
               end
               ```
-              Note that the above workflow creation command is just an example and should be modified depending on the current workflow tools options and the data set.
+              * Notes: 
+	      		* The above workflow creation command is just an example and should be modified depending on the current workflow tools options 			  and the data set. 
+	      		* Only [a-z A-z 0-9 _] symbols can be used for the --tag option.
           * Since the alignment procedure requires processing the same data multiple times, it may be convenient to prefilter the events in the alignment run to select the ones of interest for the FD. This applies in particular to recent alignment runs where the trigger included a FD electron trigger and a CD trigger, with the latter having much higher rate than the former. The selection could be done on decoded files, saving only the events where the FD trigger bit is set or that have HTCC/ECAL banks.
              
 * Alignment input files:
@@ -86,6 +88,10 @@ Set the CCDB connection environment variable to point with the Sqlite file that 
 ```
   setenv CCDB_CONNECTION sqlite:///path-to-sqlite-file
 ```
+
+
+* Note: The CCDB_CONNECTION variable may be overwritten when loading certain modules, such as the clas12 module. Make sure to set this path after 			loading such a module.
+
 Run the code with:
 ```
   ./bin/dc-alignment
@@ -195,7 +201,7 @@ Check the command line options with:
   ```
 The code will read the histograms from the specified file, retrieve the relevant parameters from the histograms or fits, compute the unit derivatives and nominal residuals and vertex values, perform themisalignment fit,plot the results and print the extracted alignment constants. 
 
-Here is example of using the "fit" option to extract misalignments an already created histogram hipo file:
+Here is example of using the "fit" option to extract misalignments from an already created histogram hipo file:
 ```
 ./bin/dc-alignment -fit -compare rga_fall2018 -input /path/to/histo.hipo
 ```
@@ -222,16 +228,16 @@ The tab displays a summary of the extracted residuals and vertex shifts and deri
 * nominal vs. theta: same as above but with the y-axis defined as the angular bin number plus the layer number. The different colors correspond to the different DC superlayers and the black points show the vertex shifts. See screenshot of graph below.
 ![Plot_02-19-2022_10 21 21_PM](https://user-images.githubusercontent.com/7524926/154819746-af0ee5bc-3e22-41b1-a00f-50f6d20d84c7.png)
 * corrected and corrected vs. theta: same as above but after applying the translations and rotations from the /geometry/dc/alignment table in the CCDB variation specified with the ``-compare`` option. (Example not shown.)
-* shift magnitude: histogram of the residual and vertex shifts associated with the chosen translations and rotations. The top histograms shows the average change of the track residual for translations and rotations of region 1 (x:1-6), region 2 (x:7-12), and region 3 (x:13-18). Within each region range, the first 3 x values coresponds to the xyz translations and the second 3 x values to xyz rotations. The missing bins at x=4 are due to the x rotations not being used. The different colors correspond t the theta bins (black is all theta) and the different color shadows to the phi bins. The bottom histogram shows the same information for vertex shifts.
+* shift magnitude: histogram of the residual and vertex shifts associated with the chosen translations and rotations. The top histogram shows the average change of the track residual for translations and rotations of region 1 (x:1-6), region 2 (x:7-12), and region 3 (x:13-18). Within each region range, the first 3 x values coresponds to the xyz translations and the second 3 x values to xyz rotations. The missing bins at x=4 are due to the x rotations not being used. The different colors correspond to the theta bins (black is all theta) and the different color shades correspond to the phi bins. The bottom histogram shows the same information for vertex shifts.
 ![Plot_07-05-2022_07 06 10_PM](https://user-images.githubusercontent.com/7524926/177380554-d91f0da9-29c7-412d-b429-796c22653b6f.png)
 * r1_x, ...r3_cy: graphs of the fit residuals and vertex derivatives for the corresponding translation or rotation. Each graph corresponds to a different angular bin. Colors correspond to different sectors while the average is shown in black. An example is shown by the following graph.
 ![Plot_02-19-2022_10 22 13_PM](https://user-images.githubusercontent.com/7524926/154819842-7f8f4f72-ad4d-4d27-a0e3-ada02b65447a.png)
-* corrected(with new parameters) and ocrrected(with new parameters) vs. theta: same as nominal or corrected, but after aplying the combination of shifts and rotations resulting from the global fit. (Example not shown.)
-* before/after: shows the distribution of all tracking and vertex residuals corrected with the fitted misalignements 9red), with the misalignments specified iwth the ``-compare`` option (green) and with nominal geometry (black). In the example below, the nominal residuals are almost completely out of scale while the comparison between the new and old parameters shows the level of improvement.
+* corrected(with new parameters) and corrected(with new parameters) vs. theta: same as nominal or corrected, but after aplying the combination of shifts and rotations resulting from the global fit. (Example not shown.)
+* before/after: shows the distribution of all tracking and vertex residuals corrected with the fitted misalignements (red), with the misalignments specified with the ``-compare`` option (green) and with nominal geometry (black). In the example below, the nominal residuals are almost completely out of scale while the comparison between the new and old parameters shows the level of improvement.
 ![Plot_07-05-2022_07 05 04_PM](https://user-images.githubusercontent.com/7524926/177380199-77dec15e-95b8-41b5-8ed5-75dc42662ec5.png)
-* misalignments: shows the comparison of the current analysis and minuit fit (red) and of the constants from the /geometry/dc/alignment table in the CCDB variation specified with the ``-compare`` option (black). If the ``-compare`` option is not specified, the black points will be at x=0. Each column correspomnds to a sector. Top and bottom corresponds to translations and rotations, respectively. The y coordinate identifies the DC region and translation/rotation coordinate. For example, points at y 0, 1 and 2 correspond to region 1, x, y and z translation or rotations.
+* misalignments: shows the comparison of the current analysis and minuit fit (red) and of the constants from the /geometry/dc/alignment table in the CCDB variation specified with the ``-compare`` option (black). If the ``-compare`` option is not specified, the black points will be at x=0. Each column corresponds to a sector. Top and bottom corresponds to translations and rotations, respectively. The y coordinate identifies the DC region and translation/rotation coordinate. For example, points at y 0, 1 and 2 correspond to region 1 x, y and z translations or rotations.
 ![Plot_07-05-2022_07 05 21_PM](https://user-images.githubusercontent.com/7524926/177382223-27eb9b1b-44fa-4405-87de-f1f777bb5beb.png)
-* internal-only: same as the previous tab but after removing ''global'' geometry transformation that cannot be constrained with the current straight track alignment. These so-called weak modes are overall contraction or expansions in size of the detector and rotations of whole sector. The displayed parameters are corrected by normalizing the region1 position to the nominal one.
+* internal-only: same as the previous tab but after removing ''global'' geometry transformation that cannot be constrained with the current straight track alignment. These so-called weak modes are overall contractions or expansions in the size of the detector and rotations of whole sectors. The displayed parameters are corrected by normalizing the region 1 position to the nominal one.
 ![Plot_07-05-2022_07 05 37_PM](https://user-images.githubusercontent.com/7524926/177382868-88ae1ed1-d3b7-4245-9764-4ff90fb9ee65.png)
 
 
@@ -241,7 +247,7 @@ The tab displays the relevant distributions for the selected electron tracks. Ex
 ![Plot_07-06-2022_12 32 20_PM](https://user-images.githubusercontent.com/7524926/177531572-964c21c9-4b42-4ee2-907b-3e11382118b4.png)
 
 #### Nominal
-This tab displays histograms of the z-vertex distributions, fit and time residuals for each angular bin and sector.
+This tab displays histograms of the z-vertex distributions and residuals for each angular bin and sector.
 * Z-vertex histograms: the picture below shows an example of a typical distribution for data taken with the 5cm-long LH2 target cell. The three peaks correspond to the cell windows and to a superinsulation foil. The upstream cell window is the left-most peak, the downstream cell window is the next peak to the right, and the superinsulation foil is the smaller, right-most peak. The distribution is fit to the sum of three Gaussians describing the windows and foil, plus a fourth broader gaussian describing the background from residual gas or badly reconstructed tracks. To ensure a good fit convergence, the 3 peak's sigmas are set to be the same and the distances between the peaks are constrained to the known values from the target geometry. The fit parameters are:
   * amp: height of the downstream cell window peak,
   * mean: mean of the downstream cell window peak (to be compared with the nominal of 0.5 cm),
@@ -320,7 +326,7 @@ When launched, the alignment code will print-out relevant information as it goes
   ***** >>> adding : /geometry/dc/alignment / table = /geometry/dc/alignment
   [DB] --->  database disconnect  : success
   ```
-  where the first connections will always be to variation default, to download the design geometry parameters and the folloing connections will be to the variations selected with the command line options.
+  where the first connections will always be to variation default, to download the design geometry parameters. The following connections will be to the variations selected with the command line options.
 * The pre-existing misalignments set with the ```-init``` command-line option. These are printed twice, the first in the local frame and the second in the CCDB-compliant format.
 * The minuit fit results for each sector:
   ```
@@ -352,22 +358,34 @@ When launched, the alignment code will print-out relevant information as it goes
     r3_cz:  0.0268 ± 0.0138 (-0.0138 - 0.0138)
   ```
   A good fit should have status set to true, indicating minuit converged.
-* The fitted misalignment constants from the current analysis, the final constants obtained as the sum of this and previous iteration and the pre-existing constants to compare to. The second of this table is the one to be loaded into the sqlite file for testing or for proceeding with a subsequent iteration.
+* The fitted misalignment constants from the current analysis, the final constants obtained as the sum of this and previous iteration, and the pre-existing constants to compare to. The second of this table is the one to be loaded into the sqlite file for testing or for proceeding with a subsequent iteration.
 
 
 #### Loading alignment constants to sqlite/CCDB
-The final constants can be loaded to a new variation in the sqlite file for testing purpose or to proceed with a new iteration. The constants should be loaded to CCDB only when really finalized and vetted.
+The final constants can be loaded to a new variation in the sqlite file for testing purposes or to proceed with a new iteration. The constants should be loaded to CCDB only when really finalized and vetted.
 To load them to sqlite:
 * Create a new variation using *rga_fall2018* as a parent to inherit the correct geometry for all other detectors:
   ```
-  ccdb -c sqlite:///path-to-sqlite-file mkvar variation-name -p rga_fall2018
+  ccdb -c sqlite:///path-to-sqlite-file mkvar variation_name -p rga_fall2018
   ```
+  choosing a suitable name for the variation. Note that only strings containing letters, numbers, and/or _ will be allowed for the varaition name.
 * Create a text file with the constants from this analysis.
+	* This can be done by simply copying the "Final alignment parameters in CCDB format" table that results from running the alignment program and pasting this into a txt file. 
 * Load the constants:
   ```
-  ccdb -c sqlite:///path-to-sqlite-file add /geometry/dc/alignment file-with-constants.txt -v variation-name
+  ccdb -c sqlite:///path-to-sqlite-file add /geometry/dc/alignment file-with-constants.txt -v variation_name
   ```
+* Check the constants were loaded correctly:
+  ```
+  ccdb -c sqlite:///path-to-sqlite-file dump /geometry/dc/alignment -v variation_name
+  ```  
 The sqlite file can then be used for a new iteration by repeating the all procedure, using the new variation as the nominal.
 
-  
-
+#### Performing a new iteration
+Once the sqlite is updated with the constants from a given iteration, a new iteration can be performed repeating the whole procedure (starting with generating new yaml files) using the new variation created above as *nominal*.
+When running the alignment code on the processed event files, include the command line option:
+```
+-init variation_name
+```
+with the variation created and filled with the previous iteration constants. In this way the final constants printed on the terminal will be the sum of the previous and current misalignments.
+* Note: The -init option should be used also with the -analyze and -fit options in order for previous misalignments to be accounted for.
