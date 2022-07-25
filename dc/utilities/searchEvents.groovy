@@ -1,22 +1,36 @@
-import org.jlab.io.hipo.*;
-import org.jlab.io.hipo.HipoDataSource;
-import org.jlab.io.base.DataBank;
-import org.jlab.io.base.DataEvent;
+import org.jlab.jnp.hipo4.data.Bank;
+import org.jlab.jnp.hipo4.data.Event;
+import org.jlab.jnp.hipo4.data.SchemaFactory;
+import org.jlab.jnp.hipo4.data.Schema;
+import org.jlab.jnp.hipo4.io.HipoReader;
+import org.jlab.jnp.hipo4.io.HipoWriter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+String eventListFile = null;
+String inputPath = null
+boolean merge = false;
+
+
 if(args.length<2) {
-    System.out.println("Usage:\\n\t run-groovy saveEventNumbers.groovy <hipo-file-directory> <run-and-event-numbers-file>");
+    System.out.println("Usage:\\n\t run-groovy searchEvents.groovy <run-and-event-numbers-file> <hipo-file-directory> [merge-runs(true/false)]");
     return;
+}
+else {
+    eventListFile = args[0];
+    inputPath     = args[1];
+    if(args.length>2) {
+        if(args[2].equals("true")) merge = true;
+    }
 }
 
 // read event list
-FileReader fileReader = new FileReader(args[0]);
+FileReader fileReader = new FileReader(eventListFile);
 BufferedReader bufferedReader = new BufferedReader(fileReader);
 
-Map<Integer, ArrayList<Integer>> eventMap = new HashMap<>();
+Map<Integer, Map<Integer, Boolean>> eventMap = new LinkedHashMap<>();
 String line = null;
 while ((line = bufferedReader.readLine()) != null) {
     String[] cols = line.split("\\s+");
@@ -24,89 +38,68 @@ while ((line = bufferedReader.readLine()) != null) {
         int run   = Integer.parseInt(cols[0].trim());
         int event = Integer.parseInt(cols[1].trim());
         if(!eventMap.containsKey(run)) {
-            eventMap.put(run, new ArrayList<Integer>());
+            eventMap.put(run, new HashMap<>());
         }
-        eventMap.get(run).add(event);
+        eventMap.get(run).put(event, false);
     } 
 }
 bufferedReader.close();
 
-String inputpath = args[1];
 
-HipoDataSync writer = new HipoDataSync();
-writer.open("skim4.hipo");
+HipoWriter writer = null;
+String outFile = null;
 
-for(Integer run : eventMap.keySet()) {
-    System.out.println("Searching events for run " + run);
+for(Integer run : eventMap.keySet()) {    
+    Map<Integer, Boolean> eventList = eventMap.get(run);
     
-    ArrayList eventList = eventMap.get(run);
-    Collections.sort(eventList);
+    System.out.println("Searching " + eventList.size() + " events for run " + run);
+    if(eventList.size()==0) continue;
     
-    String dirname  = inputpath + String.format("/%06d",run);
+    String dirname  = inputPath + String.format("/%06d",run);
     File file = new File(dirname);
     String[] files = file.list();
     Arrays.sort(files); 
-    // build list of first events
-    ArrayList<Integer> filesMinEvents = new ArrayList<>();
-    for(int j=0; j<files.length; j++) {
-        String filename = files[j];
-        HipoDataSource reader = new HipoDataSource();
-        reader.open(dirname + "/" + filename);
-        while(reader.hasEvent()) {   
-            DataEvent event = reader.getNextEvent();
-            // getting event number
-            if (event.hasBank("RUN::config")) {
-                DataBank bank = event.getBank("RUN::config");
-                if(bank.getInt("event",0)>0) {
-                    filesMinEvents.add(bank.getInt("event",0));
-                    break;
-                }
-            }
-        }
-    }
-    
-    // group events by file 
-    Map<Integer, Integer> eventByFile = new HashMap();
-    for(int ev : eventMap.get(run)) {
-        int ifile = -1;
-        for(int i=0; i<filesMinEvents.size()-1; i++) {
-            if(ev>=filesMinEvents.get(i) && ev<filesMinEvents.get(i+1)) {
-                ifile = i
-                break;
-            }
-        }
-        if(ifile==-1 && ev>=filesMinEvents.get(filesMinEvents.size()-1)) {
-            ifile = filesMinEvents.size()-1;
-        }
-        if(ifile>=0) {
-            if(!eventByFile.containsKey(ifile)) {
-                eventByFile.put(ifile, new ArrayList<Integer>());
-            }
-            eventByFile.get(ifile).add(ev);
-        }
-    }
+    System.out.printf("File list for run %d: \n%s\n\n", run, Arrays.toString(files));
+ 
     // find the file
     int nfound = 0;
-    for(int ifile : eventByFile.keySet()) {
-        List<Integer> fileEvents = eventByFile.get(ifile);
+    for(int ifile=0; ifile<files.length; ifile++) {
         //now get the event
-        HipoDataSource reader = new HipoDataSource();
+        HipoReader reader = new HipoReader();
+        reader.setTags(0);
         reader.open(dirname + "/" + files[ifile]);
-        while(reader.hasEvent()) {   
-            DataEvent event = reader.getNextEvent();
+        
+        if(writer==null) {
+            writer = reader.createWriter();
+            writer.open("skim4.hipo")
+        }
+        
+        Schema runConfig = reader.getSchemaFactory().getSchema("RUN::config");
+
+        Event event = new Event();
+        while (reader.hasNext()) {
+            
+            reader.nextEvent(event);
+            
+            Bank bank = new Bank(runConfig);
+            event.read(bank);
+
             // getting event number
-            if (event.hasBank("RUN::config")) {
-                DataBank bank = event.getBank("RUN::config");
+            if (bank.getRows()>0) {
+
                 int ev = bank.getInt("event",0);
-                if(fileEvents.contains(ev)) {
-                    writer.writeEvent(event);
+                long ts = bank.getLong("timestamp",0);
+                if(eventList.containsKey(ev) && ts>0) {
+                    if(eventList.get(ev)) System.out.println("duplicates!!!!!" +ev);
+                    eventList.replace(ev, true);
+                    writer.addEvent(event);
 	            nfound++;
-                    if(nfound%10000==0) System.out.println("Found event " + ev + "(" + nfound + "/" + eventMap.get(run).size() + ") in run " + run);
+                    if(nfound%10000==0) System.out.println("Found event " + ev + "(" + nfound + "/" + eventList.size() + ") in run " + run);
                 }
             }
         }    
     }
-    System.out.println("Found " + nfound + " events of " + eventMap.size());   
+    System.out.println("Found " + nfound + " events of " + eventList.size());   
 }
 
-writer.close();
+if(writer!=null) writer.close();
