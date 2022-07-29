@@ -17,13 +17,13 @@ Specifically:
   * maven 
 * Data:
   * Straight-track data (both solenoid and torus should be off) with electron tracks in the forward detector
-  * Recent Sqlite snapshot of CCDB (see https://clasweb.jlab.org/clas12offline/sqlite/ccdb/)
+  * A recent Sqlite snapshot of CCDB (see https://clasweb.jlab.org/clas12offline/sqlite/ccdb/)
 
 
 ### Data processing
-  * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry and each of the individual translations or rotations in xyz for each of the DC regions. This will result in up to 16 sets of reconstructed files that will be the input of the alignment code.  The nominal geometry can be the DC design geometry (CCDB variation: *nominal*) or a geometry determined from a previous alignment with non-zero shifts compared to the nominal case. 
-    * Setup or check the chosen geometry variation in the Sqlite file which is being used. The selected variation should also be populated with realistic geometry tables for the other CLAS12 detectors. For instance, in the CCDB variation *nominal* detectors such as FTOF and ECAL are shifted by ~5 cm downstream the ideal position to account for the actual installation position of the Forward Carriage. If using a variation different from *nominal*, make sure the beam offsets constants (CCDB table ``/geometry/beam/position``) are set appropriately, i.e. set equal to the best guess of the actual bam position for the straight track run or to x=y=0, if no other information is available.
-    * The reconstruction configuration files (yaml files) to produce the 16 sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.2.1). Copy the file to your work directory and edit it, replacing the variation in the global section (*rga_fall2018* in the coatjava 8.2.1 file) with the chosen variation. Leave the other variation settings unchanged. Run the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/generateYamls.csh):
+  * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry and each of the individual translations or rotations in xyz for each of the DC regions. This will result in up to 16 sets of reconstructed files that will be the input of the alignment code.  The nominal geometry can be the DC design geometry (CCDB variation: ``nominal``) or a geometry determined from a previous alignment with non-zero shifts compared to the nominal case. 
+    * Setup or check the chosen geometry variation in the Sqlite file which is being used. The selected variation should also be populated with realistic geometry tables for the other CLAS12 detectors. For instance, in the CCDB variation ``nominal`` detectors such as FTOF and ECAL are shifted by ~5 cm downstream the ideal position to account for the actual installation position of the Forward Carriage. If using a variation different from *nominal*, make sure the beam offsets constants (CCDB table ``/geometry/beam/position``) are set appropriately, i.e. set equal to the best guess of the actual bam position for the straight track run or to x=y=0, if no other information is available.
+    * The reconstruction configuration files (yaml files) to produce the 16 sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.2.1). Copy the file to your work directory and edit it, replacing the variation in the global section (``rga_fall2018`` in the coatjava 8.2.1 file) with the chosen variation. Leave the other variation settings unchanged. Run the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/utilities/generateYamls.csh):
       ```
       ./generateYamls.csh <base-yaml-file> <variation>  <output-directory>
       ```
@@ -33,30 +33,30 @@ Specifically:
       * The generated yaml files will be in the folder specified when running the command. The folder will contain the 15 yaml files corresponding to the translations and rotations described above, the yaml file ```r0.yaml```, corresponding to the nominal geometry, and rga_fall2018.yaml, corresponding to the original alignment results by T. Haywards.
         In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
         ```
-        dcGeometryVariation: "default"
+        dcGeometryVariation: "nominal"
         alignmentShifts: "r1_cz:0.2"
         ```
-        specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected with the variable ```dcGeometryVariation```. This allows to perform multiple iterations by selecting a variation where the ``/geometry/dc/alignment table`` contains the results of the previous iteration.
+        specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected with the variable ```dcGeometryVariation```. This allows to perform multiple iterations by selecting a variation where the ``/geometry/dc/alignment`` table contains the results of the previous iteration.
     * For each yaml file, generate and run one cooking workflow to process the straight track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation):
       * Use as output directory name for the workflow the same name of the yaml file without the extention (e.g. the output of the data processed with r1_cz.yaml should be in a directory named r1_cz). 
       * Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks. The dst schema directory can be found at $COATJAVA/etc/bankdefs/hipo4/singles/dst)
       * Use the --ccdbsqlite workflow option to point to the Sqlite snapshot that is being used for the alignment.
       * Since the workflows that should be generated have the same configuration except for the selected yaml file, the tag, and the output directory, an easy way to generate all of then with a single command is to use a command-line for-loop. In cshell or tcshell, this would look like:
-              ```
-              foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
-                 clas12-workflow.py --runGroup rgb --model rec --tag myTag_$var --inputs /mss/clas12/rg-b/production/decoded/6.5.6/006342 --runs 6342 --clara /group/clas12/packages/clara/5.0.2_8.1.2 --outDir /my-ouput-drectory-path/$var --reconYaml path-to-yamls-directory/$var".yaml" --ccdbsqlite path-to-sqlite-file --reconSize 1 --threads 16
-              end
-              ```
+        ```
+        foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
+            clas12-workflow.py --runGroup rgb --model rec --tag myTag_$var --inputs /mss/clas12/rg-b/production/decoded/6.5.6/006342 --runs 6342 --clara /group/clas12/packages/clara/5.0.2_8.1.2 --outDir /my-ouput-drectory-path/$var --reconYaml path-to-yamls-directory/$var".yaml" --ccdbsqlite path-to-sqlite-file --reconSize 1 --threads 16
+        end
+        ```
         Similarly, the workflows submission can be done as follows:
-              ```
-              foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
-                 swif2 import -file rgb-r-myTag_$var"-6342.json"
-                 swif2 run -workflow  rgb-r-myTag_$var"-6342"
-              end
-              ```
+        ```
+        foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
+            swif2 import -file rgb-r-myTag_$var"-6342.json"
+            swif2 run -workflow  rgb-r-myTag_$var"-6342"
+        end
+        ```
       * Notes: 
-	* The above workflow creation command is just an example and should be modified depending on the current workflow tools options and the data set. 
-	* Only [a-z A-z 0-9 _] symbols can be used for the --tag option.
+        * The above workflow creation command is just an example and should be modified depending on the current workflow tools options and the data set. 
+        * Only [a-z A-z 0-9 _] symbols can be used for the --tag option.
         * Since the alignment procedure requires processing the same data multiple times, it may be convenient to prefilter the events in the alignment run to select the ones of interest for the FD. This applies in particular to recent alignment runs where the trigger included a FD electron trigger and a CD trigger, with the latter having much higher rate than the former. The selection could be done on decoded files, saving only the events where the FD trigger bit is set or that have HTCC/ECAL banks.
              
 * Alignment input files:
@@ -146,14 +146,19 @@ Check the command line options with:
     -theta : theta bin limits, e.g. "5:10:20:30" (default = 5:10:20)
      -time : make time residual histograms (1=true, 0=false) (default = 0)
   -verbose : global fit verbosity (1/0 = on/off) (default = 0)
-   -vertex : fit vertex plots with 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1) (default = 4)
+   -vertex : fit vertex plots with 3 gaussians (5), with 3 gaussians (4), 2 gaussians (3), 
+             1 gaussian plus background (2) or only 1 gaussian (1) (default = 5)
 ```
 The code will process the input files specified with the ```-nominal``` or ```-r[123]_[c][xyz]``` options, create and fill histograms according to the selected theta and phi bins, run the analysis, plot the results and printout the extracted alignment constants. All histograms will be saved to an histogram file named ``prefix_histo.hipo``, with ``prefix`` being the string specified with the ```-o``` option, or ``histo.hipo`` if the option is not used. 
 By specifying ``-display 0``, the graphical window presenting the plotted results will not be opened.
 
 The following is an example of how one would process directories of the reconstructed data files, utilizing 12 geometry variations (9 translations and 3 rotations). In this example, three theta bins are used (8 to 14, and 14 to 22 [degrees]) and two bins in phi are used (-30 to 0, and 0 to 30 [degrees]).
 ```
-./bin/dc-alignment -process -nominal path-to-r0-files -r1_x path-to-r1_x -r1_y path-to-r1_y/ -r1_z path-to-r1_z -r1_cy path-to-r1_cy -r1_cz path-to-r1_cz -r2_x path-to-r2_x -r2_y path-to-r2_y -r2_z path-to-r2_z -r2_cy path-to-r2_cy -r2_cz path-to-r2_cz -r3_x path-to-r3_x -r3_y path-to-r3_y -r3_z path-to-r3_z -r3_cy path-to-r3_cy -r3_cz path-to-r3_cz -theta 6:8:12:36 -phi -30:-10:0:10:30 -vertex 4 -residuals 2  -compare rga_fall2018 -o output_file_name_prefix
+./bin/dc-alignment -process -nominal path-to-r0-files \
+-r1_x path-to-r1_x -r1_y path-to-r1_y -r1_z path-to-r1_z -r1_cy path-to-r1_cy -r1_cz path-to-r1_cz \
+-r2_x path-to-r2_x -r2_y path-to-r2_y -r2_z path-to-r2_z -r2_cy path-to-r2_cy -r2_cz path-to-r2_cz \
+-r3_x path-to-r3_x -r3_y path-to-r3_y -r3_z path-to-r3_z -r3_cy path-to-r3_cy -r3_cz path-to-r3_cz \
+-theta 6:8:12:36 -phi -30:-10:0:10:30 -vertex 4 -residuals 2  -compare rga_fall2018 -o output_file_name_prefix
 
 ```
 #### Analyze a histogram file
@@ -173,7 +178,8 @@ Check the command line options with:
    -shifts : use event-by-event subtraction for unit shifts (1=on, 0=off) (default = 0)
     -stats : set histogram stat option (default = )
   -verbose : global fit verbosity (1/0 = on/off) (default = 0)
-   -vertex : fit vertex plots with 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1) (default = 4)
+   -vertex : fit vertex plots with 3 gaussians (5), with 3 gaussians (4), 2 gaussians (3), 
+             1 gaussian plus background (2) or only 1 gaussian (1) (default = 5)
 ```
 The code will read the histograms from the specified file, analyze them, compute the unit derivatives and nominal residuals and vertex values, perform the misalignment fit,plot the results and print the extracted alignment constants. 
 
@@ -213,9 +219,23 @@ In addition to the parameters that can be selected from command line, the code u
 * global fit parameters initialization values and step size.
 These can be modified according to the needs before compiling and running the code.
 
+### Vertex fits
+The choice of the vertex fit functional form is very important for the accuracy of the results. Currently, five fitting options are implemented:
+1. single gaussian,
+2. gaussian plus polynomial background,
+3. double gaussian,
+4. sum of 3 gaussians plus background,
+5. sum of 4 gaussians plus background.    
+Option 1 is mostly for MC studies, option 2 and 3 have been implemented for RG-F in the assumption of fitting only the downstream or upstream target window, options 4 and 5 have been implemented for the cryotarget. In this last case, two gaussians are used to fit the target cell windows, the third gaussian is used to fit the heath shield located downstream to the target cell and the optional fourth gaussian fits the scattering chamber exit window located at about 28 cm from the target center. The plot below shows an example of the 4 Gaussians fit.
+![Plot_07-29-2022_10 18 30_PM](https://user-images.githubusercontent.com/7524926/181837320-4bedbbb7-c0a8-4957-9a84-b09f82a63265.png)
+
+For the fit to converge, it is critical to choose appropriately the target parameters at https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Constants.java#L76-L80. 
+The fitted gausssian means are used to determine the target offset with respect to the nominal value. This difference is one of the measurements used in the final fit to extract the alignment constants. If option 5 is selected, the offset of the scattering-chambers exit-window from the nominal position is also used in the final minuit fit.
+
 ### Output
-When the ``-process`` option is chosen, a file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` or with the ``-fit`` options.
-With all options, the extracted misalignment constants are printed out in a format consistent with the /geometry/dc/alignment CCDB table.
+* Histogram file: when the ``-process`` option is chosen, a file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` or with the ``-fit`` options.
+* Log file: the terminal ouput is also saved to file. The file ame is ``dc-alignment.log``.
+* Alignment constants file: with all options, the extracted misalignment constants are printed out in a format consistent with the /geometry/dc/alignment CCDB table and saved to thefile ``dc-alignment.ccdb``.
 
 ### Plots and results
 If the ``-display`` option is set to 1 (default), a graphic window displaying histograms and relevant graphs is opened. 
@@ -250,13 +270,17 @@ The tab displays the relevant distributions for the selected electron tracks. Ex
 This tab displays histograms of the z-vertex distributions and residuals for each angular bin and sector.
 * Z-vertex histograms: the picture below shows an example of a typical distribution for data taken with the 5cm-long LH2 target cell. The three peaks correspond to the cell windows and to a superinsulation foil. The upstream cell window is the left-most peak, the downstream cell window is the next peak to the right, and the superinsulation foil is the smaller, right-most peak. The distribution is fit to the sum of three Gaussians describing the windows and foil, plus a fourth broader gaussian describing the background from residual gas or badly reconstructed tracks. To ensure a good fit convergence, the 3 peak's sigmas are set to be the same and the distances between the peaks are constrained to the known values from the target geometry. The fit parameters are:
   * amp: height of the downstream cell window peak,
-  * mean: mean of the downstream cell window peak (to be compared with the nominal of 0.5 cm),
+  * exw: mean of the downstream cell window peak (to be compared with the nominal of -0.5 cm),
   * tl: distance between the cell windows,
   * sigma: sigma of the downstream cell window peak,
   * wd: distance between the 2nd and 3rd peak,
-  * bg: amplitude of the background function.
+  * bg: amplitude of the backgroud in between the entrance and exit cell windows,
+  * sc: height of the scattering chamber exit window peak,
+  * scw: distance between the scattering chamber window and the target center,
+  * air: amplitude of the background downstream to the scattering chamber window.
 
-![Plot_02-19-2022_10 47 51_PM](https://user-images.githubusercontent.com/7524926/154820232-aa246a66-d90a-4d02-8049-eb6183aad146.png)
+![Plot_07-29-2022_10 18 30_PM](https://user-images.githubusercontent.com/7524926/181837320-4bedbbb7-c0a8-4957-9a84-b09f82a63265.png)
+
 * Residual plots: residual histograms for each sector and angular bin are displayed in separate subtabs. On each, 6x6 plots show the distributions for each DC layer, as shown by the picture below. The residual shift from zero is by default estimated by performing a gaussian fit. Alternatively, the histogram mean can be used setting the ``-fit`` option to 0. Plots of time-residuals (on tabs TSec...) are included to allow checking the quality of the time calibrations.
 ![Plot_02-19-2022_11 03 15_PM](https://user-images.githubusercontent.com/7524926/154820651-63a37d6b-53ad-4669-84c6-1befab1216a6.png)
 
@@ -269,7 +293,6 @@ When launched, the alignment code will print-out relevant information as it goes
   [CONFIG] subtractedShifts set to false
   [CONFIG] sectorShifts set to true
   [CONFIG] fitIteration set to 1
-  [CONFIG] fitVerbosity set to false
   ...
   Opening file: iss805-dcAlMin-oldCalib-iter1.hipo
   [CONFIG] Setting theta bins to:
@@ -399,7 +422,7 @@ To test the alignment results:
 * Load the final alignment table in the Sqlite file as you would do to perform a new iteration and generate the yaml files. 
 * Select a suitable field-on run to process.
 * Create and submit ONE single workflow to process the selected data with the ```r0.yaml``` file.
-* Analyze the cooking output with the script [```kinemtics.groovy```](https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/utilities/kinematics.groovy). Check the usage options with:
+* Analyze the cooking output with the script [```kinematics.groovy```](https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/utilities/kinematics.groovy). Check the usage options with:
   ```
   run-groovy kinematics.groovy
   ``` 
