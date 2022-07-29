@@ -78,7 +78,7 @@ Clone this repository and checkout the dcDev4 branch:
 ```  
   git clone https://github.com/JeffersonLab/clas12alignment
   cd clas12alignment
-  git checkout dcDev3
+  git checkout dcDev4
 ```
 Go to the folder clas12alignment/dc/java/dc-alignment and compile with maven:
 ```
