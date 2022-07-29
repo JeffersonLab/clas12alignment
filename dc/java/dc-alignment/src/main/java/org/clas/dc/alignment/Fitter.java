@@ -1,6 +1,7 @@
 package org.clas.dc.alignment;
 
 import java.util.List;
+import java.util.logging.Logger;
 import org.freehep.math.minuit.FCNBase;
 import org.freehep.math.minuit.FunctionMinimum;
 import org.freehep.math.minuit.MinosError;
@@ -35,6 +36,8 @@ public class Fitter  implements FCNBase {
     private long      startTime     = 0L;
     private long      endTime       = 0L;
     private boolean   status;
+    
+    private static final Logger LOGGER = Logger.getLogger(Constants.LOGGERNAME);
     
     public Fitter(double[][][][] shifts, double [][][] residuals, double[][][] errors) {
         if(shifts.length!=Constants.NPARS) 
@@ -222,15 +225,14 @@ public class Fitter  implements FCNBase {
                     }
                 }
 	        FunctionMinimum scanmin = scanner.minimize(); 
-	        if(options.contains("V")==true){
-                    System.err.println("******************");
-                    System.err.println("*   SCAN RESULTS  *");
-                    System.err.println("******************");
-                    System.out.println("minimum : " + scanmin.isValid());
-                    System.out.println("pars    : " + upar);
-                    System.out.println(upar);
-                    System.err.println("*******************************************");
-                }
+                LOGGER.fine("******************");
+                LOGGER.fine("*   SCAN RESULTS  *");
+                LOGGER.fine("******************");
+                LOGGER.fine("minimum : " + scanmin.isValid());
+                LOGGER.fine("pars    : " + upar);
+                LOGGER.fine(upar.toString());
+                LOGGER.fine("*******************************************");
+
                 if(scanmin.isValid()) upar = scanmin.userParameters();
                 
                 MnMigrad migrad = new MnMigrad(this, upar, 2);
@@ -255,14 +257,13 @@ public class Fitter  implements FCNBase {
                         }
                     }
                 }
-	        if(options.contains("V")==true){
-	            System.out.println(upar);
-	            System.err.println("******************");
-	            System.err.println("*   FIT RESULTS  *");
-	            System.err.println("******************");
+	        LOGGER.fine(upar.toString());
+	        LOGGER.fine("******************");
+	        LOGGER.fine("*   FIT RESULTS  *");
+	        LOGGER.fine("******************");
 	            
-	            System.err.println(min);
-	        }
+	        LOGGER.fine(min.toString());
+	        
 
         }catch(Exception e){
 	       e.printStackTrace();
@@ -283,40 +284,40 @@ public class Fitter  implements FCNBase {
     }   
     
     public void printChi2AndNDF() {
-        System.out.println(String.format("chi2 = %.3f NDF = %d", this.getChi2(), this.getNDF()));
-        System.out.println(this.getBenchmarkString());
+        LOGGER.info(String.format("chi2 = %.3f NDF = %d", this.getChi2(), this.getNDF()));
+        LOGGER.info(this.getBenchmarkString());
     }
     
     public void printPars() {
         for(int i=0; i<pars.length; i++) {
-            System.out.println(String.format("   %6s: %7.4f \u00B1 %.4f (%7.4f - %.4f)", pars[i].name(), pars[i].value(), pars[i].error(), pars[i].lower(), pars[i].upper()));
+            LOGGER.info(String.format("   %6s: %7.4f \u00B1 %.4f (%7.4f - %.4f)", pars[i].name(), pars[i].value(), pars[i].error(), pars[i].lower(), pars[i].upper()));
         }
-        System.out.println();
+        LOGGER.info("");
     }
     
     public void printResiduals() {
-        System.out.println("Layer\tResiduals+/-Errors...");
+        LOGGER.info("Layer\tResiduals+/-Errors...");
         for(int im=0; im<currentValues.length; im++) {
-            System.out.print(im);
+            LOGGER.info(im + "");
             for(int it=0; it<currentValues[0].length; it++) {
                 for(int ip=0; ip<currentValues[0][0].length; ip++) {
-                    System.out.print(String.format("\t%7.2f \u00B1 %7.2f", currentValues[im][it][ip], currentErrors[im][it][ip]));
+                    LOGGER.info(String.format("\t%7.2f \u00B1 %7.2f", currentValues[im][it][ip], currentErrors[im][it][ip]));
                 }
             }
-            System.out.println();
+            LOGGER.info("");
         }
     }
     
     public void printShifts(int key) {
-        System.out.println("Layer\tShifts for distortion " + key);
+        LOGGER.info("Layer\tShifts for distortion " + key);
         for(int im=0; im<unitShifts[key].length; im++) {
-            System.out.print(im);
+            LOGGER.info(im + "");
             for(int it=0; it<unitShifts[key][0].length; it++) {
                 for(int ip=0; ip<unitShifts[key][0][0].length; ip++) {
-                    System.out.print(String.format("\t%7.2f", unitShifts[key][im][it][ip], unitShifts[key][im][it][ip]));
+                    LOGGER.info(String.format("\t%7.2f", unitShifts[key][im][it][ip], unitShifts[key][im][it][ip]));
                 }
             }
-            System.out.println();
+            LOGGER.info("");
         }
     }
 }

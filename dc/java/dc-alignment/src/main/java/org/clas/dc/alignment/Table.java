@@ -1,5 +1,10 @@
 package org.clas.dc.alignment;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jlab.geom.prim.Vector3D;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.group.DataGroup;
@@ -257,4 +262,16 @@ public class Table {
         return s;
     }
     
+    public void toFile(String filename) {
+        try {
+            FileWriter fileWriter = new FileWriter(filename);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+            bufferedWriter.write(this.toTextTable());
+            bufferedWriter.close();
+            Logger.getLogger(Constants.LOGGERNAME).log(Level.INFO, "Alignment constants saved to file " + filename);
+        } catch (IOException ex) {
+            Logger.getLogger(Constants.LOGGERNAME).log(Level.SEVERE, "Error saving alignment constants to file", ex);
+        }
+
+    }
 }

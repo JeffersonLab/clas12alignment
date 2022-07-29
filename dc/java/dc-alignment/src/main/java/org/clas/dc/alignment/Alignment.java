@@ -4,11 +4,19 @@ package org.clas.dc.alignment;
 import eu.mihosoft.vrl.v3d.Vector3d;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import org.jlab.detector.base.DetectorType;
@@ -54,7 +62,6 @@ public class Alignment {
     private boolean           subtractedShifts = true;
     private boolean           sectorShifts      = false;
     private boolean           initFitPar       = false;
-    private boolean           fitVerbosity     = false;
     private int               fitIteration     = 1;
     
     private int               markerSize = 4;
@@ -65,6 +72,8 @@ public class Alignment {
     ByteArrayOutputStream pipeOut = new ByteArrayOutputStream();
     private static PrintStream outStream = System.out;
     private static PrintStream errStream = System.err;
+    
+    private static final Logger LOGGER = Logger.getLogger(Constants.LOGGERNAME);
     
     public Alignment() {
         this.initInputs();
@@ -79,13 +88,50 @@ public class Alignment {
         compareAlignment = this.getTable(run, compareVariation);
     }
     
-    public void setFitOptions(boolean sector, int iteration, boolean verbosity) {
+    private void initLogger(Level level) {
+        
+        LOGGER.setUseParentHandlers(false);
+        
+        try{
+            SimpleFormatter formatter = new SimpleFormatter() {
+                private static final String format = " %3$s %n";
+
+                @Override
+                public synchronized String format(LogRecord lr) {
+                    return String.format("%s\n", lr.getMessage());
+                }
+            };  
+            //Creating consoleHandler and fileHandler
+            Handler consoleHandler = new ConsoleHandler();
+            Handler fileHandler    = new FileHandler(Constants.LOGGERNAME + ".log");
+             
+            //Assigning handlers to LOGGER object
+            LOGGER.addHandler(consoleHandler);
+            LOGGER.addHandler(fileHandler);
+             
+            //Setting logger format
+            consoleHandler.setFormatter(formatter);  
+            fileHandler.setFormatter(formatter);  
+
+            //Setting levels to handlers and LOGGER
+            this.setLoggerLevel(level);
+        } 
+        catch(IOException exception){
+            LOGGER.log(Level.SEVERE, "Error occur in configuring Logging file", exception);
+        }
+        LOGGER.config("[CONFIG] Completed logger configuration, level set to " + LOGGER.getLevel().getName());
+    }
+    
+    private void setLoggerLevel(Level level) {
+        LOGGER.setLevel(level);
+        for(Handler handler : LOGGER.getHandlers()) handler.setLevel(level);
+    }
+    
+    public void setFitOptions(boolean sector, int iteration) {
         this.sectorShifts = sector;
         this.fitIteration = iteration;
-        this.fitVerbosity = verbosity;
         this.printConfig(sectorShifts, "sectorShifts", "");
         this.printConfig(fitIteration, "fitIteration", "");
-        this.printConfig(fitVerbosity, "fitVerbosity", "");
     }
     
     private void setShiftsMode(boolean shifts) {
@@ -135,7 +181,7 @@ public class Alignment {
     private void printConfig(Object o, String name, String message) {
         String s = "[CONFIG] " + name + " set to " + o.toString();
         if(!message.isEmpty()) s += ": " + message;
-        System.out.println(s);
+        LOGGER.config(s);
     }
     
     public void addHistoSet(String name, Histo histo) {
@@ -146,7 +192,7 @@ public class Alignment {
         this.printConfig(resFit, "resFit", "");
         this.printConfig(vertexFit, "vertexFit", "");
         for(String key : histos.keySet()) {
-            System.out.println("\nAnalyzing histos for variation " + key);
+            LOGGER.info("\nAnalyzing histos for variation " + key);
             histos.get(key).analyzeHisto(resFit, vertexFit);
             for(int i=0; i<Constants.NPARS; i++)
                 if(key.equals(Constants.PARNAME[i])) Constants.PARACTIVE[i] = true;
@@ -281,7 +327,7 @@ public class Alignment {
     
     public EmbeddedCanvasTabbed analyzeFits() {
         EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("nominal");
-        System.out.println("\nPlotting nominal geometry residuals");
+        LOGGER.info("\nPlotting nominal geometry residuals");
         canvas.getCanvas("nominal").draw(this.getResidualGraphs(null));
         canvas.getCanvas().setFont(fontName);
         for(EmbeddedPad pad : canvas.getCanvas("nominal").getCanvasPads())
@@ -293,7 +339,7 @@ public class Alignment {
         for(EmbeddedPad pad : canvas.getCanvas("nominal vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
-        System.out.println("\nPlotting corrected geometry residuals");        
+        LOGGER.info("\nPlotting corrected geometry residuals");        
         canvas.addCanvas("CCDB corrected");
         canvas.getCanvas("CCDB corrected").draw(this.getResidualGraphs(compareAlignment.subtract(initAlignment)));
         canvas.getCanvas().setFont(fontName);
@@ -307,7 +353,7 @@ public class Alignment {
             pad.getAxisX().setRange(-2000, 2000);
         
         // shifts
-        System.out.println("\nPlotting shifted geometry residuals");
+        LOGGER.info("\nPlotting shifted geometry residuals");
         canvas.addCanvas("shift magnitude");
         canvas.getCanvas("shift magnitude").draw(this.getShiftsHisto(1));
         for(String key : histos.keySet()) {
@@ -320,9 +366,9 @@ public class Alignment {
             }
         }
         if(compareAlignment!=null) {
-            System.out.println("\nFitting residuals");
-            System.out.println("\nInitial alignment parameters (variation: " + this.initVariation + ") in the DC tilted sector frame\n" + this.initAlignment.toString());
-            System.out.println("\nInitial alignment parameters (variation: " + this.initVariation + ") in CCDB format\n" + this.initAlignment.toTextTable());
+            LOGGER.info("\nFitting residuals");
+            LOGGER.info("\nInitial alignment parameters (variation: " + this.initVariation + ") in the DC tilted sector frame\n" + this.initAlignment.toString());
+            LOGGER.info("\nInitial alignment parameters (variation: " + this.initVariation + ") in CCDB format\n" + this.initAlignment.toTextTable());
             Table fittedAlignment = new Table();
             if(this.setActiveParameters()>0) {
                 for(int is=0; is<Constants.NSECTOR; is++) {
@@ -331,9 +377,10 @@ public class Alignment {
                     fittedAlignment.update(sector, par);
                 }
                 Table finalAlignment = fittedAlignment.copy().add(initAlignment);
-                System.out.println("\nFitted alignment parameters in the DC tilted sector frame\n" +fittedAlignment.toString());
-                System.out.println("\nFinal alignment parameters in CCDB format (sum of this and previous iteration costants)\n" +finalAlignment.toTextTable());
-                System.out.println("\nCompare to " +this.compareVariation + " variation constants\n" +this.compareAlignment.toTextTable());
+                LOGGER.info("\nFitted alignment parameters in the DC tilted sector frame\n" +fittedAlignment.toString());
+                LOGGER.info("\nFinal alignment parameters in CCDB format (sum of this and previous iteration costants)\n" +finalAlignment.toTextTable());
+                LOGGER.info("\nCompare to " +this.compareVariation + " variation constants\n" +this.compareAlignment.toTextTable());
+                finalAlignment.toFile("dc-alignment.txt");
                 
                 canvas.addCanvas("corrected (with new parameters)");
                 canvas.getCanvas("corrected (with new parameters)").draw(this.getResidualGraphs(fittedAlignment));
@@ -383,7 +430,6 @@ public class Alignment {
     
     private Parameter[] fit(int sector) {
         String options = "";
-        if(fitVerbosity) options = "V";
         double[][][][] shifts = new double[Constants.NPARS][Constants.NLAYER+Constants.NTARGET][thetaBins.length-1][phiBins.length-1];
         double[][][]   values = new double[Constants.NLAYER+Constants.NTARGET][thetaBins.length-1][phiBins.length-1];
         double[][][]   errors = new double[Constants.NLAYER+Constants.NTARGET][thetaBins.length-1][phiBins.length-1];
@@ -410,17 +456,17 @@ public class Alignment {
         Fitter residualFitter = new Fitter(shifts, values, errors);
         // check chi2 of "compare" misalignments
         residualFitter.setPars(compareAlignment.subtract(initAlignment).getParameters(sector));
-        System.out.println(String.format("\nSector %d", sector));
-        System.out.println("Chi2 and benchmark with constants from variation " + this.compareVariation + ":");
+        LOGGER.info(String.format("\nSector %d", sector));
+        LOGGER.info("Chi2 and benchmark with constants from variation " + this.compareVariation + ":");
         residualFitter.printChi2AndNDF();
         // reinit
-        System.out.println("Current minuit results:");
+        LOGGER.info("Current minuit results:");
         residualFitter.zeroPars();
         double chi2 = Double.POSITIVE_INFINITY;
         Parameter[] fittedPars = residualFitter.getParCopy();
         String benchmark = "";
         for(int i=0; i<fitIteration; i++) {
-            System.out.print("\riteration "+i + "\t" + benchmark);
+            LOGGER.info("iteration "+i + "\t" + benchmark);
 //            residualFitter.randomizePars(fittedPars);
 //            residualFitter.printChi2AndNDF();
             residualFitter.fit(options);
@@ -431,7 +477,7 @@ public class Alignment {
                 benchmark = residualFitter.getBenchmarkString();
             }
         }
-        System.out.println();
+        LOGGER.info("");
         residualFitter.setPars(fittedPars);
         residualFitter.printChi2AndNDF();
         residualFitter.printPars();
@@ -612,7 +658,6 @@ public class Alignment {
                 double low  = Double.parseDouble(bins[i-1].trim());
                 double high = Double.parseDouble(bins[i].trim());
                 binArray[i] = new Bin(low,high);
-                System.out.println(binArray[i].toString());
             }
         }
         else {
@@ -644,10 +689,12 @@ public class Alignment {
     }
 
     private void setAngularBins(String thetabins, String phibins) {
-        System.out.println("[CONFIG] Setting theta bins to:");
         thetaBins = this.getBins(thetabins);
-        System.out.println("[CONFIG] Setting phi bins to:");
+        LOGGER.config("[CONFIG] Setting theta bins to:");
+        for(int i=1; i<thetaBins.length; i++) LOGGER.config(thetaBins[i].toString());
         phiBins   = this.getBins(phibins);
+        LOGGER.config("[CONFIG] Setting phi bins to:");
+        for(int i=1; i<phiBins.length; i++) LOGGER.config(phiBins[i].toString());
     }
 
     public Bin[] getThetaBins() {
@@ -776,13 +823,12 @@ public class Alignment {
     }
 
     public void readHistos(String fileName, String optStats) {
-        System.out.println("Opening file: " + fileName);
+        LOGGER.info("Opening file: " + fileName);
         PrintStream pipeStream = new PrintStream(pipeOut);
         System.setOut(pipeStream);
         System.setErr(pipeStream);
         TDirectory dir = new TDirectory();
         dir.readFile(fileName);
-        System.out.println(dir.getDirectoryList());
         String folder = dir.getDirectoryList().get(0);
         String[] bins = folder.split("_");
         this.setAngularBins(bins[1], bins[2]);
@@ -801,7 +847,7 @@ public class Alignment {
     }
 
     public void saveHistos(String fileName) {
-        System.out.println("\nSaving histograms to file " + fileName);
+        LOGGER.info("\nSaving histograms to file " + fileName);
         PrintStream pipeStream = new PrintStream(pipeOut);
         System.setOut(pipeStream);
         System.setErr(pipeStream);
@@ -820,6 +866,7 @@ public class Alignment {
     public static void main(String[] args){
         
         Alignment align = new Alignment();
+        align.initLogger(Level.CONFIG);
         String[] inputs = align.getInputs();
             
 
@@ -838,7 +885,7 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
         parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
-        parser.getOptionParser("-process").addOption("-vertex"   , "4",            "fit vertex plots with 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
+        parser.getOptionParser("-process").addOption("-vertex"   , "5",            "fit vertex plots with 4 gaussians (5), fit vertex plots with 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
         parser.getOptionParser("-process").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-process").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-process").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
@@ -898,10 +945,11 @@ public class Alignment {
             boolean verbose    = parser.getOptionParser("-process").getOption("-verbose").intValue()!=0;
             openWindow         = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
+            if(verbose)     align.setLoggerLevel(Level.FINE);
             
             align.setShiftsMode(shifts);
             align.setAngularBins(thetaBins, phiBins);
-            align.setFitOptions(sector, iter, verbose);
+            align.setFitOptions(sector, iter);
             align.initConstants(11, initVar, compareVar);
             
             align.addHistoSet(inputs[0], new Histo(Alignment.getFileNames(nominal),align.getThetaBins(),align.getPhiBins(), time, optStats));
@@ -934,11 +982,12 @@ public class Alignment {
             boolean verbose    = parser.getOptionParser("-analyze").getOption("-verbose").intValue()!=0;
             openWindow         = parser.getOptionParser("-analyze").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
+            if(verbose)     align.setLoggerLevel(Level.FINE);
 
             String histoName   = parser.getOptionParser("-analyze").getOption("-input").stringValue();
 
             align.setShiftsMode(shifts);
-            align.setFitOptions(sector, iter, verbose);
+            align.setFitOptions(sector, iter);
             align.initConstants(11, initVar, compareVar);
             align.readHistos(histoName, optStats);
             align.analyzeHistos(residuals, vertex);
@@ -954,11 +1003,12 @@ public class Alignment {
             boolean verbose    = parser.getOptionParser("-fit").getOption("-verbose").intValue()!=0;
             openWindow         = parser.getOptionParser("-fit").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
+            if(verbose)     align.setLoggerLevel(Level.FINE);
 
             String histoName   = parser.getOptionParser("-fit").getOption("-input").stringValue();
 
             align.setShiftsMode(shifts);
-            align.setFitOptions(sector, iter, verbose);
+            align.setFitOptions(sector, iter);
             align.initConstants(11, initVar, compareVar);
             align.readHistos(histoName, optStats);
             align.analyzeHistos(0, 0);

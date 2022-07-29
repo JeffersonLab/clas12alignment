@@ -1,5 +1,6 @@
 package org.clas.dc.alignment;
 
+import java.util.logging.Logger;
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
@@ -9,7 +10,7 @@ import org.jlab.jnp.hipo4.io.HipoReader;
  *
  * @author devita
  */
-public class FileHandler {
+public class FileManager {
     
     private HipoReader readNominal = null;
     private HipoReader readShifted = null;
@@ -20,18 +21,26 @@ public class FileHandler {
     private Event nominal = new Event();
     private Event shifted = new Event();
     
-    public FileHandler(String nominal) {
+    public FileManager(String nominal) {
         this.readNominal = new HipoReader();
-        this.readNominal.open(nominal);
+        this.open(this.readNominal, nominal);
         this.schema = this.readNominal.getSchemaFactory();
     }
     
-    public FileHandler(String nominal, String shifted) {
+    public FileManager(String nominal, String shifted) {
         this(nominal);
         if(shifted!=null) {
-            this.readShifted = new HipoReader();
-            this.readShifted.open(shifted);
+            this.open(readShifted, shifted);
         }
+    }
+    
+    private void open(HipoReader reader, String filename) {
+        reader = new HipoReader();
+        reader.open(filename);
+        if(reader.getErrorCode()==HipoReader.ERROR_NOINDEX){
+            Logger.getGlobal().severe("status check : ERROR");
+            System.exit(1);
+        }        
     }
     
     public void close() {

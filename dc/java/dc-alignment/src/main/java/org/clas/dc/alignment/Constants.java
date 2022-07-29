@@ -6,6 +6,8 @@ package org.clas.dc.alignment;
  */
 public class Constants {
     
+    public static final String LOGGERNAME = "dc-alignment";
+
     public static int NSECTOR = 6;
     public static int NLAYER  = 36;
     public static int NREGION = 3;

@@ -2,6 +2,7 @@ package org.clas.dc.alignment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import org.jlab.clas.physics.Particle;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
@@ -47,6 +48,7 @@ public class Histo {
     private boolean tres  = false;
     private boolean shift = false;
     
+    private static final Logger LOGGER = Logger.getLogger(Constants.LOGGERNAME);
     
     public Histo(List<String> files, Bin[] thetabins, Bin[] phibins, String optstats) {
         this.thetaBins = thetabins;
@@ -80,9 +82,9 @@ public class Histo {
     }
     
     private void createHistos(String optStats) {
-        System.out.println("Creating histograms for " + nSector              + " sectors, " 
-                                                      + (thetaBins.length-1) + " theta bins, " 
-                                                      + (phiBins.length-1)   + " phi bins");
+        LOGGER.info("Creating histograms for " + nSector              + " sectors, " 
+                                               + (thetaBins.length-1) + " theta bins, " 
+                                               + (phiBins.length-1)   + " phi bins");
         this.residuals = new DataGroup[nSector][thetaBins.length][phiBins.length];
         if(tres) this.time = new DataGroup[nSector][thetaBins.length][phiBins.length];
         this.vertex    = new DataGroup[thetaBins.length][phiBins.length];
@@ -400,7 +402,7 @@ public class Histo {
                 shiftedFile = shiftedFiles.get(i);
             
             
-            FileHandler handler = new FileHandler(nominalFile, shiftedFile);
+            FileManager handler = new FileManager(nominalFile, shiftedFile);
             schema = handler.getSchema();
             
             while (handler.getNext()) {

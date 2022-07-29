@@ -17,46 +17,47 @@ Specifically:
   * maven 
 * Data:
   * Straight-track data (both solenoid and torus should be off) with electron tracks in the forward detector
-  * Recent sqlite snapshot of CCDB (see https://clasweb.jlab.org/clas12offline/sqlite/ccdb/)
+  * Recent Sqlite snapshot of CCDB (see https://clasweb.jlab.org/clas12offline/sqlite/ccdb/)
+
 
 ### Data processing
-  * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry for the chosen data set and each of the individual translations or rotations in xyz for each of the DC regions. This will result in up to 15 sets of reconstructed files that will be the input of the alignment code.  The nominal geometry can be the DC design geometry (CCDB variation: default) or a geometry determined from previous alignment results with non-zero shifts compared to the ideal case. 
-    * The reconstruction configuration files (yaml files) to produce these sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.1.2), using the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/generateYamls.csh):
+  * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry and each of the individual translations or rotations in xyz for each of the DC regions. This will result in up to 16 sets of reconstructed files that will be the input of the alignment code.  The nominal geometry can be the DC design geometry (CCDB variation: *nominal*) or a geometry determined from a previous alignment with non-zero shifts compared to the nominal case. 
+    * Setup or check the chosen geometry variation in the Sqlite file which is being used. The selected variation should also be populated with realistic geometry tables for the other CLAS12 detectors. For instance, in the CCDB variation *nominal* detectors such as FTOF and ECAL are shifted by ~5 cm downstream the ideal position to account for the actual installation position of the Forward Carriage. If using a variation different from *nominal*, make sure the beam offsets constants (CCDB table ``/geometry/beam/position``) are set appropriately, i.e. set equal to the best guess of the actual bam position for the straight track run or to x=y=0, if no other information is available.
+    * The reconstruction configuration files (yaml files) to produce the 16 sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.2.1). Copy the file to your work directory and edit it, replacing the variation in the global section (*rga_fall2018* in the coatjava 8.2.1 file) with the chosen variation. Leave the other variation settings unchanged. Run the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/generateYamls.csh):
       ```
       ./generateYamls.csh <base-yaml-file> <variation>  <output-directory>
       ```
       where:
-      * The base yaml file will be dcalign.yaml.
-      * The variation will be the one containing the chosen *nominal* geometry as discussed above. 
+      * The base yaml file will be ```dcalign.yaml```.
+      * The variation will be the one containing the chosen nominal geometry as discussed above. 
       * The generated yaml files will be in the folder specified when running the command. The folder will contain the 15 yaml files corresponding to the translations and rotations described above, the yaml file ```r0.yaml```, corresponding to the nominal geometry, and rga_fall2018.yaml, corresponding to the original alignment results by T. Haywards.
-      In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
+        In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
         ```
         dcGeometryVariation: "default"
         alignmentShifts: "r1_cz:0.2"
         ```
-        specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected with the variable ```dcGeometryVariation```. This allows to perform multiple iterations by selecting a variation where the /geometry/dc/alignment table contains the results of the previous iteration.
-    *  For each yaml file, generate and run one cooking workflow to process the straight track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation):
-       *  Use as output directory name for the workflow the same name of the yaml file without the extention (e.g. the output of the data processed with r1_cz.yaml should be in a directory named r1_cz). 
-       *  Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks. The dst schema directory can be found at $COATJAVA/etc/bankdefs/hipo4/singles/dst)
-       *  Use the --ccdbsqlite workflow option to point to the Sqlite snapshot that is being used for the alignment.
-       *  Notes:
-          * Since the workflows that should be generated have the same configuration except for the selected yaml file, the tag, and the output directory, an easy way to generate all of then with a single command is to use a command-line for-loop. In cshell or tcshell, this would look like:
+        specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected with the variable ```dcGeometryVariation```. This allows to perform multiple iterations by selecting a variation where the ``/geometry/dc/alignment table`` contains the results of the previous iteration.
+    * For each yaml file, generate and run one cooking workflow to process the straight track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation):
+      * Use as output directory name for the workflow the same name of the yaml file without the extention (e.g. the output of the data processed with r1_cz.yaml should be in a directory named r1_cz). 
+      * Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks. The dst schema directory can be found at $COATJAVA/etc/bankdefs/hipo4/singles/dst)
+      * Use the --ccdbsqlite workflow option to point to the Sqlite snapshot that is being used for the alignment.
+      * Since the workflows that should be generated have the same configuration except for the selected yaml file, the tag, and the output directory, an easy way to generate all of then with a single command is to use a command-line for-loop. In cshell or tcshell, this would look like:
               ```
               foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
                  clas12-workflow.py --runGroup rgb --model rec --tag myTag_$var --inputs /mss/clas12/rg-b/production/decoded/6.5.6/006342 --runs 6342 --clara /group/clas12/packages/clara/5.0.2_8.1.2 --outDir /my-ouput-drectory-path/$var --reconYaml path-to-yamls-directory/$var".yaml" --ccdbsqlite path-to-sqlite-file --reconSize 1 --threads 16
               end
               ```
-              Similarly, the workflows submission can be done as follows:
+        Similarly, the workflows submission can be done as follows:
               ```
               foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
                  swif2 import -file rgb-r-myTag_$var"-6342.json"
                  swif2 run -workflow  rgb-r-myTag_$var"-6342"
               end
               ```
-              * Notes: 
-	      		* The above workflow creation command is just an example and should be modified depending on the current workflow tools options 			  and the data set. 
-	      		* Only [a-z A-z 0-9 _] symbols can be used for the --tag option.
-          * Since the alignment procedure requires processing the same data multiple times, it may be convenient to prefilter the events in the alignment run to select the ones of interest for the FD. This applies in particular to recent alignment runs where the trigger included a FD electron trigger and a CD trigger, with the latter having much higher rate than the former. The selection could be done on decoded files, saving only the events where the FD trigger bit is set or that have HTCC/ECAL banks.
+      * Notes: 
+	* The above workflow creation command is just an example and should be modified depending on the current workflow tools options and the data set. 
+	* Only [a-z A-z 0-9 _] symbols can be used for the --tag option.
+        * Since the alignment procedure requires processing the same data multiple times, it may be convenient to prefilter the events in the alignment run to select the ones of interest for the FD. This applies in particular to recent alignment runs where the trigger included a FD electron trigger and a CD trigger, with the latter having much higher rate than the former. The selection could be done on decoded files, saving only the events where the FD trigger bit is set or that have HTCC/ECAL banks.
              
 * Alignment input files:
   * To reduce the reconstructed data volume and speed up the analysis, files for each geometry variation can be filtered with the command:
@@ -73,7 +74,7 @@ Specifically:
     The tracks selection is further refined by the alignment code to identify electrons. See the ``getElectron()`` method in the ``Histo`` class, using     parameters from the ``Constants`` class.
 
 ### Build and run
-Clone this repository and checkout the dcDev3 branch:
+Clone this repository and checkout the dcDev4 branch:
 ```  
   git clone https://github.com/JeffersonLab/clas12alignment
   cd clas12alignment
@@ -89,8 +90,7 @@ Set the CCDB connection environment variable to point with the Sqlite file that 
   setenv CCDB_CONNECTION sqlite:///path-to-sqlite-file
 ```
 
-
-* Note: The CCDB_CONNECTION variable may be overwritten when loading certain modules, such as the clas12 module. Make sure to set this path after 			loading such a module.
+* Note: The CCDB_CONNECTION variable may be overwritten when loading certain modules, such as the clas12 module. Make sure to set this path after loading such a module.
 
 Run the code with:
 ```
@@ -358,17 +358,17 @@ When launched, the alignment code will print-out relevant information as it goes
     r3_cz:  0.0268 ± 0.0138 (-0.0138 - 0.0138)
   ```
   A good fit should have status set to true, indicating minuit converged.
-* The fitted misalignment constants from the current analysis, the final constants obtained as the sum of this and previous iteration, and the pre-existing constants to compare to. The second of this table is the one to be loaded into the sqlite file for testing or for proceeding with a subsequent iteration.
+* The fitted misalignment constants from the current analysis, the final constants obtained as the sum of this and previous iteration, and the pre-existing constants to compare to. The second of this table is the one to be loaded into the Sqlite file for testing or for proceeding with a subsequent iteration.
 
 
-#### Loading alignment constants to sqlite/CCDB
-The final constants can be loaded to a new variation in the sqlite file for testing purposes or to proceed with a new iteration. The constants should be loaded to CCDB only when really finalized and vetted.
-To load them to sqlite:
-* Create a new variation using *rga_fall2018* as a parent to inherit the correct geometry for all other detectors:
+#### Loading alignment constants to Sqlite/CCDB
+The final constants can be loaded to a new variation in the Sqlite file for testing purposes or to proceed with a new iteration. The constants should be loaded to CCDB only when really finalized and vetted.
+To load them to Sqlite:
+* Create a new variation using nominal variation chosen above as a parent to inherit the correct geometry for all other detectors. For example:
   ```
-  ccdb -c sqlite:///path-to-sqlite-file mkvar variation_name -p rga_fall2018
+  ccdb -c sqlite:///path-to-sqlite-file mkvar variation_name -p nominal
   ```
-  choosing a suitable name for the variation. Note that only strings containing letters, numbers, and/or _ will be allowed for the varaition name.
+  choosing a suitable name for the variation. Note that only strings containing letters, numbers, and/or _ will be allowed for the variation name.
 * Create a text file with the constants from this analysis.
 	* This can be done by simply copying the "Final alignment parameters in CCDB format" table that results from running the alignment program and pasting this into a txt file. 
 * Load the constants:
@@ -379,13 +379,27 @@ To load them to sqlite:
   ```
   ccdb -c sqlite:///path-to-sqlite-file dump /geometry/dc/alignment -v variation_name
   ```  
-The sqlite file can then be used for a new iteration by repeating the all procedure, using the new variation as the nominal.
+The Sqlite file can then be used for a new iteration by repeating the all procedure, using the new variation as the nominal.
 
 #### Performing a new iteration
-Once the sqlite is updated with the constants from a given iteration, a new iteration can be performed repeating the whole procedure (starting with generating new yaml files) using the new variation created above as *nominal*.
+Once the Sqlite is updated with the constants from a given iteration, a new iteration can be performed repeating the whole procedure, starting with generating new yaml files using the new variation created above as nominal.
 When running the alignment code on the processed event files, include the command line option:
 ```
 -init variation_name
 ```
 with the variation created and filled with the previous iteration constants. In this way the final constants printed on the terminal will be the sum of the previous and current misalignments.
-* Note: The -init option should be used also with the -analyze and -fit options in order for previous misalignments to be accounted for.
+* Note: The ```-init``` option should be used also with the ```-analyze``` and ```-fit``` options in order for previous misalignments to be accounted for.
+
+Usually, two iterations are sufficient for the alignment to converge. The metric to decide whther to stop or perform another iteration is given by multiple factors:
+* The chi2 of the final fit doesn't improve significantly compared to the previous iteration;
+* The residuals and vertex offset distributions corrected for the current iteration results (red histogram in the before/after analysis tab) are not significantly narrower than the nominal (black histogram in the same tab). 
+
+#### Testing the results
+To test the alignment results:
+* Load the final alignment table in the Sqlite file as you would do to perform a new iteration and generate the yaml files. 
+* Select a suitable field-on run to process.
+* Create and submit ONE single workflow to process the selected data with the ```r0.yaml``` file.
+* Analyze the cooking output with the script [```kinemtics.groovy```](https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/utilities/kinematics.groovy). Check the usage options with:
+  ```
+  run-groovy kinematics.groovy
+  ``` 
