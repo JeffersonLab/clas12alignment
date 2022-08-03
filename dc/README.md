@@ -392,6 +392,10 @@ To load them to Sqlite:
   ccdb -c sqlite:///path-to-sqlite-file mkvar variation_name -p nominal
   ```
   choosing a suitable name for the variation. Note that only strings containing letters, numbers, and/or _ will be allowed for the variation name.
+* Check that the variation was created correctly:
+  ```
+  ccdb -c sqlite:///path-to-sqlite-file info -v variation_name
+  ```
 * Create a text file with the constants from this analysis.
 	* This can be done by simply copying the "Final alignment parameters in CCDB format" table that results from running the alignment program and pasting this into a txt file. 
 * Load the constants:
