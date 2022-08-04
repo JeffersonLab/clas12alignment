@@ -25,7 +25,7 @@ public class Main {
         if (params.get('s') == null) {
             swmSetup[0] = Constants.SOLMAGSCALE;
             swmSetup[1] = Constants.TORMAGSCALE;
-            swmSetup[2] = Constants.TORMAGSHIFT;
+            swmSetup[2] = Constants.SOLMAGSHIFT;
         }
         else {
             for (int i = 0; i < 3; ++i) swmSetup[i] = Double.parseDouble(params.get('s').get(i));

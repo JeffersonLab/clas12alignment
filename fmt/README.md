@@ -1,5 +1,5 @@
 # FMT Analysis
-Code used for the FMT detector alignment using residual analysis. A residual is the distance between an FMT cluster of hits and a DC track.
+Code used for the FMT detector alignment using residual analysis. A residual is the distance between an FMT cluster of hits and a DC track. In case the README and/or the usage of the program is not clear enough, a short presentation with details on how to run is included in this directory, named `usage_help.pdf`.
 
 ## Setup
 Some setting up is required to run the program. The `run.sh` file requires some tuning, which includes
@@ -17,12 +17,13 @@ Note that per-layer XY alignment of FMT is impossible with the current condition
 ```
 Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]
                         [-s --swim] [-c --cutsinfo] [-V --variation]
+                        [-p -plot]
                         [-x --dx] [-y --dy] [-z --dz]
                         [-X --rx] [-Y --ry] [-Z --rz]
   * file      : hipo input file.
   * nevents   : number of events to run. If unspecified, runs all events in
                 input file.
-  * var       : variable to be aligned. Can be *dXY*, *dZ*, *rXY*, or *rZ*.
+  * var       : variable to be aligned. Can be dXY, dZ, rXY, or rZ.
   * inter (2) : [0] range between nominal position and position to be tested.
                 [1] interval for each tested value between <nominal - range>
                     and <nominal + range>.
@@ -30,10 +31,12 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]
                     RG-F data (-0.75, -1.0, 3.0).
                 [0] Solenoid magnet scale.
                 [1] Torus magnet scale.
-                [2] Torus magnet shift.
+                [2] Solenoid magnet shift.
   * cutsinfo  : int describing how much info on the cuts should be printed. 0
                 is no info, 1 is minimal, 2 is detailed. Default is 1.
   * variation : CCDB variation to be used. Default is ``rgf_spring2020''.
+  * plot      : int describing if plots are to be shown. 1 means show them.
+                Plots are always saved in the ``histograms.hipo'' file.
   * dx    (3) : x shift for each FMT layer.
   * dy    (3) : y shift for each FMT layer.
   * dz    (3) : z shift for each FMT layer.
@@ -41,8 +44,8 @@ Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]
   * ry    (3) : y rotation for each FMT layer.
   * rz    (3) : z rotation for each FMT layer.
 
-For example, if <var> == '*dZ*', <inter> == '0.2 0.1', and <dz> == 0.5, then the
-values tested for z are:
+For example, if var == dZ, inter == 0.2 0.1, and dz == 0.5, then the values
+tested for z are:
 
         (0.3, 0.4, 0.5, 0.6, 0.7).
 
@@ -61,7 +64,7 @@ NOTE. All measurements are in cm, while the ccdb works in mm.
     * Crosses are constructed by grouping clusters from the six different FMT layers.
     * The DC track is updated with these crosses via a Kalman Filter algorithm.
 
-**NOTE**. Crosses are not implemented for the RG-F run, where only three FMT layers were installed.
+**NOTE**. Crosses are not implemented for runs with only three FMT layers.
 
 ### Plotting Residuals:
 * Residuals are the difference between the DC track and the FMT clusters in y in the FMT layer's local coordinate system.
@@ -70,5 +73,3 @@ NOTE. All measurements are in cm, while the ccdb works in mm.
 ### Comparing results:
 * For *dZ* and *rZ* alignment, it is ideal to use the sigma of the residuals distribution, fixing as much as sigmaError allows.
 * For *dXY* and *rXY* alignment, the mean of the residuals distribution can be used, fixing as much as sigma allows.
-
-**NOTE**. This program was designed to work with Coatjava 6.5.8. Different versions may cause errors or weird behavior.
