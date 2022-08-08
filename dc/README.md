@@ -23,7 +23,7 @@ Specifically:
 ### Data processing
   * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry and each of the individual translations or rotations in xyz for each of the DC regions. This will result in up to 16 sets of reconstructed files that will be the input of the alignment code.  The nominal geometry can be the DC design geometry (CCDB variation: ``nominal``) or a geometry determined from a previous alignment with non-zero shifts compared to the nominal case. 
     * Setup or check the chosen geometry variation in the Sqlite file which is being used. The selected variation should also be populated with realistic geometry tables for the other CLAS12 detectors. For instance, in the CCDB variation ``nominal`` detectors such as FTOF and ECAL are shifted by ~5 cm downstream the ideal position to account for the actual installation position of the Forward Carriage. If using a variation different from *nominal*, make sure the beam offsets constants (CCDB table ``/geometry/beam/position``) are set appropriately, i.e. set equal to the best guess of the actual bam position for the straight track run or to x=y=0, if no other information is available.
-    * The reconstruction configuration files (yaml files) to produce the 16 sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.2.1). Copy the file to your work directory and edit it, replacing the variation in the global section (``rga_fall2018`` in the coatjava 8.2.1 file) with the chosen variation. Leave the other variation settings unchanged. Run the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/utilities/generateYamls.csh):
+    * The reconstruction configuration files (yaml files) to produce the 16 sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.2.1). Copy the file to your work directory and edit it, replacing the variation in the global section (``rga_fall2018`` in the coatjava 8.2.1 file) with the chosen variation. Leave the other variation settings unchanged. Run the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/dc/utilities/generateYamls.csh):
       ```
       ./generateYamls.csh <base-yaml-file> <variation>  <output-directory>
       ```
@@ -74,7 +74,7 @@ Specifically:
     Trkg::TBTracks,TimeBasedTrkg::TBHits" -o outputfilename inputfiles
     ```
     where the vertex, nphe and energy cut should be selected according to the experiment configuration (beam energy and target).
-    To facilitate this step, use the script [``createSkims.csh``](https://github.com/JeffersonLab/clas12alignment/blob/dcDev3/dc/utilities/createSkims.csh):
+    To facilitate this step, use the script [``createSkims.csh``](https://github.com/JeffersonLab/clas12alignment/dc/utilities/createSkims.csh):
     ```
     createSkims.sh <reconstructed-files-directory> [<output-directory>]
     ```
@@ -433,7 +433,7 @@ To test the alignment results:
 * Load the final alignment table in the Sqlite file as you would do to perform a new iteration and generate the yaml files. 
 * Select a suitable field-on run to process.
 * Create and submit ONE single workflow to process the selected data with the ```r0.yaml``` file.
-* Analyze the cooking output with the script [```kinematics.groovy```](https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/utilities/kinematics.groovy). Check the usage options with:
+* Analyze the cooking output with the script [```kinematics.groovy```](https://github.com/JeffersonLab/clas12alignment/dc/utilities/kinematics.groovy). Check the usage options with:
   ```
   run-groovy kinematics.groovy
   ``` 
