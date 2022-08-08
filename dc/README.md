@@ -64,10 +64,11 @@ Specifically:
             hipo-utils -reduce -ct "REC::Particle://beta>0[GT]0,REC::Cherenkov://nphe>2[GT]0,REC::Calorimeter://energy>0[GT]0,TimeBasedTrkg::TBTracks://
             Vtx0_z>-15&&Vtx0_z<35[GT]0" -b "RUN::config,*::adc,*::tdc" -o outputfilename inputfiles
             ```
+	    
 	  * In doing the above two steps, inpufiles can be merged to reduce the overall number of files and therefore cooking jobs that will be necessary for the alignment. It is still advisable to limit the number of events in a merged file to be of the order of 200-300 k. The final file names should be consisted with the regex ```".*clas[_A-Za-z]*_(\d+)\.evio\.(\d+)"```, to be compatible with the workflow tool default settings.
              
 * Alignment input files:
-  * If the data were not already filtered, to reduce the reconstructed data volume and speed up the analysis, files for each geometry variation can be filtered with the command:
+  * If the data were not already filtered as mentioned above, cooked files for each geometry variation can be filtered to reduce the reconstructed data volume and speed up the analysis:
     ```
     hipo-utils -reduce -ct "REC::Particle://beta>0[GT]0,REC::Cherenkov://nphe>2[GT]0,REC::Calorimeter://energy>0[GT]0,TimeBasedTrkg::TBTracks://
     Vtx0_z>-15&&Vtx0_z<35[GT]0" -r "TimeBasedTrkg::TBHits://trkID>0" -b "RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBased
