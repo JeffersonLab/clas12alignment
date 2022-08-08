@@ -29,7 +29,7 @@ public class Constants {
     // histogram limits for vertex plots
     public static int    VTXBINS = 500;
     public static double VTXMIN = -20.0;
-    public static double VTXMAX =  35.0;
+    public static double VTXMAX =  15.0;
     // histogram limits for vertex difference plots
     public static int    VDFBINS = 200;
     public static double VDFMIN = -5.0;

@@ -287,7 +287,7 @@ public class Kinematics {
                     else if(part.pid()==-211 && recPim==null) recPim=part;
                     else if(part.pid()==2212 && recPro==null) recPro=part;
                 }
-                else if(bank.getInt("charge", loop)==1 && recPr==null && status==4) {
+                else if(bank.getInt("charge", loop)==1 && recPr==null && status==2) {
                     recPr = new Particle(
                                 2212,
                                 bank.getFloat("px", loop),

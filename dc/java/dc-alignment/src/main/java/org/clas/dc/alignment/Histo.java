@@ -759,7 +759,7 @@ public class Histo {
         int nbin = histo.getData().length;
         double dx = histo.getDataX(1)-histo.getDataX(0);
         //find downstream window
-        int ibin0 = histo.getMaximumBin();
+        int ibin0 = Histo.getMaximumBinBetween(histo, Constants.VTXMIN, (Constants.TARGETPOS+Constants.SCEXIT)/2);
         //check if the found maximum is the first or second peak, ibin is tentative upstream window
         int ibin1 = Math.max(0, histo.getMaximumBin() - (int)(Constants.TARGETLENGTH/dx));
         int ibin2 = Math.min(nbin-1, histo.getMaximumBin() + (int)(Constants.TARGETLENGTH/dx));
@@ -773,8 +773,11 @@ public class Histo {
         double sigma = 0.5;
         double bg = histo.getBinContent((ibin1+ibin0)/2);
         
-        F1D f1_vtx   = new F1D("f3vertex","[amp]*gaus(x,[mean]-[tl],[sigma])+[amp]*gaus(x,[mean],[sigma])+[amp]*gaus(x,[mean]+[wd],[sigma])/1.8+[bg]*gaus(x,[mean]-[tl]/2,[tl]*0.8)", -10, 10);
-	//F1D f1_vtx   = new F1D("f3vertex","[amp]*gaus(x,[mean]-[tl],[sigma])+[amp]*gaus(x,[mean],[sigma])+[amp]*gaus(x,[mean]+[wd],[sigma])/1.8+[bg]*gaus(x,[mean]/2,[tl]*0.8)", -10, 10);
+        String function = "[amp]*gaus(x,[exw]-[tl],[sigma])+"
+                        + "[amp]*gaus(x,[exw],[sigma])+"
+                        + "[amp]*gaus(x,[exw]+[wd],[sigma])/1.8+"
+                        + "[bg]*gaus(x,[exw]-[tl]/2,[tl]*0.8)";
+        F1D f1_vtx   = new F1D("f3vertex", function, -10, 10);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
         f1_vtx.setOptStat("11111111");

@@ -885,7 +885,7 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
         parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
-        parser.getOptionParser("-process").addOption("-vertex"   , "5",            "fit vertex plots with 4 gaussians (5), fit vertex plots with 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
+        parser.getOptionParser("-process").addOption("-vertex"   , "5",            "fit vertex plots with 4 gaussians (5), 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
         parser.getOptionParser("-process").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-process").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-process").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
@@ -899,7 +899,7 @@ public class Alignment {
         parser.getOptionParser("-analyze").addOption("-stats"    ,"",              "set histogram stat option");
         parser.getOptionParser("-analyze").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-analyze").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
-        parser.getOptionParser("-analyze").addOption("-vertex"   , "4",            "fit vertex plots with 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
+        parser.getOptionParser("-analyze").addOption("-vertex"   , "5",            "fit vertex plots with 4 gaussians (5), 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
         parser.getOptionParser("-analyze").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-analyze").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-analyze").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
