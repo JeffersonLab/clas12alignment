@@ -59,10 +59,9 @@ Specifically:
         * Only [a-z A-z 0-9 _] symbols can be used for the --tag option.
         * Since the alignment procedure requires processing the same data multiple times, it may be convenient to prefilter the events in the alignment run to select the ones of interest for the FD. This applies in particular to recent alignment runs where the trigger included a FD electron trigger and a CD trigger, with the latter having much higher rate than the former. The selection could be done on decoded files, saving only the events where the FD trigger bit is set or that have HTCC/ECAL banks. If that is not effective, an alternative is the following:
           * Process the data a first time using the best available alignment for that data set and a schema including the banks listed above, plus the following ones ```DC::tdc, ECAL::adc, ECAL::tdc, FTOF::adc, FTOF::tdc, HTCC::adc, RF::adc, RF::tdc```. 
-	  * Filter the reconstructed data with the following command:
+          * Filter the reconstructed data with the following command:
 	    ```
-            hipo-utils -reduce -ct "REC::Particle://beta>0[GT]0,REC::Cherenkov://nphe>2[GT]0,REC::Calorimeter://energy>0[GT]0,TimeBasedTrkg::TBTracks://
-            Vtx0_z>-15&&Vtx0_z<35[GT]0" -r "TimeBasedTrkg::TBHits://trkID>0" -b "RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits" -o outputfilename inputfile(s)
+            hipo-utils -reduce -ct "REC::Particle://beta>0[GT]0,REC::Cherenkov://nphe>2[GT]0,REC::Calorimeter://energy>0[GT]0,TimeBasedTrkg::TBTracks://Vtx0_z>-15&&Vtx0_z<35[GT]0" -r "TimeBasedTrkg::TBHits://trkID>0" -b "RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits" -o outputfilename inputfile(s)
             ```
           * Drop the reconstructed banks with the following command:
 	    ```
