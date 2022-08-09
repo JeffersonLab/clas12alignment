@@ -22,25 +22,25 @@ public class FileManager {
     private Event shifted = new Event();
     
     public FileManager(String nominal) {
-        this.readNominal = new HipoReader();
-        this.open(this.readNominal, nominal);
+        this.readNominal = this.open(nominal);
         this.schema = this.readNominal.getSchemaFactory();
     }
     
     public FileManager(String nominal, String shifted) {
         this(nominal);
         if(shifted!=null) {
-            this.open(readShifted, shifted);
+            this.readShifted = this.open(shifted);
         }
     }
     
-    private void open(HipoReader reader, String filename) {
-        reader = new HipoReader();
+    private HipoReader open(String filename) {
+        HipoReader reader = new HipoReader();
         reader.open(filename);
         if(reader.getErrorCode()==HipoReader.ERROR_NOINDEX){
             Logger.getGlobal().severe("status check : ERROR");
             System.exit(1);
         }        
+        return reader;
     }
     
     public void close() {
