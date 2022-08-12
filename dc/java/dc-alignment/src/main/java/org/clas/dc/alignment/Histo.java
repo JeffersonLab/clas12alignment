@@ -457,7 +457,8 @@ public class Histo {
                         this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*(Constants.VTXMAX-Constants.VTXMIN)/Constants.VTXBINS/2);
                         if(hvtx.getFunction().getName().equals("f4vertex") && 
                            hvtx.getFunction().getNPars()>7 && 
-                           hvtx.getFunction().parameter(7).name().equals("scw")) {
+                           hvtx.getFunction().parameter(7).name().equals("scw") &&
+                           hvtx.getFunction().getParameter(6)>0) {
                             this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] = (hvtx.getFunction().getParameter(7)-Constants.SCEXIT)*Constants.SCALE;
                             this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] =  hvtx.getFunction().parameter(7).error()*Constants.SCALE;
                         }
@@ -806,9 +807,11 @@ public class Histo {
             ibin1 = ibin0;
             ibin0 = ibin2;
         }
+        int ibinsc = Histo.getMaximumBinBetween(histo, (Constants.SCEXIT-Constants.TARGETPOS)*0.9, (Constants.SCEXIT-Constants.TARGETPOS)*1.1);
         
         double mean  = histo.getDataX(ibin0);
         double amp   = histo.getBinContent(ibin0);
+        double sc    = histo.getBinContent(ibinsc);
         double sigma = 0.5;
         double bg = histo.getBinContent((ibin1+ibin0)/2);
         String function = "[amp]*gaus(x,[exw]-[tl],[sigma])+"
@@ -829,11 +832,12 @@ public class Histo {
         f1_vtx.setParameter(4, Constants.WINDOWDIST);
         f1_vtx.setParLimits(4, Constants.WINDOWDIST*0.9, Constants.WINDOWDIST*1.1);
         f1_vtx.setParameter(5, bg);
-        f1_vtx.setParameter(6, amp/2);
+        f1_vtx.setParameter(6, sc);
         f1_vtx.setParameter(7, Constants.SCEXIT-Constants.TARGETPOS);
         f1_vtx.setParLimits(7, (Constants.SCEXIT-Constants.TARGETPOS)*0.9, (Constants.SCEXIT-Constants.TARGETPOS)*1.1);
         f1_vtx.setRange(mean-Constants.TARGETLENGTH*1.5,Constants.SCEXIT+Constants.TARGETLENGTH*0.6);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
+        if(f1_vtx.getParameter(6)<f1_vtx.getParameter(0)/4) f1_vtx.setParameter(6, 0);
     }
 
     //This was a previous version of fitting the z vertex peaks

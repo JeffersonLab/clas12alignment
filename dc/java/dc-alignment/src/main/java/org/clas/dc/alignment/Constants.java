@@ -29,7 +29,7 @@ public class Constants {
     // histogram limits for vertex plots
     public static int    VTXBINS = 500;
     public static double VTXMIN = -20.0;
-    public static double VTXMAX =  15.0;
+    public static double VTXMAX =  35.0;
     // histogram limits for vertex difference plots
     public static int    VDFBINS = 200;
     public static double VDFMIN = -5.0;
@@ -77,7 +77,7 @@ public class Constants {
     public static double TARGETPOS    = -0.5;
     public static double TARGETLENGTH =  5;    //target length
     public static double WINDOWDIST   =  6.8;  //6.8;//2.8; //distance between the mylar foil and the downstream window
-    public static double SCEXIT       = 28.4;  //scattering chamber exit window, old value from PDF - 2 mm for the window bow
+    public static double SCEXIT       = 27.3;  //scattering chamber exit window, old value from PDF - 2 mm for the window bow
     public static double SCALE        = 1000;
     
 }
