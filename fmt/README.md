@@ -10,7 +10,8 @@ The position of each FMT layer is adjusted by minimizing the residuals between t
   * Java Development Kit 11 or newer
   * A coatjava installation
 * Data:
-  * Beam data with electron tracks in the forward detector and the following banks: ```RUN::config, REC::Event, REC::Particle, REC::Track, REC::Trajectory, FMT::Clusters, FMT::Tracks```
+  * Beam data with electron tracks in the forward detector and the following banks: ```RUN::config, REC::Event, 
+REC::Particle, REC::Track, REC::Trajectory, FMT::Hits, FMT::Clusters, FMT::Tracks```
   * A recent Sqlite snapshot of CCDB (see https://clasweb.jlab.org/clas12offline/sqlite/ccdb/)
 
 ## Setup
@@ -87,4 +88,5 @@ NOTE. All measurements are in cm, while the ccdb works in mm.
 * For *dXY* and *rXY* alignment, the mean of the residuals distribution can be used, fixing as much as sigma allows.
 
 ### Example of alignment results
-See https://logbooks.jlab.org/entry/3947235
+See https://logbooks.jlab.org/entry/3947235. The validation plots can be obtained running the script 
+```fmtVertex.groovy``` on data reprocessed with the alignment constants.
