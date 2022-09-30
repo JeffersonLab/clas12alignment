@@ -1,10 +1,22 @@
 # FMT Analysis
 Code used for the FMT detector alignment using residual analysis. A residual is the distance between an FMT cluster of hits and a DC track. In case the README and/or the usage of the program is not clear enough, a short presentation with details on how to run is included in this directory, named `usage_help.pdf`.
 
+## Alignment algorithm
+The position of each FMT layer is adjusted by minimizing the residuals between the reconstructed FMT clusters and the DC track trajectory point. The values of the misalignment parameters are identified by performing subsequent scans of z translations, z rotations, xy translations and xy rotations, fitting the residuals for each set of misalignments and selecting the values for which the mean or sigma of the fit are minimal. Multiple iterations can be performed to account for correlations between the parameters. Because of the 1D strip readout of the FMT layers, while z misalignment can be optmized for each layer independently, xy misalignments can be studied only if at least two layers are simultaneously displaced or rotated. For this reason, z misalignments are defined per layer, while the same xy misalignments are applied to the whole detector.
+
+##Prerequisites
+* Software:
+  * A Linux or Mac computer
+  * Java Development Kit 11 or newer
+  * A coatjava installation
+* Data:
+  * Beam data with electron tracks in the forward detector and the following banks: ```RUN::config, REC::Event, REC::Particle, REC::Track, REC::Trajectory, FMT::Clusters, FMT::Tracks```
+  * A recent Sqlite snapshot of CCDB (see https://clasweb.jlab.org/clas12offline/sqlite/ccdb/)
+
 ## Setup
 Some setting up is required to run the program. The `run.sh` file requires some tuning, which includes
 * Name of the torus and solenoid maps to be used.
-* Location in disk of coatjava.
+* Path to the coatjava installation.
 After this initial setup is done, simply run the script without giving it any parameters to get the programs' usage and continue from there.
 
 After successfully running, a plot of shifts versus sigma (for dZ or rZ alignment) or mean (for dXY and rXY alignment) will be shown. The best shift is the one with the mean and sigma closest to 0.
@@ -73,3 +85,6 @@ NOTE. All measurements are in cm, while the ccdb works in mm.
 ### Comparing results:
 * For *dZ* and *rZ* alignment, it is ideal to use the sigma of the residuals distribution, fixing as much as sigmaError allows.
 * For *dXY* and *rXY* alignment, the mean of the residuals distribution can be used, fixing as much as sigma allows.
+
+### Example of alignment results
+See https://logbooks.jlab.org/entry/3947235
