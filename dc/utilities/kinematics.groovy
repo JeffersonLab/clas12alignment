@@ -609,6 +609,7 @@ public class Kinematics {
         
         boolean openWindow = false;
         String  optStats   = "";
+        List<String> inputList = null;
         
         Kinematics analysis = null;
         
@@ -624,7 +625,7 @@ public class Kinematics {
             openWindow  = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
                         
-            List<String> inputList = parser.getOptionParser("-process").getInputList();
+            inputList = parser.getOptionParser("-process").getInputList();
             if(inputList.isEmpty()==true){
                 parser.printUsage();
                 System.out.println("\n >>>> error: no input file is specified....\n");
@@ -667,7 +668,7 @@ public class Kinematics {
             openWindow = parser.getOptionParser("-plot").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
 
-            List<String> inputList = parser.getOptionParser("-plot").getInputList();
+            inputList = parser.getOptionParser("-plot").getInputList();
             if(inputList.isEmpty()==true){
                 parser.printUsage();
                 System.out.println("\n >>>> error: no input file is specified....\n");
@@ -681,7 +682,7 @@ public class Kinematics {
         
 
         if(openWindow) {
-            JFrame frame = new JFrame("Kinematics");
+            JFrame frame = new JFrame(inputList.get(0));
             frame.setSize(1200, 800);
             frame.add(analysis.drawHistos(optStats));
             frame.setLocationRelativeTo(null);
