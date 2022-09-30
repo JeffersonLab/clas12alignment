@@ -4,7 +4,7 @@ Code used for the FMT detector alignment using residual analysis. A residual is 
 ## Alignment algorithm
 The position of each FMT layer is adjusted by minimizing the residuals between the reconstructed FMT clusters and the DC track trajectory point. The values of the misalignment parameters are identified by performing subsequent scans of z translations, z rotations, xy translations and xy rotations, fitting the residuals for each set of misalignments and selecting the values for which the mean or sigma of the fit are minimal. Multiple iterations can be performed to account for correlations between the parameters. Because of the 1D strip readout of the FMT layers, while z misalignment can be optmized for each layer independently, xy misalignments can be studied only if at least two layers are simultaneously displaced or rotated. For this reason, z misalignments are defined per layer, while the same xy misalignments are applied to the whole detector.
 
-##Prerequisites
+## Prerequisites
 * Software:
   * A Linux or Mac computer
   * Java Development Kit 11 or newer
