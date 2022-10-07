@@ -76,8 +76,8 @@ public class Constants {
     // target parameters
     public static double TARGETPOS    = -0.5;
     public static double TARGETLENGTH =  5;    //target length
-    public static double WINDOWDIST   =  6.8;  //6.8;//2.8; //distance between the mylar foil and the downstream window
-    public static double SCEXIT       = 27.3;  //scattering chamber exit window, old value from PDF - 2 mm for the window bow
+    public static double WINDOWDIST   =  8.5;  //6.8;//2.8; //distance between the mylar foil and the downstream window
+    public static double SCEXIT       = 14.0;  //scattering chamber exit window, old value from PDF - 2 mm for the window bow
     public static double SCALE        = 1000;
     
 }
