@@ -188,10 +188,11 @@ public class Alignment {
         this.histos.put(name, histo);
     }
     
-    public void analyzeHistos(int resFit, int vertexFit) {
+    public void analyzeHistos(int resFit, int vertexFit, boolean test) {
         this.printConfig(resFit, "resFit", "");
         this.printConfig(vertexFit, "vertexFit", "");
         for(String key : histos.keySet()) {
+            if(test && !key.equals("nominal")) continue;
             LOGGER.info("\nAnalyzing histos for variation " + key);
             histos.get(key).analyzeHisto(resFit, vertexFit);
             for(int i=0; i<Constants.NPARS; i++)
@@ -897,26 +898,40 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
 //        parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
         parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
-        parser.getOptionParser("-process").addOption("-vertex"   , "5",            "fit vertex plots with 4 gaussians (5), 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
+        parser.getOptionParser("-process").addOption("-vertex"   , "5",            "fit vertex plots with:\n" +
+                                                                                   "\t\t- RG-C layout (6),\n" +
+                                                                                   "\t\t- 4 gaussians (5),\n" +
+                                                                                   "\t\t- 3 gaussians (4),\n" +
+                                                                                   "\t\t- 2 gaussians (3),\n" +
+                                                                                   "\t\t- 1 gaussian plus background (2),\n" +
+                                                                                   "\t\t- or only 1 gaussian (1)");
         parser.getOptionParser("-process").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-process").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-process").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
         parser.getOptionParser("-process").addOption("-iter"     , "1",            "number of global fit iterations");
         parser.getOptionParser("-process").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
-        
+        parser.getOptionParser("-process").addOption("-test"     , "0",            "analyze nominal geometry only for fit testing (1/0 = on/off)");
+
         // valid options for histogram-base analysis
         parser.addCommand("-analyze", "analyze histogram files");
         parser.getOptionParser("-analyze").addRequired("-input"  ,                 "input histogram file");
         parser.getOptionParser("-analyze").addOption("-display"  ,"1",             "display histograms (0/1)");
         parser.getOptionParser("-analyze").addOption("-stats"    ,"",              "set histogram stat option");
         parser.getOptionParser("-analyze").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
-        parser.getOptionParser("-analyze").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
-        parser.getOptionParser("-analyze").addOption("-vertex"   , "5",            "fit vertex plots with 4 gaussians (5), 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
+        parser.getOptionParser("-analyze").addOption("-residuals", "2",            "fit residuals (2), use mean (1), or use existing fit available (0)");
+        parser.getOptionParser("-analyze").addOption("-vertex"   , "5",            "fit vertex plots with:\n" +
+                                                                                   "\t\t- RG-C layout (6),\n" +
+                                                                                   "\t\t- 4 gaussians (5),\n" +
+                                                                                   "\t\t- 3 gaussians (4),\n" +
+                                                                                   "\t\t- 2 gaussians (3),\n" +
+                                                                                   "\t\t- 1 gaussian plus background (2),\n" +
+                                                                                   "\t\t- or only 1 gaussian (1)");
         parser.getOptionParser("-analyze").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-analyze").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-analyze").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
         parser.getOptionParser("-analyze").addOption("-iter"     , "1",            "number of global fit iterations");
         parser.getOptionParser("-analyze").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
+        parser.getOptionParser("-analyze").addOption("-test"     , "0",            "analyze nominal geometry only for fit testing (1/0 = on/off)");
         
         // valid options for final minuit-fit
         parser.addCommand("-fit", "perform misalignment fit");
@@ -955,6 +970,7 @@ public class Alignment {
             String  initVar    = parser.getOptionParser("-process").getOption("-init").stringValue();
             int     iter       = parser.getOptionParser("-process").getOption("-iter").intValue();
             boolean verbose    = parser.getOptionParser("-process").getOption("-verbose").intValue()!=0;
+            boolean testFit    = parser.getOptionParser("-process").getOption("-test").intValue()!=0;
             openWindow         = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
             if(verbose)     align.setLoggerLevel(Level.FINE);
@@ -978,7 +994,7 @@ public class Alignment {
                 }
             }
             align.processFiles(maxEvents);
-            align.analyzeHistos(residuals, vertex);
+            align.analyzeHistos(residuals, vertex, testFit);
             align.saveHistos(histoName);
         }
         
@@ -992,6 +1008,7 @@ public class Alignment {
             String  initVar    = parser.getOptionParser("-analyze").getOption("-init").stringValue();
             int     iter       = parser.getOptionParser("-analyze").getOption("-iter").intValue();
             boolean verbose    = parser.getOptionParser("-analyze").getOption("-verbose").intValue()!=0;
+            boolean testFit    = parser.getOptionParser("-analyze").getOption("-test").intValue()!=0;
             openWindow         = parser.getOptionParser("-analyze").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
             if(verbose)     align.setLoggerLevel(Level.FINE);
@@ -1002,7 +1019,7 @@ public class Alignment {
             align.setFitOptions(sector, iter);
             align.initConstants(11, initVar, compareVar);
             align.readHistos(histoName, optStats);
-            align.analyzeHistos(residuals, vertex);
+            align.analyzeHistos(residuals, vertex, testFit);
         }
         
         if(parser.getCommand().equals("-fit")) {
@@ -1023,7 +1040,7 @@ public class Alignment {
             align.setFitOptions(sector, iter);
             align.initConstants(11, initVar, compareVar);
             align.readHistos(histoName, optStats);
-            align.analyzeHistos(0, 0);
+            align.analyzeHistos(0, 0, false);
         }
 
         if(openWindow) {
