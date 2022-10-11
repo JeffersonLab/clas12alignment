@@ -1,8 +1,8 @@
 # FMT Analysis
 Code used for the FMT detector alignment using residual analysis. A residual is the distance between
-an FMT cluster of hits and a DC track. In case the README and/or the usage of the program is not
-clear enough, a short presentation with details on how to run is included in this directory, named
-`usage_help.pdf`.
+an FMT cluster of hits and a DC track in the FMT layer's local coordinate system. In case the README
+and the usage of the program is not clear enough, a short presentation with details on how to run is
+included in this directory, named `usage_help.pdf`.
 
 ## Alignment algorithm
 The position of each FMT layer is adjusted by minimizing the residuals between the reconstructed FMT
@@ -19,31 +19,24 @@ between the parameters.
 
 ## Prerequisites
 * Software:
-  * A Linux or Mac computer.
-  * Java Development Kit 11 or newer.
-  * A coatjava installation.
+    * A Linux or Mac computer.
+    * Java Development Kit 11 or newer.
+    * A coatjava installation.
 * Data:
-  * Beam data with electron tracks in the forward detector and the following banks: `RUN::config,
-  REC::Event, REC::Particle, REC::Track, REC::Trajectory, FMT::Hits, FMT::Clusters, FMT::Tracks`.
-  * A recent Sqlite snapshot of CCDB (see https://clasweb.jlab.org/clas12offline/sqlite/ccdb/).
+    * Beam data with electron tracks in the forward detector and the following banks: `RUN::config`,
+    `REC::Event`, `REC::Particle`, `REC::Track`, `REC::Trajectory`, `FMT::Hits`, `FMT::Clusters`,
+    and `FMT::Tracks`.
+    * A recent Sqlite snapshot of CCDB (see https://clasweb.jlab.org/clas12offline/sqlite/ccdb/).
 
 ## Setup
-Some setting up is required to run the program. The `run.sh` file requires some tuning, which
-includes
-* Name of the torus and solenoid maps to be used.
-* Path to the coatjava installation.
-After this initial setup is done, simply run the script without giving it any parameters to get the
-programs' usage and continue from there.
+A minimal setup is required to run the program. In the `run.sh` file, three variables need to be set
+* `TORUSMAP` and `SOLENOIDMAP` should point to the desired solenoid map appropiate for the run, and
+* `COATJAVA` should point to the desired coatjava installation.
 
-After successfully running, a plot of shifts versus sigma (for dZ or rZ alignment) or mean (for dXY
-    and rXY alignment) will be shown. The best shift is the one with the mean and sigma closest to
-    0.
+With this setup done, the script prints the programs' usage if its ran without any parameters.
 
-Note that per-layer XY alignment of FMT is impossible with the current conditions, so the mean of
-the three layers distribution is shown.
-
-**NOTE**. To change number of FMT layers, change the `FMTLAYERS` variable in
-`src/.../test/Constants.java`. Default is 3.
+**Note**. By default, the program assumes the number of FMT layers to be 3. If this changes, change
+the `FMTLAYERS` variable in `src/.../test/Constants.java` to the new value.
 
 ## Usage
 ```
