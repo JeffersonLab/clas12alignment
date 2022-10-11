@@ -87,15 +87,65 @@ After successfully running, the program produces either a 1D or a 2D depending o
 alignment ran:
 * For z alignment, a 1D plot of the deviation of the Gaussian fit against the shift or rotation
 applied is shown for each FMT layer. An example of this plot follows.
-![dz results](readme_img/dz_results.png)
+![dz results](readme_img/results_dz.png)
 
 * For xy alignment, a 2D plot of the mean average across layers against each shift is shown. An
 example of this plot follows.
-![dxy results](readme_img/dxy_results.png)
+![dxy results](readme_img/results_dxy.png)
 
-The most accurate shifts and rotations are the ones with the lowest means and deviations, within acceptable error margins.
+The most accurate shifts and rotations are the ones with the lowest means and deviations, within
+acceptable error margins.
 
-## Useful Information
-### Example of alignment results
+## Examples
+### RG-M Run 15109 Alignment
 See https://logbooks.jlab.org/entry/3947235. The validation plots can be obtained running the script
-```fmtVertex.groovy``` on data reprocessed with the alignment constants.
+`fmtVertex.groovy` on data reprocessed with the alignment constants.
+
+### RG-F Run 12439 Alignment
+First, let's perform dz alignment. To get rid of major misalignments, the `run.sh` is executed with
+a large range and step size, i.e:
+
+    ./run.sh /path/to/out_clas_012439.hipo -n 100000 -v dZ -i 5.0 0.5
+
+After the program runs, it shows
+![dz 0.5 results](readme_img/example_dz_0.5.png)
+showing that the z shift for each layer is about -4.0 cm. Knowing this, a second execution of the
+script is performed including the found z shifts and a bigger number of events:
+
+    ./run.sh /path/to/out_clas_012439.hipo -z -4.0 -4.0 -4.0 -n 1000000 \
+            -v dZ -i 0.5 0.05
+
+to get
+![dz 0.05 results](readme_img/example_dz_0.05.png)
+from which the set of shifts (-3.75 -4.05 -3.85) can be concluded. Looking at the error bars on the
+plot, it can be concluded that a much greater number of events would be needed for more precise
+results.
+
+The same procedure should be followed for rz alignment. For dxy, the following parameters are added
+to the run script
+
+    ./run.sh /path/to/out_clas_012439.hipo -z -3.75 -4.05 -3.85 \
+            -Z -0.50 -0.50 -0.40 -n 100000 -v dXY -i 0.15 0.05
+
+to get
+![dxy 0.05 results](readme_img/example_dxy_0.05.png)
+from which a shift of 0.10 cm to x and y can be concluded. Further detail can be squeezed in
+
+    ./run.sh /path/to/out_clas_012439.hipo -z -3.75 -4.05 -3.85 \
+            -Z -0.50 -0.50 -0.40 -x 0.10 0.10 0.10 -y 0.10 0.10 0.10 \
+            -n 100000 -v dXY -i 0.03 0.01
+
+to get
+![dxy 0.01 results](readme_img/example_dxy_0.01.png)
+pushing the previously found shifts by 0.1 mm in the positive x and positive y directions.
+
+Remembering that the CCDB variables are stored in millimeters, a text file is written detailing the
+shifts and rotations found as
+
+    # sector layer component deltaX deltaY deltaZ rotX rotY rotZ
+      0      1     0         1.1    1.1    -37.5  0.0  0.0  -0.50
+      0      2     0         1.1    1.1    -40.5  0.0  0.0  -0.50
+      0      3     0         1.1    1.1    -38.5  0.0  0.0  -0.40
+      0      4     0         0.0    0.0      0.0  0.0  0.0   0.0
+      0      5     0         0.0    0.0      0.0  0.0  0.0   0.0
+      0      6     0         0.0    0.0      0.0  0.0  0.0   0.0
