@@ -96,27 +96,6 @@ example of this plot follows.
 The most accurate shifts and rotations are the ones with the lowest means and deviations, within acceptable error margins.
 
 ## Useful Information
-### Reconstruction:
-* Currently, the FMT engine handles FMT data.
-* The engine grabs the DC tracks and reconstructs them, updating them with the FMT cluster data.
-* Reconstruction works in a similar fashion to the DC's:
-    * Clusters are made from the hits via a simple Cluster Finding algorithm.
-    * Crosses are constructed by grouping clusters from the six different FMT layers.
-    * The DC track is updated with these crosses via a Kalman Filter algorithm.
-
-**NOTE**. Crosses are not implemented for runs with only three FMT layers.
-
-### Plotting Residuals:
-* Residuals are the difference between the DC track and the FMT clusters in y in the FMT layer's
-local coordinate system.
-* Looking at the residuals gives us an idea of how to fix misalignments in the geometry.
-
-### Comparing results:
-* For *dZ* and *rZ* alignment, it is ideal to use the sigma of the residuals distribution, fixing as
-much as sigmaError allows.
-* For *dXY* and *rXY* alignment, the mean of the residuals distribution can be used, fixing as much
-as sigma allows.
-
 ### Example of alignment results
 See https://logbooks.jlab.org/entry/3947235. The validation plots can be obtained running the script
 ```fmtVertex.groovy``` on data reprocessed with the alignment constants.
