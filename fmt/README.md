@@ -105,15 +105,19 @@ See https://logbooks.jlab.org/entry/3947235. The validation plots can be obtaine
 First, let's perform dz alignment. To get rid of major misalignments, the `run.sh` is executed with
 a large range and step size, i.e:
 
-    ./run.sh /path/to/out_clas_012439.hipo -n 100000 -v dZ -i 5.0 0.5
+```bash
+./run.sh /path/to/out_clas_012439.hipo -n 100000 -v dZ -i 5.0 0.5
+```
 
 After the program runs, it shows
 ![dz 0.5 results](readme_img/example_dz_0.5.png)
 showing that the z shift for each layer is about -4.0 cm. Knowing this, a second execution of the
 script is performed including the found z shifts and a bigger number of events:
 
-    ./run.sh /path/to/out_clas_012439.hipo -z -4.0 -4.0 -4.0 -n 1000000 \
-            -v dZ -i 0.5 0.05
+```bash
+./run.sh /path/to/out_clas_012439.hipo -z -4.0 -4.0 -4.0 -n 1000000 -v dZ \
+        -i 0.5 0.05
+```
 
 to get
 ![dz 0.05 results](readme_img/example_dz_0.05.png)
@@ -124,16 +128,20 @@ results.
 The same procedure should be followed for rz alignment. For dxy, the following parameters are added
 to the run script
 
-    ./run.sh /path/to/out_clas_012439.hipo -z -3.75 -4.05 -3.85 \
-            -Z -0.50 -0.50 -0.40 -n 100000 -v dXY -i 0.15 0.05
+```bash
+./run.sh /path/to/out_clas_012439.hipo -z -3.75 -4.05 -3.85 \
+        -Z -0.50 -0.50 -0.40 -n 100000 -v dXY -i 0.15 0.05
+```
 
 to get
 ![dxy 0.05 results](readme_img/example_dxy_0.05.png)
 from which a shift of 0.10 cm to x and y can be concluded. Further detail can be squeezed in
 
-    ./run.sh /path/to/out_clas_012439.hipo -z -3.75 -4.05 -3.85 \
-            -Z -0.50 -0.50 -0.40 -x 0.10 0.10 0.10 -y 0.10 0.10 0.10 \
-            -n 100000 -v dXY -i 0.03 0.01
+```bash
+./run.sh /path/to/out_clas_012439.hipo -z -3.75 -4.05 -3.85 \
+        -Z -0.50 -0.50 -0.40 -x 0.10 0.10 0.10 -y 0.10 0.10 0.10 \
+        -n 100000 -v dXY -i 0.03 0.01
+```
 
 to get
 ![dxy 0.01 results](readme_img/example_dxy_0.01.png)
