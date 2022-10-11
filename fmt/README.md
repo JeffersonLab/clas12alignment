@@ -1,4 +1,4 @@
-# FMT Analysis
+# FMT Alignment
 Code used for the FMT detector alignment using residual analysis. A residual is the distance between
 an FMT cluster of hits and a DC track in the FMT layer's local coordinate system. In case the README
 and the usage of the program is not clear enough, a short presentation with details on how to run is
