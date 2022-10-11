@@ -82,6 +82,19 @@ not specified, a plot showing the residuals for the given nominal positions and 
 
 **Note**. The alignemnt program receives measurements in cm, while the CCDB works in mm.
 
+## Results
+After successfully running, the program produces either a 1D or a 2D depending on the type of
+alignment ran:
+* For z alignment, a 1D plot of the deviation of the Gaussian fit against the shift or rotation
+applied is shown for each FMT layer. An example of this plot follows.
+![dz results](readme_img/dz_results.png)
+
+* For xy alignment, a 2D plot of the mean average across layers against each shift is shown. An
+example of this plot follows.
+![dxy results](readme_img/dxy_results.png)
+
+The most accurate shifts and rotations are the ones with the lowest means and deviations, within acceptable error margins.
+
 ## Useful Information
 ### Reconstruction:
 * Currently, the FMT engine handles FMT data.
