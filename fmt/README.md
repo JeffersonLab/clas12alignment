@@ -1,7 +1,7 @@
 # FMT Alignment
 Code used for the FMT detector alignment using residual analysis. A residual is the distance between
 an FMT cluster of hits and a DC track in the FMT layer's local coordinate system. In case the README
-and the usage of the program is not clear enough, a short presentation with details on how to run is
+and the usage of the program is not clear enough, a brief presentation with details on how to run is
 included in this directory, named `usage_help.pdf`.
 
 ## Alignment algorithm
@@ -12,10 +12,10 @@ fitting the residuals for each set of misalignments and selecting the values for
 sigma of the fit are minimal. Multiple iterations can be performed to account for correlations
 between the parameters.
 
- Because of the 1D strip readout of the FMT layers, while z misalignment can be optmized for each
- layer independently, xy misalignments can be studied only if at least two layers are simultaneously
- displaced or rotated. For this reason, z misalignments are defined per layer, while the same xy
- misalignments are applied to the whole detector.
+Because of the 1D strip readout of the FMT layers, while z misalignment can be optimized for each
+layer independently, xy misalignments can be studied only if at least two layers are simultaneously
+displaced or rotated. For this reason, z misalignments are defined per layer, while the same xy
+misalignments are applied to the whole detector.
 
 ## Prerequisites
 * Software:
@@ -30,10 +30,10 @@ between the parameters.
 
 ## Setup
 A minimal setup is required to run the program. In the `run.sh` file, three variables need to be set
-* `TORUSMAP` and `SOLENOIDMAP` should point to the desired solenoid map appropiate for the run, and
+* `TORUSMAP` and `SOLENOIDMAP` should point to the desired solenoid map appropriate for the run, and
 * `COATJAVA` should point to the desired coatjava installation.
 
-With this setup done, the script prints the programs' usage if its ran without any parameters.
+With this setup done, the script prints the programs' usage if it's ran without any parameters.
 
 **Note**. By default, the program assumes the number of FMT layers to be 3. If this changes, change
 the `FMTLAYERS` variable in `src/.../test/Constants.java` to the new value.
@@ -80,10 +80,10 @@ size is of 0.1. The set of values tested for z are `(0.3 0.4 0.5 0.6 0.7)`.
 If a position or rotation is not specified, it is assumed to be 0 for all FMT layers. If `var` is
 not specified, a plot showing the residuals for the given nominal positions and rotations is shown.
 
-**Note**. The alignemnt program receives measurements in cm, while the CCDB works in mm.
+**Note**. The alignment program receives measurements in cm, while the CCDB works in mm.
 
 ## Results
-After successfully running, the program produces either a 1D or a 2D depending on the type of
+After successfully running, the program produces either a 1D or a 2D, depending on the type of
 alignment ran:
 * For z alignment, a 1D plot of the deviation of the Gaussian fit against the shift or rotation
 applied is shown for each FMT layer. An example of this plot follows.
@@ -112,7 +112,7 @@ a large range and step size, i.e:
 After the program runs, it shows
 ![dz 0.5 results](readme_img/example_dz_0.5.png)
 showing that the z shift for each layer is about -4.0 cm. Knowing this, a second execution of the
-script is performed including the found z shifts and a bigger number of events:
+script is performed, including the found z shifts and a greater number of events:
 
 ```bash
 ./run.sh /path/to/out_clas_012439.hipo -z -4.0 -4.0 -4.0 -n 1000000 -v dZ \
@@ -122,7 +122,7 @@ script is performed including the found z shifts and a bigger number of events:
 to get
 ![dz 0.05 results](readme_img/example_dz_0.05.png)
 from which the set of shifts (-3.75 -4.05 -3.85) can be concluded. Looking at the error bars on the
-plot, it can be concluded that a much greater number of events would be needed for more precise
+plot, it can be concluded that a much larger number of events would be needed for more precise
 results.
 
 The same procedure should be followed for rz alignment. For dxy, the following parameters are added
