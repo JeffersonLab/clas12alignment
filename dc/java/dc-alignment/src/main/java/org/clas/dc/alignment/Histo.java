@@ -449,12 +449,13 @@ public class Histo {
                         System.out.print("\r");
                     }
                     H1F hvtx = vertex[it][ip].getH1F("hi_S"+s);
+                    double dx = hvtx.getDataX(1)-hvtx.getDataX(0);
                     this.fitVertex(vertexFit, hvtx);
                     this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*Constants.SCALE;
                     this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*Constants.SCALE;
                     if(!shift) {
                         this.parValues[is][it][ip][0] -= Constants.TARGETPOS*Constants.SCALE;
-                        this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*(Constants.VTXMAX-Constants.VTXMIN)/Constants.VTXBINS/2);
+                        this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*dx/2);
                         if(hvtx.getFunction().getName().equals("f4vertex") && 
                            hvtx.getFunction().getNPars()>7 && 
                            hvtx.getFunction().parameter(7).name().equals("scw") &&
