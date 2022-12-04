@@ -883,7 +883,7 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-theta"    , "5:10:20",      "theta bin limits, e.g. \"5:10:20:30\"");
         parser.getOptionParser("-process").addOption("-phi"      , "-30:0:30",     "phi bin limits, e.g. \"-30:-10:0:10:30\"");
         parser.getOptionParser("-process").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
-        parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
+//        parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
         parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
         parser.getOptionParser("-process").addOption("-vertex"   , "5",            "fit vertex plots with 4 gaussians (5), 3 gaussians (4), 2 gaussians (3), 1 gaussian plus background (2) or only 1 gaussian (1)");
         parser.getOptionParser("-process").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
@@ -934,7 +934,7 @@ public class Alignment {
             String thetaBins   = parser.getOptionParser("-process").getOption("-theta").stringValue();
             String phiBins     = parser.getOptionParser("-process").getOption("-phi").stringValue();
             String optStats    = parser.getOptionParser("-process").getOption("-stats").stringValue();
-            boolean time       = parser.getOptionParser("-process").getOption("-time").intValue()!=0;
+            boolean time       = false;//parser.getOptionParser("-process").getOption("-time").intValue()!=0;
             int     residuals  = parser.getOptionParser("-process").getOption("-residuals").intValue();
             int     vertex     = parser.getOptionParser("-process").getOption("-vertex").intValue();
             boolean sector     = parser.getOptionParser("-process").getOption("-sector").intValue()!=0;
