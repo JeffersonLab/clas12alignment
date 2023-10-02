@@ -242,8 +242,8 @@ public class Table {
         return s;
     }
     
-    public String toTextTable() {
-        String s = "";
+    public Table toCLAS12Frame() {
+        Table transformed = this.copy();
         for(int ir=0; ir<Constants.NREGION; ir++) {
             for(int is=0; is<Constants.NSECTOR; is++) {
                 Vector3D offset = new Vector3D(this.alignment.getDoubleValue("dx", ir+1, is+1, 0),
@@ -251,12 +251,30 @@ public class Table {
                                                this.alignment.getDoubleValue("dz", ir+1, is+1, 0));
                 offset.rotateY(Math.toRadians(25));
                 offset.rotateZ(Math.toRadians(60*is));
+                transformed.alignment.setDoubleValue(offset.x(), "dx", ir+1, is+1, 0);
+                transformed.alignment.setDoubleValue(offset.y(), "dy", ir+1, is+1, 0);
+                transformed.alignment.setDoubleValue(offset.z(), "dz", ir+1, is+1, 0);
+                transformed.alignment.setDoubleValue(0.0, "ex", ir+1, is+1, 0);
+                transformed.alignment.setDoubleValue(0.0, "ey", ir+1, is+1, 0);
+                transformed.alignment.setDoubleValue(0.0, "ez", ir+1, is+1, 0);
+            }
+        }
+        return transformed;
+    }
+    
+    public String toCCDBTable() {
+        Table transformed = this.toCLAS12Frame();
+        String s = "";
+        for(int ir=0; ir<Constants.NREGION; ir++) {
+            for(int is=0; is<Constants.NSECTOR; is++) {
                 s += String.format("%4d %4d %4d   %10.4f %10.4f %10.4f   %10.4f %10.4f %10.4f\n",
                         (ir+1), (is+1), 0,
-                        offset.x(), offset.y(), offset.z(),
-                        this.alignment.getDoubleValue("dtheta_x", ir+1, is+1, 0),
-                        this.alignment.getDoubleValue("dtheta_y", ir+1, is+1, 0),
-                        this.alignment.getDoubleValue("dtheta_z", ir+1, is+1, 0));
+                        transformed.alignment.getDoubleValue("dx", ir+1, is+1, 0),
+                        transformed.alignment.getDoubleValue("dy", ir+1, is+1, 0),
+                        transformed.alignment.getDoubleValue("dz", ir+1, is+1, 0),
+                        transformed.alignment.getDoubleValue("dtheta_x", ir+1, is+1, 0),
+                        transformed.alignment.getDoubleValue("dtheta_y", ir+1, is+1, 0),
+                        transformed.alignment.getDoubleValue("dtheta_z", ir+1, is+1, 0));
             }
         }
         return s;
@@ -266,7 +284,7 @@ public class Table {
         try {
             FileWriter fileWriter = new FileWriter(filename);
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-            bufferedWriter.write(this.toTextTable());
+            bufferedWriter.write(this.toCCDBTable());
             bufferedWriter.close();
             Logger.getLogger(Constants.LOGGERNAME).log(Level.INFO, "Alignment constants saved to file " + filename);
         } catch (IOException ex) {

@@ -368,7 +368,7 @@ public class Alignment {
         if(compareAlignment!=null) {
             LOGGER.info("\nFitting residuals");
             LOGGER.info("\nInitial alignment parameters (variation: " + this.initVariation + ") in the DC tilted sector frame\n" + this.initAlignment.toString());
-            LOGGER.info("\nInitial alignment parameters (variation: " + this.initVariation + ") in CCDB format\n" + this.initAlignment.toTextTable());
+            LOGGER.info("\nInitial alignment parameters (variation: " + this.initVariation + ") in CCDB format\n" + this.initAlignment.toCCDBTable());
             Table fittedAlignment = new Table();
             if(this.setActiveParameters()>0) {
                 for(int is=0; is<Constants.NSECTOR; is++) {
@@ -378,8 +378,8 @@ public class Alignment {
                 }
                 Table finalAlignment = fittedAlignment.copy().add(initAlignment);
                 LOGGER.info("\nFitted alignment parameters in the DC tilted sector frame\n" +fittedAlignment.toString());
-                LOGGER.info("\nFinal alignment parameters in CCDB format (sum of this and previous iteration costants)\n" +finalAlignment.toTextTable());
-                LOGGER.info("\nCompare to " +this.compareVariation + " variation constants\n" +this.compareAlignment.toTextTable());
+                LOGGER.info("\nFinal alignment parameters in CCDB format (sum of this and previous iteration costants)\n" +finalAlignment.toCCDBTable());
+                LOGGER.info("\nCompare to " +this.compareVariation + " variation constants\n" +this.compareAlignment.toCCDBTable());
                 finalAlignment.toFile("dc-alignment.txt");
                 
                 canvas.addCanvas("corrected (with new parameters)");
@@ -417,6 +417,18 @@ public class Alignment {
                 canvas.getCanvas("internal-only").draw(finalInternal.getDataGroup(2));
                 for(int i=0; i<canvas.getCanvas("internal-only").getCanvasPads().size(); i++) {
                     EmbeddedPad pad = canvas.getCanvas("internal-only").getCanvasPads().get(i);
+                    if(i<Constants.NSECTOR) 
+                        pad.getAxisX().setRange(-0.5, 0.5);
+                    else
+                        pad.getAxisX().setRange(-0.199, 0.201);
+                }
+                canvas.addCanvas("clas12 frame");
+                Table compareGlobal = compareAlignment.toCLAS12Frame();
+                Table finalGlobal   = finalAlignment.toCLAS12Frame();
+                canvas.getCanvas("clas12 frame").draw(compareGlobal.getDataGroup(1));
+                canvas.getCanvas("clas12 frame").draw(finalGlobal.getDataGroup(2));
+                for(int i=0; i<canvas.getCanvas("clas12 frame").getCanvasPads().size(); i++) {
+                    EmbeddedPad pad = canvas.getCanvas("clas12 frame").getCanvasPads().get(i);
                     if(i<Constants.NSECTOR) 
                         pad.getAxisX().setRange(-0.5, 0.5);
                     else
