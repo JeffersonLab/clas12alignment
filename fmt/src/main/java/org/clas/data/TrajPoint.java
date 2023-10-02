@@ -94,6 +94,7 @@ public class TrajPoint {
                     trajPoints.get(trajPoints.size()-1)[li] = null;
             }
 
+            if (trajPoints.size() == 0) return null;
             fcuts.increaseTrajCount();
 
             // Get DC sector of the track.
