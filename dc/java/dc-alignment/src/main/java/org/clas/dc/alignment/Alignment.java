@@ -52,6 +52,7 @@ public class Alignment {
     private String[]          inputs           = new String[Constants.NPARS+1];
     private Bin[]             thetaBins        = null;
     private Bin[]             phiBins          = null;
+    private double[]          vertexRange      = null;
     private ConstantsManager  manager          = new ConstantsManager();
     private String            compareVariation = null;
     private String            initVariation    = null;
@@ -162,6 +163,27 @@ public class Alignment {
         }
     }
     
+    private void initVertexPar(int vertex, String pars) {
+        if(!pars.isEmpty()) {
+            double[] parValues = new double[pars.split(":").length];
+            for(int i=0; i<parValues.length; i++) {
+                parValues[i] = Double.parseDouble(pars.split(":")[i]);
+            }
+            Constants.initTargetPars(parValues);
+        }
+        else {
+            if(Math.abs(vertex)==3)
+                Constants.initTargetPars(Constants.RGFSUMMER2020);
+            else if(Math.abs(vertex)==5)
+                Constants.initTargetPars(Constants.RGMFALL2021);
+            else if(Math.abs(vertex)==6)
+                Constants.initTargetPars(Constants.RGCSUMMER2022);
+            else if(Math.abs(vertex)==7)
+                Constants.initTargetPars(Constants.RGDFALL2023);
+        }
+        if(vertex<0) vertex=0;
+    }
+    
     public Table getTable(int run, String variation) {
         Table alignment = null;
         
@@ -188,9 +210,10 @@ public class Alignment {
         this.histos.put(name, histo);
     }
     
-    public void analyzeHistos(int resFit, int vertexFit, boolean test) {
+    public void analyzeHistos(int resFit, int vertexFit, String vertexPar, boolean test) {
         this.printConfig(resFit, "resFit", "");
         this.printConfig(vertexFit, "vertexFit", "");
+        this.initVertexPar(vertexFit, vertexPar);
         for(String key : histos.keySet()) {
             if(test && !key.equals("nominal")) continue;
             LOGGER.info("\nAnalyzing histos for variation " + key);
@@ -710,12 +733,28 @@ public class Alignment {
         for(int i=1; i<phiBins.length; i++) LOGGER.config(phiBins[i].toString());
     }
 
+    private void setVertexRange(String range) {
+        String[] limits = range.split(":");
+        if(limits.length==2) {
+            this.vertexRange[0] = Double.parseDouble(limits[0]);
+            this.vertexRange[1] = Double.parseDouble(limits[1]);            
+        }
+        else {
+            vertexRange[0] = Constants.VTXMIN;
+            vertexRange[1] = Constants.VTXMAX;
+        }
+    }
+    
     public Bin[] getThetaBins() {
         return thetaBins;
     }
 
     public Bin[] getPhiBins() {
         return phiBins;
+    }   
+    
+    public double[] getVertexRange() {
+        return vertexRange;
     }   
     
     public JTabbedPane getCanvases() {
@@ -851,7 +890,7 @@ public class Alignment {
             Map.Entry<String,Directory> object = (Map.Entry<String,Directory>) entry;
             String key = object.getKey();
             boolean shift = !key.equals("nominal") && subtractedShifts;
-            this.addHistoSet(key, new Histo(shift, thetaBins, phiBins, optStats));
+            this.addHistoSet(key, new Histo(shift, thetaBins, phiBins, vertexRange, optStats));
             histos.get(key).readDataGroup(folder+"/"+key, dir);
         }
         System.setOut(outStream);
@@ -898,13 +937,21 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
 //        parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
         parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
-        parser.getOptionParser("-process").addOption("-vertex"   , "5",            "fit vertex plots with:\n" +
+        parser.getOptionParser("-process").addOption("-vertfit"  , "5",            "fit vertex plots with:\n" +
+                                                                                   "\t\t- RG-D layout (7), new cryotarget, \n" +
                                                                                    "\t\t- RG-C layout (6),\n" +
                                                                                    "\t\t- 4 gaussians (5),\n" +
                                                                                    "\t\t- 3 gaussians (4),\n" +
                                                                                    "\t\t- 2 gaussians (3),\n" +
                                                                                    "\t\t- 1 gaussian plus background (2),\n" +
                                                                                    "\t\t- or only 1 gaussian (1)");
+        parser.getOptionParser("-process").addOption("-vertpar"  , "",             "comma-separated vertex function parameters, default values are for Spring19 crryotarget with:\n" +
+                                                                                   "\t\t- -0.5: target cell exit window position,\n" +
+                                                                                   "\t\t-  5.0: target length,\n" +
+                                                                                   "\t\t-  6.8: distance between the cell exit window and the insulation foil,\n" +
+                                                                                   "\t\t- 27.3: distance between the scattering chamber exit window and the target center,\n" +
+                                                                                   "leave empty to use defaults; units are cm");
+        parser.getOptionParser("-process").addOption("-vertrange", "",             "comma-separated vertex histogram limits, e.g. -20:35; units are cm");
         parser.getOptionParser("-process").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-process").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-process").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
@@ -919,13 +966,20 @@ public class Alignment {
         parser.getOptionParser("-analyze").addOption("-stats"    ,"",              "set histogram stat option");
         parser.getOptionParser("-analyze").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-analyze").addOption("-residuals", "2",            "fit residuals (2), use mean (1), or use existing fit available (0)");
-        parser.getOptionParser("-analyze").addOption("-vertex"   , "5",            "fit vertex plots with:\n" +
+        parser.getOptionParser("-analyze").addOption("-vertfit"   , "5",           "fit vertex plots with:\n" +
+                                                                                   "\t\t- RG-D layout (7), new cryotarget,\n" +
                                                                                    "\t\t- RG-C layout (6),\n" +
                                                                                    "\t\t- 4 gaussians (5),\n" +
                                                                                    "\t\t- 3 gaussians (4),\n" +
                                                                                    "\t\t- 2 gaussians (3),\n" +
                                                                                    "\t\t- 1 gaussian plus background (2),\n" +
                                                                                    "\t\t- or only 1 gaussian (1)");
+        parser.getOptionParser("-analyze").addOption("-vertpar"  , "",             "comma-separated vertex function parameters, default values are for Spring19 crryotarget with:\n" +
+                                                                                   "\t\t- -0.5: target cell exit window position,\n" +
+                                                                                   "\t\t-  5.0: target length,\n" +
+                                                                                   "\t\t-  6.8: distance between the cell exit window and the insulation foil,\n" +
+                                                                                   "\t\t- 27.3: distance between the scattering chamber exit window and the target center,\n" +
+                                                                                   "\t\tleave empty to use defaults; units are cm");
         parser.getOptionParser("-analyze").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-analyze").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-analyze").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
@@ -940,6 +994,20 @@ public class Alignment {
         parser.getOptionParser("-fit").addOption("-stats"    ,"",              "set histogram stat option");
         parser.getOptionParser("-fit").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-fit").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
+        parser.getOptionParser("-fit").addOption("-vertfit"  , "5",            "fit vertex plots with:\n" +
+                                                                               "\t\t- RG-D layout (7), new cryotarget, \n" +
+                                                                               "\t\t- RG-C layout (6),\n" +
+                                                                               "\t\t- 4 gaussians (5),\n" +
+                                                                               "\t\t- 3 gaussians (4),\n" +
+                                                                               "\t\t- 2 gaussians (3),\n" +
+                                                                               "\t\t- 1 gaussian plus background (2),\n" +
+                                                                               "\t\t- or only 1 gaussian (1)");
+        parser.getOptionParser("-fit").addOption("-vertpar"  , "",             "comma-separated vertex function parameters, default values are for Spring19 crryotarget with:\n" +
+                                                                               "\t\t- -0.5: target cell exit window position,\n" +
+                                                                               "\t\t-  5.0: target length,\n" +
+                                                                               "\t\t-  6.8: distance between the cell exit window and the insulation foil,\n" +
+                                                                               "\t\t- 27.3: distance between the scattering chamber exit window and the target center,\n" +
+                                                                               "leave empty to use defaults; units are cm");
         parser.getOptionParser("-fit").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-fit").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
         parser.getOptionParser("-fit").addOption("-iter"     , "1",            "number of global fit iterations");
@@ -957,51 +1025,55 @@ public class Alignment {
             if(!namePrefix.isEmpty()) {
                 histoName  = namePrefix + "_" + histoName;
             }
-            String nominal     = parser.getOptionParser("-process").getOption("-nominal").stringValue();
-            String thetaBins   = parser.getOptionParser("-process").getOption("-theta").stringValue();
-            String phiBins     = parser.getOptionParser("-process").getOption("-phi").stringValue();
-            String optStats    = parser.getOptionParser("-process").getOption("-stats").stringValue();
-            boolean time       = false;//parser.getOptionParser("-process").getOption("-time").intValue()!=0;
-            int     residuals  = parser.getOptionParser("-process").getOption("-residuals").intValue();
-            int     vertex     = parser.getOptionParser("-process").getOption("-vertex").intValue();
-            boolean sector     = parser.getOptionParser("-process").getOption("-sector").intValue()!=0;
-            boolean shifts     = parser.getOptionParser("-process").getOption("-shifts").intValue()!=0;
-            String  compareVar = parser.getOptionParser("-process").getOption("-compare").stringValue();
-            String  initVar    = parser.getOptionParser("-process").getOption("-init").stringValue();
-            int     iter       = parser.getOptionParser("-process").getOption("-iter").intValue();
-            boolean verbose    = parser.getOptionParser("-process").getOption("-verbose").intValue()!=0;
-            boolean testFit    = parser.getOptionParser("-process").getOption("-test").intValue()!=0;
-            openWindow         = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
+            String   nominal      = parser.getOptionParser("-process").getOption("-nominal").stringValue();
+            String   thetaBins    = parser.getOptionParser("-process").getOption("-theta").stringValue();
+            String   phiBins      = parser.getOptionParser("-process").getOption("-phi").stringValue();
+            String   optStats     = parser.getOptionParser("-process").getOption("-stats").stringValue();
+            boolean  time         = false;//parser.getOptionParser("-process").getOption("-time").intValue()!=0;
+            int      residuals    = parser.getOptionParser("-process").getOption("-residuals").intValue();
+            int      vertexFit    = parser.getOptionParser("-process").getOption("-vertfit").intValue();
+            String   vertexPar    = parser.getOptionParser("-process").getOption("-vertpar").stringValue();   
+            String   vertexRange  = parser.getOptionParser("-process").getOption("-vertrange").stringValue();
+            boolean  sector       = parser.getOptionParser("-process").getOption("-sector").intValue()!=0;
+            boolean  shifts       = parser.getOptionParser("-process").getOption("-shifts").intValue()!=0;
+            String   compareVar   = parser.getOptionParser("-process").getOption("-compare").stringValue();
+            String   initVar      = parser.getOptionParser("-process").getOption("-init").stringValue();
+            int      iter         = parser.getOptionParser("-process").getOption("-iter").intValue();
+            boolean  verbose      = parser.getOptionParser("-process").getOption("-verbose").intValue()!=0;
+            boolean  testFit      = parser.getOptionParser("-process").getOption("-test").intValue()!=0;
+            openWindow           = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
             if(verbose)     align.setLoggerLevel(Level.FINE);
             
             align.setShiftsMode(shifts);
             align.setAngularBins(thetaBins, phiBins);
+            align.setVertexRange(vertexRange);
             align.setFitOptions(sector, iter);
             align.initConstants(11, initVar, compareVar);
             
-            align.addHistoSet(inputs[0], new Histo(Alignment.getFileNames(nominal),align.getThetaBins(),align.getPhiBins(), time, optStats));
+            align.addHistoSet(inputs[0], new Histo(Alignment.getFileNames(nominal),align.getThetaBins(),align.getPhiBins(), time, align.getVertexRange(), optStats));
             for(int i=1; i<inputs.length; i++) {
                 String input = parser.getOptionParser("-process").getOption("-" + inputs[i]).stringValue();
                 if(!input.isEmpty()) { 
                     if(shifts)
                         align.addHistoSet(inputs[i], new Histo(Alignment.getFileNames(input), 
                                                                Alignment.getFileNames(nominal), 
-                                                               align.getThetaBins(),align.getPhiBins(),optStats));
+                                                               align.getThetaBins(),align.getPhiBins(),align.getVertexRange(),optStats));
                     else 
                         align.addHistoSet(inputs[i], new Histo(Alignment.getFileNames(input), 
-                                                               align.getThetaBins(),align.getPhiBins(),optStats));
+                                                               align.getThetaBins(),align.getPhiBins(),align.getVertexRange(),optStats));
                 }
             }
             align.processFiles(maxEvents);
-            align.analyzeHistos(residuals, vertex, testFit);
+            align.analyzeHistos(residuals, vertexFit, vertexPar, testFit);
             align.saveHistos(histoName);
         }
         
         if(parser.getCommand().equals("-analyze")) {
             String  optStats   = parser.getOptionParser("-analyze").getOption("-stats").stringValue();
             int     residuals  = parser.getOptionParser("-analyze").getOption("-residuals").intValue();
-            int     vertex     = parser.getOptionParser("-analyze").getOption("-vertex").intValue();
+            int     vertexFit  = parser.getOptionParser("-analyze").getOption("-vertfit").intValue();
+            String  vertexPar  = parser.getOptionParser("-analyze").getOption("-vertpar").stringValue();            
             boolean sector     = parser.getOptionParser("-analyze").getOption("-sector").intValue()!=0;
             boolean shifts     = parser.getOptionParser("-analyze").getOption("-shifts").intValue()!=0;
             String  compareVar = parser.getOptionParser("-analyze").getOption("-compare").stringValue();
@@ -1019,13 +1091,15 @@ public class Alignment {
             align.setFitOptions(sector, iter);
             align.initConstants(11, initVar, compareVar);
             align.readHistos(histoName, optStats);
-            align.analyzeHistos(residuals, vertex, testFit);
+            align.analyzeHistos(residuals, vertexFit, vertexPar, testFit);
         }
         
         if(parser.getCommand().equals("-fit")) {
             String  optStats   = parser.getOptionParser("-fit").getOption("-stats").stringValue();
             boolean shifts     = parser.getOptionParser("-fit").getOption("-shifts").intValue()!=0;
             boolean sector     = parser.getOptionParser("-fit").getOption("-sector").intValue()!=0;
+            int     vertexFit  = parser.getOptionParser("-fit").getOption("-vertfit").intValue();
+            String  vertexPar  = parser.getOptionParser("-fit").getOption("-vertpar").stringValue();            
             String  compareVar = parser.getOptionParser("-fit").getOption("-compare").stringValue();
             String  initVar    = parser.getOptionParser("-fit").getOption("-init").stringValue();
             int     iter       = parser.getOptionParser("-fit").getOption("-iter").intValue();
@@ -1040,7 +1114,7 @@ public class Alignment {
             align.setFitOptions(sector, iter);
             align.initConstants(11, initVar, compareVar);
             align.readHistos(histoName, optStats);
-            align.analyzeHistos(0, 0, false);
+            align.analyzeHistos(0, -vertexFit, vertexPar, false);
         }
 
         if(openWindow) {

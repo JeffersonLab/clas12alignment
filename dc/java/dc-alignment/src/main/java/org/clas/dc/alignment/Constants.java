@@ -73,11 +73,44 @@ public class Constants {
                                               1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1,   1};               
     
-    // target parameters
-    public static double TARGETPOS    = -1.4;
-    public static double TARGETLENGTH =  5.25;    //target length
-    public static double WINDOWDIST   =  8.3;  //6.8;//2.8; //distance between the mylar foil and the downstream window
-    public static double SCEXIT       = 14.45;  //scattering chamber exit window, old value from PDF - 2 mm for the window bow
+    // target parameter sets:
+    // - target cell exit window position, 
+    // - target length, 
+    // - distance between cell exit window and indulation foil, 
+    // - distance beetween the scattering chamber exit window and the target center
+    public static final double[] DEFAULT       = {-0.5, 5.0, 6.8, 27.3};
+    public static final double[] RGAFALL2018   = {-0.5, 5.0, 2.8, 28.4};
+    public static final double[] RGBSPRING2019 = {-0.5, 5.0, 6.8, 28.4};
+    public static final double[] RGFSUMMER2020 = {-32, 5.0, 6.8, 27.3};
+    public static final double[] RGMFALL2021   = {-0.5, 5.0, 6.8, 27.3};
+    public static final double[] RGCSUMMER2022 = {-1.4,5.25, 8.3, 14.3};
+    public static final double[] RGDFALL2023   = {-0.5, 5.0, 3.0, 25.6};
+
+    // target parameters used for vertex fit initialization
+    public static double TARGETPOS    = DEFAULT[0];
+    public static double TARGETLENGTH = DEFAULT[1];
+    public static double WINDOWDIST   = DEFAULT[2];
+    public static double SCEXIT       = DEFAULT[3];
     public static double SCALE        = 1000;
     
+    public static void initTargetPars(double[] pars) {
+        if(pars.length>0 && pars.length<=DEFAULT.length) {
+            TARGETPOS = pars[0];
+            if(pars.length>1)
+                TARGETLENGTH = pars[1];
+            if(pars.length>2)
+                WINDOWDIST   = pars[2];
+            if(pars.length>3)
+                SCEXIT       = pars[3];
+        }
+        else {
+            System.out.println("[WARNING] wrong number of target parameters. Number is " + pars.length + " instead of [1:4]");
+        }
+        System.out.println("[CONFIG] target parameters set to:");
+        System.out.println("         - TARGETPOS    = " + TARGETPOS);
+        System.out.println("         - TARGETLENGTH = " + TARGETLENGTH);
+        System.out.println("         - WINDOWDIST   = " + WINDOWDIST);
+        System.out.println("         - SCEXIT       = " + SCEXIT);
+    }
+
 }
