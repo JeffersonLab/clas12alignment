@@ -41,6 +41,9 @@ public class Histo {
     private Bin[] thetaBins = null;
     private Bin[] phiBins  = null;
         
+    private double minVtx = Constants.VTXMIN;
+    private double maxVtx = Constants.VTXMAX;
+
     private List<String> nominalFiles = null;
     private List<String> shiftedFiles = null;
     private SchemaFactory      schema = null;
@@ -50,22 +53,24 @@ public class Histo {
     
     private static final Logger LOGGER = Logger.getLogger(Constants.LOGGERNAME);
     
-    public Histo(List<String> files, Bin[] thetabins, Bin[] phibins, String optstats) {
+    public Histo(List<String> files, Bin[] thetabins, Bin[] phibins, double[] vertexrange, String optstats) {
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
         this.nominalFiles = files;
         this.createHistos(optstats);
     }
     
-    public Histo(List<String> files, Bin[] thetabins, Bin[] phibins, boolean time, String optstats) {
+    public Histo(List<String> files, Bin[] thetabins, Bin[] phibins, boolean time, double[] vertexrange, String optstats) {
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
+        this.minVtx    = vertexrange[0];
+        this.maxVtx    = vertexrange[1];
         this.tres      = time;
         this.nominalFiles = files;
         this.createHistos(optstats);
     }
     
-    public Histo(List<String> files, List<String> shifted, Bin[] thetabins, Bin[] phibins, String optstats) {
+    public Histo(List<String> files, List<String> shifted, Bin[] thetabins, Bin[] phibins, double[] vertexrange, String optstats) {
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
         this.nominalFiles = files;
@@ -74,7 +79,7 @@ public class Histo {
         this.createHistos(optstats);
     }
     
-    public Histo(boolean shift, Bin[] thetabins, Bin[] phibins, String optstats) {
+    public Histo(boolean shift, Bin[] thetabins, Bin[] phibins, double[] vertexrange, String optstats) {
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
         this.shift     = shift;
@@ -95,8 +100,6 @@ public class Histo {
         double minRes = Constants.RESMIN;
         double maxRes = Constants.RESMAX;
         int nbinsVtx  = Constants.VTXBINS;
-        double minVtx = Constants.VTXMIN;
-        double maxVtx = Constants.VTXMAX;
         if(shift) {
             nbinsRes = Constants.DIFBINS;
             minRes = Constants.DIFMIN;
@@ -160,7 +163,7 @@ public class Histo {
         hi_nphe.setFillColor(4);
         H1F hi_ecal  = new H1F("hi_ecal",  "ECAL E(GeV)", "Counts", 100, 0., 4.);
         hi_ecal.setFillColor(4);
-        H1F hi_vtx   = new H1F("hi_vtx",   "Vertex(cm)",  "Counts",  Constants.VTXBINS, Constants.VTXMIN, Constants.VTXMAX);
+        H1F hi_vtx   = new H1F("hi_vtx",   "Vertex(cm)",  "Counts", nbinsVtx, minVtx, maxVtx);
         hi_vtx.setFillColor(4);
         H1F hi_theta = new H1F("hi_theta", "#theta(deg)", "Counts", 100, 0., 40.);
         hi_theta.setFillColor(4);
@@ -178,7 +181,7 @@ public class Histo {
         this.binning = new DataGroup(3,2);
         for(int is=0; is<nSector; is++) {
             int sector = is+1;
-            H2F hi_vtxtheta = new H2F("hi_S" + sector, "Sector " + sector,  Constants.VTXBINS, Constants.VTXMIN, Constants.VTXMAX, 100, 0., 35);
+            H2F hi_vtxtheta = new H2F("hi_S" + sector, "Sector " + sector, nbinsVtx, minVtx, maxVtx, 100, 0., 35);
             hi_vtxtheta.setTitleX("Vertex (cm)");
             hi_vtxtheta.setTitleY("#theta (deg)");
             this.binning.addDataSet(hi_vtxtheta, is);
@@ -568,7 +571,10 @@ public class Histo {
                 Histo.fit4Vertex(histo);
                 break;
             case 6:    
-                Histo.fitCVertex(histo);
+                Histo.fitRGCVertex(histo);
+                break;
+            case 7:    
+                Histo.fit4Vertex(histo);
                 break;
             default:
                 break;
@@ -617,7 +623,12 @@ public class Histo {
         }
     }    
 
-    
+    /**
+     * 2-Gaussian function fit function
+     * Used for RG-F
+     * @param histo
+     * @return
+     */
     public static boolean fitDoublePeak(H1F histo) {
         double mean = histo.getDataX(getMaximumBinBetween(histo, -50, 0));
         double amp   = histo.getBinContent(getMaximumBinBetween(histo, -50, 0));
@@ -649,7 +660,11 @@ public class Histo {
         f1_bckgr.setOptStat("1111");
         
         
-        F1D fdouble_peak = new F1D("upStream_window","[amp]*gaus(x,[mean],[sigma])+[amp]/[secondGausAmpFactor]*gaus(x,[mean]-[peak_sep],[sigma])+[amp]/[thirdGaussAmpFactor]*gaus(x,[mean]+[thirdGausMeanOffset],[sigma]*[thirdGausSigmaFactor])+[p0]+[p1]*x+[p2]*x*x", -50, 0);
+        F1D fdouble_peak = new F1D("upStream_window",
+                                   "[amp]*gaus(x,[mean],[sigma])+" +
+                                   "[amp]/[secondGausAmpFactor]*gaus(x,[mean]-[peak_sep],[sigma])+" + 
+                                   "[amp]/[thirdGaussAmpFactor]*gaus(x,[mean]+[thirdGausMeanOffset],[sigma]*[thirdGausSigmaFactor])+" +
+                                   "[p0]+[p1]*x+[p2]*x*x", -50, 0);
         fdouble_peak.setLineColor(2);
         fdouble_peak.setLineWidth(2);
         fdouble_peak.setOptStat("1111");                
@@ -689,8 +704,8 @@ public class Histo {
             fdouble_peak.setParLimits(0, amp*0.5,   amp*1.5);
             fdouble_peak.setParLimits(1, mean*0.9,  mean*1.1);            
             fdouble_peak.setParLimits(2, sigma*0.2, sigma*1.5);
-            fdouble_peak.setParLimits(3, second_gauss_amp_factor-1, second_gauss_amp_factor+1);
-            fdouble_peak.setParLimits(4, peak_separation*0.99, peak_separation*1.01);
+            fdouble_peak.setParLimits(3, second_gauss_amp_factor-2, second_gauss_amp_factor+1);
+            fdouble_peak.setParLimits(4, peak_separation*0.9, peak_separation*1.1);
             fdouble_peak.setParLimits(5, third_gauss_amp_factor-2, third_gauss_amp_factor+2);
             fdouble_peak.setParLimits(6, third_gauss_mean_offset-1, third_gauss_mean_offset+2);
             fdouble_peak.setParLimits(7, third_gauss_sigma_factor-0.5, third_gauss_sigma_factor+1);
@@ -700,12 +715,16 @@ public class Histo {
             return true;
         }
         else { 
-            //histo.setFunction(fdouble_peak);
+            histo.setFunction(fdouble_peak);
             return false;
         }
     }
     
-    
+    /**
+     * Single Gaussian+background vertex fit function
+     * @param histo
+     * @return
+     */
     public static boolean fit1Vertex(H1F histo) {
         //double mean  = Histo.getMeanIDataSet(histo, histo.getMean()-histo.getRMS(), 
         //                                            histo.getMean()+histo.getRMS());
@@ -759,12 +778,21 @@ public class Histo {
         }
     }    
 
-    
+    /**
+     * 3-peaks vertex fitting function
+     * Peaks correspond to: target windows and downstream insulation foil
+     * Initialized according to:
+     * - chosen target length (TARGETLENGTH), 
+     * - target exit window position (TARGETPOS)
+     * - distance between target exit window and insulation foil (WINDOWDIST)
+     * Includes a wide Gaussian to account for target residual gas
+     * @param histo
+     */
     public static void fit3Vertex(H1F histo) {
         int nbin = histo.getData().length;
         double dx = histo.getDataX(1)-histo.getDataX(0);
         //find downstream window
-        int ibin0 = Histo.getMaximumBinBetween(histo, Constants.VTXMIN, (Constants.TARGETPOS+Constants.SCEXIT)/2);
+        int ibin0 = Histo.getMaximumBinBetween(histo, histo.getDataX(0), (Constants.TARGETPOS+Constants.SCEXIT)/2);
         //check if the found maximum is the first or second peak, ibin is tentative upstream window
         int ibin1 = Math.max(0, histo.getMaximumBin() - (int)(Constants.TARGETLENGTH/dx));
         int ibin2 = Math.min(nbin-1, histo.getMaximumBin() + (int)(Constants.TARGETLENGTH/dx));
@@ -799,11 +827,23 @@ public class Histo {
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
     }
 
+     /**
+     * 4-peaks vertex fitting function
+     * Peaks correspond to: target windows, downstream insulation foil and scattering chamber exit window
+     * Initialized according to:
+     * - chosen target length (TARGETLENGTH), 
+     * - target exit window position (TARGETPOS)
+     * - distance between target exit window and insulation foil (WINDOWDIST)
+     * - distance between the scattering chamber exit window and the target center (SCEXIT)
+     * Includes a wide Gaussian and a Landau to account for target residual gas 
+     * and the air outside the scattering chamber
+     * @param histo
+     */
     public static void fit4Vertex(H1F histo) {
         int nbin = histo.getData().length;
         double dx = histo.getDataX(1)-histo.getDataX(0);
         //find downstream window
-        int ibin0 = Histo.getMaximumBinBetween(histo, Constants.VTXMIN, (Constants.TARGETPOS+Constants.SCEXIT)/2);
+        int ibin0 = Histo.getMaximumBinBetween(histo, histo.getDataX(0), (Constants.TARGETPOS+Constants.SCEXIT)/2);
         //check if the found maximum is the first or second peak, ibin is tentative upstream window
         int ibin1 = Math.max(0, ibin0 - (int)(Constants.TARGETLENGTH/dx));
         int ibin2 = Math.min(nbin-1, ibin0 + (int)(Constants.TARGETLENGTH/dx));
@@ -844,7 +884,19 @@ public class Histo {
         if(f1_vtx.getParameter(6)<f1_vtx.getParameter(0)/4) f1_vtx.setParameter(6, 0);
     }
 
-    public static void fitCVertex(H1F histo) {
+     /**
+     * RG-C vertex fitting function
+     * Peaks correspond to: target windows, downstream insulation foil and cryostat exit window
+     * Initialized according to:
+     * - chosen target length (TARGETLENGTH), 
+     * - target exit window position (TARGETPOS)
+     * - distance between target exit window and insulation foil (WINDOWDIST)
+     * - distance between the cryostat exit window and the target center (SCEXIT)
+     * Includes a wide Gaussian and a Landau to account for target residual gas 
+     * and the air outside the scattering chamber
+     * @param histo
+     */
+    public static void fitRGCVertex(H1F histo) {
         int nbin = histo.getData().length;
         double dx = histo.getDataX(1)-histo.getDataX(0);
     
@@ -874,10 +926,10 @@ public class Histo {
 	double air = 0;
         String function = "[amp]*gaus(x,[exw]-[tl],[sigma])+"
                         + "[amp]*gaus(x,[exw],[sigma])+"
-                        + "[bg]*gaus(x,[exw]-[tl]/2,[tl]*0.6)+"
-                        + "gaus(x,[exw]+[wd],[sigma])*[sc]+"
-                        + "[sc]*gaus(x,[exw]+[scw]-[tl]/2,[sigma])/1.1+"
-                        + "[air]*landau(x,[exw]+[scw]-[tl]/2,[sigma]*4)";
+                        + "[bg]*gaus(x,[exw]-[tl]/4,[tl]*0.8)+"
+                        + "gaus(x,[exw]+[wd],[sigma])*[sc]*1.4+"
+                        + "[sc]*gaus(x,[exw]+[scw]-[tl]/2,[sigma])+"
+                        + "[air]*landau(x,[exw]+[scw]-[tl]/2,[sigma]*5)";
         F1D f1_vtx   = new F1D("f4vertex", function, mean - Constants.TARGETLENGTH*2, mean + Constants.TARGETLENGTH/2 + Constants.SCEXIT);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
