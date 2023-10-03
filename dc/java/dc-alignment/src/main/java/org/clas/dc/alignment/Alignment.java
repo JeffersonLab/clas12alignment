@@ -945,13 +945,13 @@ public class Alignment {
                                                                                    "\t\t- 2 gaussians (3),\n" +
                                                                                    "\t\t- 1 gaussian plus background (2),\n" +
                                                                                    "\t\t- or only 1 gaussian (1)");
-        parser.getOptionParser("-process").addOption("-vertpar"  , "",             "comma-separated vertex function parameters, default values are for Spring19 crryotarget with:\n" +
+        parser.getOptionParser("-process").addOption("-vertpar"  , "",             "comma-separated vertex function parameters, default values are for Spring19 cryotarget with:\n" +
                                                                                    "\t\t- -0.5: target cell exit window position,\n" +
                                                                                    "\t\t-  5.0: target length,\n" +
                                                                                    "\t\t-  6.8: distance between the cell exit window and the insulation foil,\n" +
                                                                                    "\t\t- 27.3: distance between the scattering chamber exit window and the target center,\n" +
-                                                                                   "leave empty to use defaults; units are cm");
-        parser.getOptionParser("-process").addOption("-vertrange", "",             "comma-separated vertex histogram limits, e.g. -20:35; units are cm");
+                                                                                   "\t\t leave empty to use defaults; units are cm");
+        parser.getOptionParser("-process").addOption("-vertrange", "-20:35",       "comma-separated vertex histogram limits, e.g. -20:35; units are cm");
         parser.getOptionParser("-process").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-process").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-process").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
@@ -974,7 +974,7 @@ public class Alignment {
                                                                                    "\t\t- 2 gaussians (3),\n" +
                                                                                    "\t\t- 1 gaussian plus background (2),\n" +
                                                                                    "\t\t- or only 1 gaussian (1)");
-        parser.getOptionParser("-analyze").addOption("-vertpar"  , "",             "comma-separated vertex function parameters, default values are for Spring19 crryotarget with:\n" +
+        parser.getOptionParser("-analyze").addOption("-vertpar"  , "",             "comma-separated vertex function parameters, default values are for Spring19 cryotarget with:\n" +
                                                                                    "\t\t- -0.5: target cell exit window position,\n" +
                                                                                    "\t\t-  5.0: target length,\n" +
                                                                                    "\t\t-  6.8: distance between the cell exit window and the insulation foil,\n" +
@@ -1002,12 +1002,12 @@ public class Alignment {
                                                                                "\t\t- 2 gaussians (3),\n" +
                                                                                "\t\t- 1 gaussian plus background (2),\n" +
                                                                                "\t\t- or only 1 gaussian (1)");
-        parser.getOptionParser("-fit").addOption("-vertpar"  , "",             "comma-separated vertex function parameters, default values are for Spring19 crryotarget with:\n" +
+        parser.getOptionParser("-fit").addOption("-vertpar"  , "",             "comma-separated vertex function parameters, default values are for Spring19 cryotarget with:\n" +
                                                                                "\t\t- -0.5: target cell exit window position,\n" +
                                                                                "\t\t-  5.0: target length,\n" +
                                                                                "\t\t-  6.8: distance between the cell exit window and the insulation foil,\n" +
                                                                                "\t\t- 27.3: distance between the scattering chamber exit window and the target center,\n" +
-                                                                               "leave empty to use defaults; units are cm");
+                                                                               "\t\t leave empty to use defaults; units are cm");
         parser.getOptionParser("-fit").addOption("-compare"  , "default",      "database variation for constant comparison");
         parser.getOptionParser("-fit").addOption("-init"     , "default",      "init global fit from previous constants from the selected variation");
         parser.getOptionParser("-fit").addOption("-iter"     , "1",            "number of global fit iterations");
