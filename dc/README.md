@@ -274,10 +274,11 @@ The choice of the vertex fit functional form is very important for the accuracy 
 5. [sum of 4 gaussians plus background, optimized for the old Saclay cryotarget](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L842),
 6. [sum of 4 gaussians plus background, optimized for the RG-C polarized target](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L899),
 7. sum of 4 gaussians plus background, optimized for the new cryotarget.
+   
 Option 1 is mostly for MC studies, option 2 and 3 have been implemented for RG-F in the assumption of fitting only the downstream or upstream target window, options 4 and 5 have been implemented for the old cryotarget, option 6 for the RG-C polarized target and option 7 for the new cryotarget used first in RG-D. In the default and most used case (5), two gaussians are used to fit the target cell windows, the third gaussian is used to fit the heath shield located downstream to the target cell and the optional fourth gaussian fits the scattering chamber exit window located at about 28 cm from the target center. The plot below shows an example of the 4 Gaussians fit.
 ![Plot_07-29-2022_10 18 30_PM](https://user-images.githubusercontent.com/7524926/181837320-4bedbbb7-c0a8-4957-9a84-b09f82a63265.png)
 
-For the fit to converge, it is critical to choose appropriately the target parameters at https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Constants.java#L81-L94. Predefined sets of parameters are provided for the different fit functions as for example and are automatically selected based on the fitting function choice. Those default can be overwritten using the command-line option ```-vertpar```. 
+For the fit to converge, it is critical to choose appropriately the target parameters at https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Constants.java#L81-L94. Predefined sets of parameters are provided for the different fit functions and are automatically selected based on the fitting function choice. Those default can be overwritten using the command-line option ```-vertpar```. 
 The fitted gausssian means are used to determine the target offset with respect to the nominal value. This difference is one of the measurements used in the final fit to extract the alignment constants. If option 5 is selected, the offset of the scattering-chambers exit-window from the nominal position is also used in the final minuit fit.
 
 ### Output
@@ -291,7 +292,7 @@ If the ``-display`` option is set to 1 (default), a graphic window displaying hi
 
 #### Analysis tab
 The tab displays a summary of the extracted residuals and vertex shifts and derivatives. It includes the following sub-tabs:
-* nominal: graphs of the extracted residuals and vertex shifts for the nominal geometry. Each plot corresponds to a different sector and the color points to different polar angle bins; different symbols are used to display the phi bins. The vertex shifts are displayed as layer=0, in 10s of um. See screenshot of graph below.
+* nominal: graphs of the extracted residuals and vertex shifts for the nominal geometry. Each plot corresponds to a different sector and the color points to different polar angle bins; different symbols are used to display the phi bins. The vertex shifts are displayed as layer=0, in 10s of um. If the scattering chamber exit window position is fitted too, the corresponding residual is displayed as layer=37, in the same units. See screenshot of graph below.
 ![Plot_02-19-2022_10 20 52_PM](https://user-images.githubusercontent.com/7524926/154820094-0bca8488-a895-474d-b8e2-22e25f42e7a6.png)
 * nominal vs. theta: same as above but with the y-axis defined as the angular bin number plus the layer number. The different colors correspond to the different DC superlayers and the black points show the vertex shifts. See screenshot of graph below.
 ![Plot_02-19-2022_10 21 21_PM](https://user-images.githubusercontent.com/7524926/154819746-af0ee5bc-3e22-41b1-a00f-50f6d20d84c7.png)
@@ -307,7 +308,7 @@ The tab displays a summary of the extracted residuals and vertex shifts and deri
 ![Plot_07-05-2022_07 05 21_PM](https://user-images.githubusercontent.com/7524926/177382223-27eb9b1b-44fa-4405-87de-f1f777bb5beb.png)
 * internal-only: same as the previous tab but after removing ''global'' geometry transformation that cannot be constrained with the current straight track alignment. These so-called weak modes are overall contractions or expansions in the size of the detector and rotations of whole sectors. The displayed parameters are corrected by normalizing the region 1 position to the nominal one.
 ![Plot_07-05-2022_07 05 37_PM](https://user-images.githubusercontent.com/7524926/177382868-88ae1ed1-d3b7-4245-9764-4ff90fb9ee65.png)
-
+* clas12 frame: same as the previous tab but transformed to the global clas12 frame.
 
 #### Electron
 The tab displays the relevant distributions for the selected electron tracks. Examples of the plots are shown in the following two figures. These are meant to facilitate the choice of angular bins for the alignment, since having enough statistics in each bin is critical for the fits to converge.
@@ -353,7 +354,12 @@ When launched, the alignment code will print-out relevant information as it goes
 	   bin: 0.0-10.0
 	   bin: 10.0-30.0
   [CONFIG] resFit set to 0
-  [CONFIG] vertexFit set to 0
+  [CONFIG] vertexFit set to 6
+  [CONFIG] target parameters set to:
+           - TARGETPOS    = -1.4
+           - TARGETLENGTH = 5.25
+           - WINDOWDIST   = 8.3
+           - SCEXIT       = 14.1
   ```
 * The CCDB connection logs, as for example:
   ```
@@ -477,4 +483,13 @@ To test the alignment results:
 * Analyze the cooking output with the script [```kinematics.groovy```](https://github.com/JeffersonLab/clas12alignment/dc/utilities/kinematics.groovy). Check the usage options with:
   ```
   run-groovy kinematics.groovy
-  ``` 
+  ```
+  
+#### How to interpret and judge on the quality of the results 
+This section provides some guidelines on how to judge on the quality of the results and decide on the next steps.
+* Always check the vertex and tracking residual fits. If the vertex fits do not converge, it may be necessary to tune the fitting function or the fit initialization. Tracking residual fits are likely to converge unless the distributions are multimodal: if that happens for relatively small bins of theta and phi, new DC calibrations may be needed before alignment can proceed.
+* If the vertex parameters residuals in the summary plots corrected or corrected vs. theta are systematically shifted in one direction, check that the target parameters values are set correctly. Small adjustments (~ mm) to SCEXIT with respect to the nominal value may be needed for example to account for the window bowing due to the pressure difference on the two sides.
+* Check from the log the global misalignment fits converged and that the chi2 after the fit is much smaller than the one before. Check also the before/after tab and verify the sigma of the distribution after the analysis (red histogram) is well below 100 um, close to 50 um, and better than the before distribution (black histogram). 
+* If all the above is achieved, the misalignment results are likely to be reliable. Depending on the size of the remaining residual offsets (>100 um), a new iteration can be performed or the misalignment can be considered final.
+
+  
