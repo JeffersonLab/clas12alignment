@@ -161,7 +161,7 @@ Check the command line options with:
 		- 2 gaussians (3),
 		- 1 gaussian plus background (2),
 		- or only 1 gaussian (1) (default = 5)
-  -vertpar : comma-separated vertex function parameters, default values are for Spring19 crryotarget with:
+  -vertpar : comma-separated vertex function parameters, default values are for Spring19 cryotarget with:
 		- -0.5: target cell exit window position,
 		-  5.0: target length,
 		-  6.8: distance between the cell exit window and the insulation foil,
@@ -206,7 +206,7 @@ Check the command line options with:
 		- 2 gaussians (3),
 		- 1 gaussian plus background (2),
 		- or only 1 gaussian (1) (default = 5)
-  -vertpar : comma-separated vertex function parameters, default values are for Spring19 crryotarget with:
+  -vertpar : comma-separated vertex function parameters, default values are for Spring19 cryotarget with:
 		- -0.5: target cell exit window position,
 		-  5.0: target length,
 		-  6.8: distance between the cell exit window and the insulation foil,
@@ -244,7 +244,7 @@ Check the command line options with:
 		- 2 gaussians (3),
 		- 1 gaussian plus background (2),
 		- or only 1 gaussian (1) (default = 5)
-  -vertpar : comma-separated vertex function parameters, default values are for Spring19 crryotarget with:
+  -vertpar : comma-separated vertex function parameters, default values are for Spring19 cryotarget with:
 		- -0.5: target cell exit window position,
 		-  5.0: target length,
 		-  6.8: distance between the cell exit window and the insulation foil,
