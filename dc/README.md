@@ -39,7 +39,7 @@ Specifically:
         specifies that a 0.2 deg z rotation of region 1 will be applied on top of the geometry defined in the variation selected with the variable ```dcGeometryVariation```. This allows to perform multiple iterations by selecting a variation where the ``/geometry/dc/alignment`` table contains the results of the previous iteration.
     * For each yaml file, generate and run one cooking workflow to process the straight track data (see the [CLAS12 chef documentation](https://clasweb.jlab.org/wiki/index.php/CLAS12_Chef_Documentation):
       * Use as output directory name for the workflow the same name of the yaml file without the extention (e.g. the output of the data processed with r1_cz.yaml should be in a directory named r1_cz). 
-      * Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits`` (tip: copy the dst schema directory from the coatjava distribution to a suitable location and add to it the two time-based tracking banks. The dst schema directory can be found at $COATJAVA/etc/bankdefs/hipo4/singles/dst)
+      * Make sure to use a schema including the banks: ``RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits``. Since coatjava 10.0.3, the ```dcalign``` schema in $COATJAVA/etc/bankdefs/hipo4/singles/ is provided for this purpose.
       * Use the --ccdbsqlite workflow option to point to the Sqlite snapshot that is being used for the alignment.
       * Since the workflows that should be generated have the same configuration except for the selected yaml file, the tag, and the output directory, an easy way to generate all of then with a single command is to use a command-line for-loop. In cshell or tcshell, this would look like:
         ```
@@ -153,8 +153,21 @@ Check the command line options with:
     -theta : theta bin limits, e.g. "5:10:20:30" (default = 5:10:20)
      -time : make time residual histograms (1=true, 0=false) (default = 0)
   -verbose : global fit verbosity (1/0 = on/off) (default = 0)
-   -vertex : fit vertex plots with 3 gaussians (5), with 3 gaussians (4), 2 gaussians (3), 
-             1 gaussian plus background (2) or only 1 gaussian (1) (default = 5)
+  -vertfit : fit vertex plots with:
+		- RG-D layout (7), new cryotarget, 
+		- RG-C layout (6),
+		- 4 gaussians (5),
+		- 3 gaussians (4),
+		- 2 gaussians (3),
+		- 1 gaussian plus background (2),
+		- or only 1 gaussian (1) (default = 5)
+  -vertpar : comma-separated vertex function parameters, default values are for Spring19 crryotarget with:
+		- -0.5: target cell exit window position,
+		-  5.0: target length,
+		-  6.8: distance between the cell exit window and the insulation foil,
+		- 27.3: distance between the scattering chamber exit window and the target center,
+		 leave empty to use defaults; units are cm (default = )
+-vertrange : comma-separated vertex histogram limits, e.g. -20:35; units are cm (default = -20:35)
 ```
 The code will process the input files specified with the ```-nominal``` or ```-r[123]_[c][xyz]``` options, create and fill histograms according to the selected theta and phi bins, run the analysis, plot the results and printout the extracted alignment constants. All histograms will be saved to an histogram file named ``prefix_histo.hipo``, with ``prefix`` being the string specified with the ```-o``` option, or ``histo.hipo`` if the option is not used. 
 By specifying ``-display 0``, the graphical window presenting the plotted results will not be opened.
@@ -185,8 +198,20 @@ Check the command line options with:
    -shifts : use event-by-event subtraction for unit shifts (1=on, 0=off) (default = 0)
     -stats : set histogram stat option (default = )
   -verbose : global fit verbosity (1/0 = on/off) (default = 0)
-   -vertex : fit vertex plots with 3 gaussians (5), with 3 gaussians (4), 2 gaussians (3), 
-             1 gaussian plus background (2) or only 1 gaussian (1) (default = 5)
+  -vertfit : fit vertex plots with:
+		- RG-D layout (7), new cryotarget, 
+		- RG-C layout (6),
+		- 4 gaussians (5),
+		- 3 gaussians (4),
+		- 2 gaussians (3),
+		- 1 gaussian plus background (2),
+		- or only 1 gaussian (1) (default = 5)
+  -vertpar : comma-separated vertex function parameters, default values are for Spring19 crryotarget with:
+		- -0.5: target cell exit window position,
+		-  5.0: target length,
+		-  6.8: distance between the cell exit window and the insulation foil,
+		- 27.3: distance between the scattering chamber exit window and the target center,
+		 leave empty to use defaults; units are cm (default = )
 ```
 The code will read the histograms from the specified file, analyze them, compute the unit derivatives and nominal residuals and vertex values, perform the misalignment fit,plot the results and print the extracted alignment constants. 
 
@@ -211,6 +236,20 @@ Check the command line options with:
    -shifts : use event-by-event subtraction for unit shifts (1=on, 0=off) (default = 0)
     -stats : set histogram stat option (default = )
   -verbose : global fit verbosity (1/0 = on/off) (default = 0)
+  -vertfit : fit vertex plots with:
+		- RG-D layout (7), new cryotarget, 
+		- RG-C layout (6),
+		- 4 gaussians (5),
+		- 3 gaussians (4),
+		- 2 gaussians (3),
+		- 1 gaussian plus background (2),
+		- or only 1 gaussian (1) (default = 5)
+  -vertpar : comma-separated vertex function parameters, default values are for Spring19 crryotarget with:
+		- -0.5: target cell exit window position,
+		-  5.0: target length,
+		-  6.8: distance between the cell exit window and the insulation foil,
+		- 27.3: distance between the scattering chamber exit window and the target center,
+		 leave empty to use defaults; units are cm (default = )
   ```
 The code will read the histograms from the specified file, retrieve the relevant parameters from the histograms or fits, compute the unit derivatives and nominal residuals and vertex values, perform themisalignment fit,plot the results and print the extracted alignment constants. 
 
@@ -228,15 +267,17 @@ These can be modified according to the needs before compiling and running the co
 
 ### Vertex fits
 The choice of the vertex fit functional form is very important for the accuracy of the results. Currently, five fitting options are implemented:
-1. single gaussian,
-2. gaussian plus polynomial background,
-3. double gaussian,
-4. sum of 3 gaussians plus background,
-5. sum of 4 gaussians plus background.    
-Option 1 is mostly for MC studies, option 2 and 3 have been implemented for RG-F in the assumption of fitting only the downstream or upstream target window, options 4 and 5 have been implemented for the cryotarget. In this last case, two gaussians are used to fit the target cell windows, the third gaussian is used to fit the heath shield located downstream to the target cell and the optional fourth gaussian fits the scattering chamber exit window located at about 28 cm from the target center. The plot below shows an example of the 4 Gaussians fit.
+1. [single gaussian](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L585),
+2. [gaussian plus polynomial background](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L728),
+3. [double gaussian](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L632),
+4. [sum of 3 gaussians plus background](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L791),
+5. [sum of 4 gaussians plus background, optimized for the old Saclay cryotarget](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L842),
+6. [sum of 4 gaussians plus background, optimized for the RG-C polarized target](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L899),
+7. sum of 4 gaussians plus background, optimized for the new cryotarget.
+Option 1 is mostly for MC studies, option 2 and 3 have been implemented for RG-F in the assumption of fitting only the downstream or upstream target window, options 4 and 5 have been implemented for the old cryotarget, option 6 for the RG-C polarized target and option 7 for the new cryotarget used first in RG-D. In the default and most used case (5), two gaussians are used to fit the target cell windows, the third gaussian is used to fit the heath shield located downstream to the target cell and the optional fourth gaussian fits the scattering chamber exit window located at about 28 cm from the target center. The plot below shows an example of the 4 Gaussians fit.
 ![Plot_07-29-2022_10 18 30_PM](https://user-images.githubusercontent.com/7524926/181837320-4bedbbb7-c0a8-4957-9a84-b09f82a63265.png)
 
-For the fit to converge, it is critical to choose appropriately the target parameters at https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Constants.java#L76-L80. 
+For the fit to converge, it is critical to choose appropriately the target parameters at https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Constants.java#L81-L94. Predefined sets of parameters are provided for the different fit functions as for example and are automatically selected based on the fitting function choice. Those default can be overwritten using the command-line option ```-vertpar```. 
 The fitted gausssian means are used to determine the target offset with respect to the nominal value. This difference is one of the measurements used in the final fit to extract the alignment constants. If option 5 is selected, the offset of the scattering-chambers exit-window from the nominal position is also used in the final minuit fit.
 
 ### Output
