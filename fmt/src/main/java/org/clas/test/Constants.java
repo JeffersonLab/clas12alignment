@@ -23,7 +23,7 @@ public class Constants {
     // Default swim parameters.
     public static final double SOLMAGSCALE = -0.75; // Default solenoid magnet scale.
     public static final double TORMAGSCALE = -1.00; // Default torus magnet scale.
-    public static final double TORMAGSHIFT =  3.00; // Default torus magnet shift.
+    public static final double SOLMAGSHIFT =  3.00; // Default solenoid magnet shift.
 
     // Physics cuts.
     public static final double MAXDZ     = 0.05; // Max z distance between cluster and traj point.
