@@ -735,6 +735,7 @@ public class Alignment {
 
     private void setVertexRange(String range) {
         String[] limits = range.split(":");
+        this.vertexRange = new double[2];
         if(limits.length==2) {
             this.vertexRange[0] = Double.parseDouble(limits[0]);
             this.vertexRange[1] = Double.parseDouble(limits[1]);            
