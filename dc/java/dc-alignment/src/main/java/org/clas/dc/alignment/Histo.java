@@ -459,12 +459,17 @@ public class Histo {
                     if(!shift) {
                         this.parValues[is][it][ip][0] -= Constants.TARGETPOS*Constants.SCALE;
                         this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*dx/2);
+                        int isc  = -1;
+                        int iscw = -1;
+                        for(int i=0; i<hvtx.getFunction().getNPars(); i++) {
+                            if(hvtx.getFunction().parameter(i).name().equals("sc"))  isc = i;
+                            if(hvtx.getFunction().parameter(i).name().equals("scw")) iscw = i;
+                        }
                         if(hvtx.getFunction().getName().equals("f4vertex") && 
-                           hvtx.getFunction().getNPars()>7 && 
-                           hvtx.getFunction().parameter(7).name().equals("scw") &&
-                           hvtx.getFunction().getParameter(6)>0) {
-                            this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] = (hvtx.getFunction().getParameter(7)-Constants.SCEXIT)*Constants.SCALE;
-                            this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] =  hvtx.getFunction().parameter(7).error()*Constants.SCALE;
+                            isc>=0 && iscw>=0 &&
+                            hvtx.getFunction().getParameter(isc)>0) {
+                            this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] = (hvtx.getFunction().getParameter(iscw)-Constants.SCEXIT)*Constants.SCALE;
+                            this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] =  hvtx.getFunction().parameter(iscw).error()*Constants.SCALE;
                         }
                     }
                 }
@@ -574,7 +579,7 @@ public class Histo {
                 Histo.fitRGCVertex(histo);
                 break;
             case 7:    
-                Histo.fit4Vertex(histo);
+                Histo.fitRGDVertex(histo);
                 break;
             default:
                 break;
@@ -948,6 +953,60 @@ public class Histo {
         f1_vtx.setParameter(8, air);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
         if(f1_vtx.getParameter(6)<f1_vtx.getParameter(0)/4) f1_vtx.setParameter(6, 0);
+    }
+
+     /**
+     * 4-peaks vertex fitting function
+     * Peaks correspond to: target windows, downstream insulation foil and scattering chamber exit window
+     * Initialized according to:
+     * - chosen target length (TARGETLENGTH), 
+     * - target exit window position (TARGETPOS)
+     * - distance between target exit window and insulation foil (WINDOWDIST)
+     * - distance between the scattering chamber exit window and the target center (SCEXIT)
+     * Includes a wide Gaussian and a Landau to account for target residual gas 
+     * and the air outside the scattering chamber
+     * @param histo
+     */
+    public static void fitRGDVertex(H1F histo) {
+        int nbin = histo.getData().length;
+        double dx = histo.getDataX(1)-histo.getDataX(0);
+        //find downstream window
+        int ibin0 = Histo.getMaximumBinBetween(histo, histo.getDataX(0), (Constants.TARGETPOS+Constants.SCEXIT)/2);
+        //check if the found maximum is the first or second peak, ibin is tentative upstream window
+        int ibin1 = Math.max(0, ibin0 - (int)(Constants.TARGETLENGTH/dx));
+        int ibin2 = Math.min(nbin-1, ibin0 + (int)(Constants.TARGETLENGTH/dx));
+        if(histo.getBinContent(ibin1)<histo.getBinContent(ibin2)) {
+            ibin1 = ibin0;
+            ibin0 = ibin2;
+        }
+        int ibinsc = Histo.getMaximumBinBetween(histo, (Constants.SCEXIT-Constants.TARGETPOS)*0.9, (Constants.SCEXIT-Constants.TARGETPOS)*1.1);
+        
+        double mean  = histo.getDataX(ibin0);
+        double amp   = histo.getBinContent(ibin0);
+        double sc    = histo.getBinContent(ibinsc);
+        double sigma = 0.5;
+        double bg = histo.getBinContent((ibin1+ibin0)/2);
+        String function = "[amp]*gaus(x,[exw]-[tl],[sigma])+"
+                        + "[amp]*gaus(x,[exw],[sigma])*1.2+"
+                        + "[bg]*gaus(x,[exw]-[tl]/2,[tl]*0.6)+"
+                        + "[sc]*gaus(x,[exw]+[scw]-[tl]/2,[sigma])+"
+                        + "[air]*landau(x,[exw]+[scw]-[tl]/2+[sigma]*2,[sigma]*4)";
+        F1D f1_vtx   = new F1D("f4vertex", function, -10, 10);
+        f1_vtx.setLineColor(2);
+        f1_vtx.setLineWidth(2);
+        f1_vtx.setOptStat("11111111111");
+        f1_vtx.setParameter(0, amp/2);
+        f1_vtx.setParameter(1, mean);
+        f1_vtx.setParameter(2, Constants.TARGETLENGTH);
+        f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.99, Constants.TARGETLENGTH*1.01);
+        f1_vtx.setParameter(3, sigma);
+        f1_vtx.setParameter(4, bg);
+        f1_vtx.setParameter(5, sc);
+        f1_vtx.setParameter(6, Constants.SCEXIT-Constants.TARGETPOS);
+        f1_vtx.setParLimits(6, (Constants.SCEXIT-Constants.TARGETPOS)*0.9, (Constants.SCEXIT-Constants.TARGETPOS)*1.1);
+        f1_vtx.setRange(mean-Constants.TARGETLENGTH*1.5,Constants.SCEXIT+Constants.TARGETLENGTH*0.6);
+        DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
+//        if(f1_vtx.getParameter(6)<f1_vtx.getParameter(0)/4) f1_vtx.setParameter(6, 0);
     }
 
     //This was a previous version of fitting the z vertex peaks

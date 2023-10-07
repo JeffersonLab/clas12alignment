@@ -84,7 +84,7 @@ public class Constants {
     public static final double[] RGFSUMMER2020 = {-32, 5.0, 6.8, 27.3};
     public static final double[] RGMFALL2021   = {-0.5, 5.0, 6.8, 27.3};
     public static final double[] RGCSUMMER2022 = {-1.4,5.25, 8.3, 14.3};
-    public static final double[] RGDFALL2023   = {-0.5, 5.0, 3.0, 25.6};
+    public static final double[] RGDFALL2023   = {-2.5, 5.0, 3.0, 27.1};
 
     // target parameters used for vertex fit initialization
     public static double TARGETPOS    = DEFAULT[0];
