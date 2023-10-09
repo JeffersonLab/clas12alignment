@@ -36,8 +36,8 @@ while ( $v <= $#var )
     set axs = `echo $var[$v] | awk -F"_" '{print $2}'`
 
     
-    if ( $var[$v] == "rga_fall2018" ) then
-        set variation = "rga_fall2018"
+    if ( v == $#var ) then
+        set variation = $var[$v]
         set align = "null"
     else if ( $var[$v] == "r0" ) then
         set align = "null"
