@@ -28,6 +28,7 @@ mkdir -p $outdir
 echo
 echo generating yaml files starting from $yaml
 echo base variation set to $variation
+echo compare-to variation set to $compvariation
 echo
 
 set v = 1
@@ -36,7 +37,7 @@ while ( $v <= $#var )
     set axs = `echo $var[$v] | awk -F"_" '{print $2}'`
 
     
-    if ( v == $#var ) then
+    if ( $v == $#var ) then
         set variation = $var[$v]
         set align = "null"
     else if ( $var[$v] == "r0" ) then
