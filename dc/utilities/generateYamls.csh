@@ -17,7 +17,7 @@ set variation = $2
 set outdir = $3
 set compvariation = rga_fall2018
 if ($#argv == 4) then
-   compvariation = $4
+   set compvariation = $4
 endif  
 
 set var   = ( r0  r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz $compvariation )
