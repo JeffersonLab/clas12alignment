@@ -23,14 +23,17 @@ Specifically:
 ### Data processing
   * Process the straight-track data with the CLAS12 reconstruction code, using the nominal geometry and each of the individual translations or rotations in xyz for each of the DC regions. This will result in up to 16 sets of reconstructed files that will be the input of the alignment code.  The nominal geometry can be the DC design geometry (CCDB variation: ``nominal``) or a geometry determined from a previous alignment with non-zero shifts compared to the nominal case. 
     * Setup or check the chosen geometry variation in the Sqlite file which is being used. The selected variation should also be populated with realistic geometry tables for the other CLAS12 detectors. For instance, in the CCDB variation ``nominal`` detectors such as FTOF and ECAL are shifted by ~5 cm downstream the ideal position to account for the actual installation position of the Forward Carriage. If using a variation different from *nominal*, make sure the beam offsets constants (CCDB table ``/geometry/beam/position``) are set appropriately, i.e. set equal to the best guess of the actual bam position for the straight track run or to x=y=0, if no other information is available.
-    * The reconstruction configuration files (yaml files) to produce the 16 sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.2.1). Copy the file to your work directory and edit it, replacing the variation in the global section (``rga_fall2018`` in the coatjava 8.2.1 file) with the chosen variation. Leave the other variation settings unchanged. Run the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/dc/utilities/generateYamls.csh):
+    * The reconstruction configuration files (yaml files) to produce the 16 sets of data can be generated from the template file ``dcalign.yaml`` provided with the coatjava distribution (supported starting from coatjava 8.2.1). Copy the file to your work directory and edit it, replacing the variation in the global section (``rga_fall2018`` in the coatjava 8.2.1 file) with the chosen variation and add settings specific to the data set under consideration, such as swap configuration etc. Leave the other variation settings unchanged. Run the script [generateYamls.csh](https://github.com/JeffersonLab/clas12alignment/tree/master/dc/utilities/generateYamls.csh):
       ```
-      ./generateYamls.csh <base-yaml-file> <variation>  <output-directory>
+      ./generateYamls.csh <base-yaml-file> <variation>  <output-directory> [<compare-to-variation>]
       ```
       where:
       * The base yaml file will be ```dcalign.yaml```.
       * The variation will be the one containing the chosen nominal geometry as discussed above. 
-      * The generated yaml files will be in the folder specified when running the command. The folder will contain the 15 yaml files corresponding to the translations and rotations described above, the yaml file ```r0.yaml```, corresponding to the nominal geometry, and rga_fall2018.yaml, corresponding to the original alignment results by T. Haywards.
+	  * The output directory is where the yamls will be written to.
+	  * The compare-to variation is the variation containing the geometry you would like to compare to (default is rga_fall2018).
+      
+The generated yaml files will be in the folder specified when running the command. The folder will contain the 15 yaml files corresponding to the translations and rotations described above, the yaml file ```r0.yaml```, corresponding to the nominal geometry, and the yaml file with the variation selected with the argument ```compare-to-variation```
         In the yaml files, the desired rotation or translation defines the value of the variable ```alignmentShift```, which has to be set for each of the DC reconstruction services. For example, the configuration        
         ```
         dcGeometryVariation: "nominal"
@@ -44,7 +47,7 @@ Specifically:
       * Since the workflows that should be generated have the same configuration except for the selected yaml file, the tag, and the output directory, an easy way to generate all of then with a single command is to use a command-line for-loop. In cshell or tcshell, this would look like:
         ```
         foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz rga_fall2018 )
-            clas12-workflow.py --runGroup rgb --model rec --tag myTag_$var --inputs /mss/clas12/rg-b/production/decoded/6.5.6/006342 --runs 6342 --clara /group/clas12/packages/clara/5.0.2_8.1.2 --outDir /my-ouput-drectory-path/$var --reconYaml path-to-yamls-directory/$var".yaml" --ccdbsqlite path-to-sqlite-file --reconSize 1 --threads 16
+            clas12-workflow.py --runGroup rgb --model rec --tag myTag_$var --inputs /mss/clas12/rg-b/production/decoded/6.5.6/006342 --runs 6342 --clara /group/clas12/packages/clara/5.0.2_8.1.2 --outDir /my-ouput-drectory-path/$var --reconYaml path-to-yamls-directory/$var".yaml" --ccdbsqlite path-to-sqlite-file
         end
         ```
         Similarly, the workflows submission can be done as follows:
@@ -74,7 +77,7 @@ Specifically:
     Trkg::TBTracks,TimeBasedTrkg::TBHits" -o outputfilename inputfiles
     ```
     where the vertex, nphe and energy cut should be selected according to the experiment configuration (beam energy and target).
-    To facilitate this step, use the script [``createSkims.csh``](https://github.com/JeffersonLab/clas12alignment/dc/utilities/createSkims.csh):
+    To facilitate this step, use the script [``createSkims.csh``](https://github.com/JeffersonLab/clas12alignment/tree/master/dc/utilities/createSkims.csh):
     ```
     createSkims.sh <reconstructed-files-directory> [<output-directory>]
     ```
@@ -178,7 +181,7 @@ The following is an example of how one would process directories of the reconstr
 -r1_x path-to-r1_x -r1_y path-to-r1_y -r1_z path-to-r1_z -r1_cy path-to-r1_cy -r1_cz path-to-r1_cz \
 -r2_x path-to-r2_x -r2_y path-to-r2_y -r2_z path-to-r2_z -r2_cy path-to-r2_cy -r2_cz path-to-r2_cz \
 -r3_x path-to-r3_x -r3_y path-to-r3_y -r3_z path-to-r3_z -r3_cy path-to-r3_cy -r3_cz path-to-r3_cz \
--theta 6:8:12:36 -phi -30:-10:0:10:30 -vertex 4 -residuals 2  -compare rga_fall2018 -o output_file_name_prefix
+-theta 6:8:12:36 -phi -30:-10:0:10:30 -vertfit 4 -residuals 2  -compare rga_fall2018 -o output_file_name_prefix
 
 ```
 #### Analyze a histogram file
@@ -267,19 +270,19 @@ These can be modified according to the needs before compiling and running the co
 
 ### Vertex fits
 The choice of the vertex fit functional form is very important for the accuracy of the results. Currently, five fitting options are implemented:
-1. [single gaussian](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L585),
-2. [gaussian plus polynomial background](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L728),
-3. [double gaussian](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L632),
-4. [sum of 3 gaussians plus background](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L791),
-5. [sum of 4 gaussians plus background, optimized for the old Saclay cryotarget](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L842),
-6. [sum of 4 gaussians plus background, optimized for the RG-C polarized target](https://github.com/JeffersonLab/clas12alignment/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L899),
-7. sum of 4 gaussians plus background, optimized for the new cryotarget.
+1. [single gaussian](https://github.com/JeffersonLab/clas12alignment/tree/master/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L585),
+2. [gaussian plus polynomial background](https://github.com/JeffersonLab/clas12alignment/tree/master/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L728),
+3. [double gaussian](https://github.com/JeffersonLab/clas12alignment/tree/master/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L632),
+4. [sum of 3 gaussians plus background](https://github.com/JeffersonLab/clas12alignment/tree/master/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L791),
+5. [sum of 4 gaussians plus background, optimized for the old Saclay cryotarget](https://github.com/JeffersonLab/clas12alignment/tree/master/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L842),
+6. [sum of 4 gaussians plus background, optimized for the RG-C polarized target](https://github.com/JeffersonLab/clas12alignment/tree/master/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L899),
+7. [sum of 3 gaussians plus background, optimized for the new cryotarget](https://github.com/JeffersonLab/clas12alignment/blob/master/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Histo.java#L970)
    
 Option 1 is mostly for MC studies, option 2 and 3 have been implemented for RG-F in the assumption of fitting only the downstream or upstream target window, options 4 and 5 have been implemented for the old cryotarget, option 6 for the RG-C polarized target and option 7 for the new cryotarget used first in RG-D. In the default and most used case (5), two gaussians are used to fit the target cell windows, the third gaussian is used to fit the heath shield located downstream to the target cell and the optional fourth gaussian fits the scattering chamber exit window located at about 28 cm from the target center. The plot below shows an example of the 4 Gaussians fit.
 ![Plot_07-29-2022_10 18 30_PM](https://user-images.githubusercontent.com/7524926/181837320-4bedbbb7-c0a8-4957-9a84-b09f82a63265.png)
 
-For the fit to converge, it is critical to choose appropriately the target parameters at https://github.com/JeffersonLab/clas12alignment/blob/dcDev4/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Constants.java#L81-L94. Predefined sets of parameters are provided for the different fit functions and are automatically selected based on the fitting function choice. Those default can be overwritten using the command-line option ```-vertpar```. 
-The fitted gausssian means are used to determine the target offset with respect to the nominal value. This difference is one of the measurements used in the final fit to extract the alignment constants. If option 5 is selected, the offset of the scattering-chambers exit-window from the nominal position is also used in the final minuit fit.
+For the fit to converge, it is critical to choose appropriately the target parameters at https://github.com/JeffersonLab/clas12alignment/tree/master/dc/java/dc-alignment/src/main/java/org/clas/dc/alignment/Constants.java#L81-L94. Predefined sets of parameters are provided for the different fit functions and are automatically selected based on the fitting function choice. Those default can be overwritten using the command-line option ```-vertpar```. 
+The fitted gausssian means are used to determine the target offset with respect to the nominal value. This difference is one of the measurements used in the final fit to extract the alignment constants. If option >=5 is selected, the offset of the scattering-chambers exit-window from the nominal position is also used in the final minuit fit.
 
 ### Output
 * Histogram file: when the ``-process`` option is chosen, a file containing all histograms produced in the data processing is saved and can be re-analyzed with the ``-analyze`` or with the ``-fit`` options.

@@ -956,8 +956,8 @@ public class Histo {
     }
 
      /**
-     * 4-peaks vertex fitting function
-     * Peaks correspond to: target windows, downstream insulation foil and scattering chamber exit window
+     * 3-peaks vertex fitting function
+     * Peaks correspond to: target windows and scattering chamber exit window
      * Initialized according to:
      * - chosen target length (TARGETLENGTH), 
      * - target exit window position (TARGETPOS)
