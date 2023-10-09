@@ -3,6 +3,7 @@
 # $1 = cooked files directory
 # $2 = output skims directory
 
+if ( $#argv < 0 || $#argv > 2) then
 
   echo "Usage: createSkims.sh <reconstructed-files-directory> [<output-directory>]"
   exit 0
