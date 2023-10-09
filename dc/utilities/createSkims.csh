@@ -36,7 +36,8 @@ foreach var ( r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y
         echo
         echo found variation $var
 
-        foreach run (`ls -d $vardir/*/`)
+        foreach rundir (`ls -d $vardir/*/`)
+            set	run = `echo $rundir | rev | awk -F"/" '{print$1}' | rev`
             hipo-utils -reduce -ct "REC::Particle://beta>0[GT]0,REC::Cherenkov://nphe>2[GT]0,REC::Calorimeter://energy>0[GT]0,TimeBasedTrkg::TBTracks://Vtx0_z>-15&&Vtx0_z<35[GT]0" -r "TimeBasedTrkg::TBHits://trkID>0" -b "RUN::config,REC::Particle,REC::Cherenkov,REC::Calorimeter,REC::Track,TimeBasedTrkg::TBTracks,TimeBasedTrkg::TBHits" -merge -o $outdir/skims/$var/$var"_clas_"$run".hipo" $vardir/$run/*
         end
 
