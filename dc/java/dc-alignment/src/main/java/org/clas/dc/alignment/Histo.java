@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import org.jlab.clas.physics.Particle;
+import org.jlab.geom.prim.Line3D;
+import org.jlab.geom.prim.Point3D;
+import org.jlab.geom.prim.Vector3D;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
@@ -196,7 +199,7 @@ public class Histo {
             this.binning.addDataSet(ftheta, is);
         }
         this.offset = new DataGroup(1,2);
-        H2F hi_thetasc = new H2F("hi_thetasc", "", 36, -180, 180, 100, 0, 20.);
+        H2F hi_thetasc = new H2F("hi_thetasc", "", 36, -180, 180, 40, 0, 20.);
         hi_thetasc.setTitleX("#phi(deg)");
         hi_thetasc.setTitleY("#theta(deg)");
         this.offset.addDataSet(hi_thetasc, 0);
@@ -243,6 +246,12 @@ public class Histo {
         
         public int sector() {
             return sector;
+        }
+    
+        public double phiSector() {
+            Vector3D dir = new Vector3D(this.px(), this.py(), this.pz());
+            dir.rotateZ(-Math.PI/3*(sector-1));
+            return dir.phi();
         }
     }
     
@@ -312,15 +321,23 @@ public class Histo {
         if(trackBank!=null) event.read(trackBank);
         
         if(trackBank!=null && trackBank.getRows()>0) {
+            Line3D track = new Line3D(new  Point3D(trackBank.getFloat("t1_x", iele),
+                                                   trackBank.getFloat("t1_y", iele),
+                                                   trackBank.getFloat("t1_z", iele)),
+                                      new Vector3D(trackBank.getFloat("t1_px", iele),
+                                                   trackBank.getFloat("t1_py", iele),
+                                                   trackBank.getFloat("t1_pz", iele)));
+            Point3D vertex = track.distance(new Line3D(0,0,0,0,0,1)).lerpPoint(0);
             Electron elec = new Electron(11,
-                                         trackBank.getFloat("p0_x", iele),
-                                         trackBank.getFloat("p0_y", iele),
-                                         trackBank.getFloat("p0_z", iele),
-                                         trackBank.getFloat("Vtx0_x", iele),
-                                         trackBank.getFloat("Vtx0_y", iele),
-                                         trackBank.getFloat("Vtx0_z", iele),
+                                         trackBank.getFloat("t1_px", iele),
+                                         trackBank.getFloat("t1_py", iele),
+                                         trackBank.getFloat("t1_pz", iele),
+                                         vertex.x(),//trackBank.getFloat("Vtx0_x", iele),
+                                         vertex.y(),//trackBank.getFloat("Vtx0_y", iele),
+                                         vertex.z(),//trackBank.getFloat("Vtx0_z", iele),
                                          trackBank.getInt("id", iele),
                                          trackBank.getByte("sector", iele));
+//            System.out.println(vertex + " " + elec.vertex() + "\n");
             return elec;
         }
         return null;
@@ -338,7 +355,7 @@ public class Histo {
                         
             this.binning.getH2F("hi_S" + electron.sector()).fill(electron.vz(), Math.toDegrees(electron.theta()));
             
-            if(Math.abs(electron.vz()-(Constants.SCEXIT+Constants.TARGETCENTER))<Constants.PEAKWIDTH)
+            if(Math.abs(electron.vz()-(Constants.SCEXIT+Constants.TARGETCENTER))<Constants.PEAKWIDTH && Math.abs(Math.toDegrees(electron.phiSector()))<10)
                 this.offset.getH2F("hi_thetasc").fill(Math.toDegrees(electron.phi()), Math.toDegrees(electron.theta()));
             
             electron.vector().rotateZ(Math.toRadians(-60*(electron.sector()-1)));
