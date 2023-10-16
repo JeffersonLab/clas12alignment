@@ -350,6 +350,9 @@ public class Alignment {
     }
     
     public EmbeddedCanvasTabbed analyzeFits() {
+        // check beam offset
+        this.getBeamOffset();
+        
         EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("nominal");
         LOGGER.info("\nPlotting nominal geometry residuals");
         canvas.getCanvas("nominal").draw(this.getResidualGraphs(null));
@@ -520,6 +523,11 @@ public class Alignment {
         return fittedPars;
     }
 
+    private void getBeamOffset() {
+        double[][] offset = this.histos.get("nominal").getBeamOffset();
+        LOGGER.info(String.format("\nBeam offset from scattering-chamber exit window analysis: x=(%.3f \u00B1 %.3f), y=(%.3f \u00B1 %.3f)", 
+                                                                                   offset[0][0], offset[0][1], offset[1][0], offset[1][1]));
+    }
     
     private DataGroup getResidualGraphs(Table alignment) {
         double[] layers = new double[Constants.NLAYER+Constants.NTARGET];

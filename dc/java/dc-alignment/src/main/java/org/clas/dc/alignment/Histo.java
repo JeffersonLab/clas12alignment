@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import org.jlab.clas.physics.Particle;
+import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
@@ -31,12 +32,14 @@ public class Histo {
     
     private DataGroup       electron  = null; 
     private DataGroup       binning   = null; 
+    private DataGroup       offset    = null; 
     private DataGroup[][][] residuals = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][][] time      = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][]   vertex    = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains sectors
 
     private double[][][][] parValues = null;
     private double[][][][] parErrors = null;
+    private double[][]     beamOffset= {{0, 0}, {0, 0}};
     
     private Bin[] thetaBins = null;
     private Bin[] phiBins  = null;
@@ -184,8 +187,19 @@ public class Histo {
             H2F hi_vtxtheta = new H2F("hi_S" + sector, "Sector " + sector, nbinsVtx, minVtx, maxVtx, 100, 0., 35);
             hi_vtxtheta.setTitleX("Vertex (cm)");
             hi_vtxtheta.setTitleY("#theta (deg)");
+            F1D ftheta = new F1D("ftheta","57.29*atan([r]/([z0]-x))",minVtx, maxVtx);
+            ftheta.setParameter(0, Constants.MOLLERR);
+            ftheta.setParameter(1, Constants.MOLLERZ);
+            ftheta.setLineColor(2);
+            ftheta.setLineWidth(2);
             this.binning.addDataSet(hi_vtxtheta, is);
+            this.binning.addDataSet(ftheta, is);
         }
+        this.offset = new DataGroup(1,2);
+        H2F hi_thetasc = new H2F("hi_thetasc", "", 36, -180, 180, 100, 0, 20.);
+        hi_thetasc.setTitleX("#phi(deg)");
+        hi_thetasc.setTitleY("#theta(deg)");
+        this.offset.addDataSet(hi_thetasc, 0);
     }
   
     private class Hit {
@@ -259,6 +273,7 @@ public class Histo {
                 for(int i=0; i<cherenkovBank.getRows(); i++) {
                     if(cherenkovBank.getShort("pindex", i)==loop) {
                         nphe = cherenkovBank.getFloat("nphe", i);
+                        break;
                     }
                 }
 
@@ -273,6 +288,7 @@ public class Histo {
                     for (int i=0; i<trackBank.getRows(); i++) {
                         if(trackBank.getShort("pindex", i)==loop) {
                             iele = trackBank.getShort("index", i);
+                            break;
                         }
                     }
                 }
@@ -321,6 +337,9 @@ public class Histo {
             this.electron.getH2F("hi_thetaphi").fill(Math.toDegrees(electron.phi()), Math.toDegrees(electron.theta()));
                         
             this.binning.getH2F("hi_S" + electron.sector()).fill(electron.vz(), Math.toDegrees(electron.theta()));
+            
+            if(Math.abs(electron.vz()-(Constants.SCEXIT+Constants.TARGETCENTER))<Constants.PEAKWIDTH)
+                this.offset.getH2F("hi_thetasc").fill(Math.toDegrees(electron.phi()), Math.toDegrees(electron.theta()));
             
             electron.vector().rotateZ(Math.toRadians(-60*(electron.sector()-1)));
             double theta = Math.toDegrees(electron.theta());
@@ -475,6 +494,22 @@ public class Histo {
                 }
             }
         }         
+        GraphErrors grthetasc = Histo.getThresholdCrossingProfile(offset.getH2F("hi_thetasc"), 0.5);
+        if(grthetasc.getDataSize(0)>1) {
+            GraphErrors grradius = this.fitOffset(grthetasc, Constants.MOLLERZ-(Constants.SCEXIT+Constants.TARGETCENTER));
+            this.beamOffset[0][0] = grradius.getFunction().getParameter(1)*Math.cos(Math.toRadians(grradius.getFunction().getParameter(2)));
+            this.beamOffset[1][0] = grradius.getFunction().getParameter(1)*Math.sin(Math.toRadians(grradius.getFunction().getParameter(2)));
+            this.beamOffset[0][1] = Math.sqrt(Math.pow(grradius.getFunction().parameter(1).error()*Math.cos(Math.toRadians(grradius.getFunction().getParameter(2))),2)+
+                                              Math.pow(grradius.getFunction().getParameter(1)*Math.sin(Math.toRadians(grradius.getFunction().getParameter(2)))*Math.toRadians(grradius.getFunction().parameter(2).error()),2));
+            this.beamOffset[1][1] = Math.sqrt(Math.pow(grradius.getFunction().parameter(1).error()*Math.sin(Math.toRadians(grradius.getFunction().getParameter(2))),2)+
+                                              Math.pow(grradius.getFunction().getParameter(1)*Math.cos(Math.toRadians(grradius.getFunction().getParameter(2)))*Math.toRadians(grradius.getFunction().parameter(2).error()),2));
+            offset.addDataSet(grthetasc, 0);
+            offset.addDataSet(grradius,  1);
+        }
+    }
+    
+    public double[][] getBeamOffset() {
+        return this.beamOffset;
     }
     
     public double[] getParValues(int sector, int itheta, int iphi) {
@@ -498,12 +533,15 @@ public class Histo {
     }
     
     public EmbeddedCanvasTabbed getElectronPlots() {
-        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("electron", "binning");
+        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("electron", "binning", "offset");
         canvas.getCanvas("electron").draw(electron);
         canvas.getCanvas("electron").getPad(3).getAxisY().setLog(true);
         canvas.getCanvas("electron").getPad(5).getAxisZ().setLog(true);
         canvas.getCanvas("binning").draw(binning);
         for(EmbeddedPad pad : canvas.getCanvas("binning").getCanvasPads())
+            pad.getAxisZ().setLog(true);
+        canvas.getCanvas("offset").draw(offset);
+        for(EmbeddedPad pad : canvas.getCanvas("offset").getCanvasPads())
             pad.getAxisZ().setLog(true);
         return canvas;
     }
@@ -1081,6 +1119,27 @@ public class Histo {
         }
     }
 
+    private GraphErrors fitOffset(GraphErrors grTheta, double deltaZ) {
+        GraphErrors grOffset = new GraphErrors("R2");
+        grOffset.setTitleX("#phi(deg)");
+        grOffset.setTitleY("r(cm)");
+        for(int i=0; i<grTheta.getDataSize(0); i++) {
+            double phi     = grTheta.getDataX(i);
+            double thetasc = grTheta.getDataY(i);
+            double errthsc = grTheta.getDataEY(i);
+            double R       = deltaZ*Math.tan((Math.toRadians(thetasc)));
+            grOffset.addPoint(phi, R, 0, 0.1);
+        }
+        F1D f1 = new F1D("f1","sqrt([R]*[R]+[d0]*[d0]-2*[R]*[d0]*cos((x-[phi0])*" + Math.PI/180 + "))", -180, 180);
+        f1.setParameter(0, (grOffset.getMax()+grOffset.getMin())/2.0);
+        f1.setParameter(1, (grOffset.getMax()-grOffset.getMin())/(grOffset.getMax()+grOffset.getMin()));
+        DataFitter.fit(f1, grOffset, "Q");
+        grOffset.getFunction().setOptStat("11111");
+        grOffset.getFunction().setLineColor(2);
+        grOffset.getFunction().setLineWidth(2);
+        return grOffset;
+    }
+    
     public static int getMaximumBinBetween(H1F histo, double min, double max) { 
         int nbin = histo.getData().length;
         double x_val_temp;
@@ -1128,7 +1187,37 @@ public class Histo {
             }
             return sum / (double) nEntries;
     }
-
+   
+    private static GraphErrors getThresholdCrossingProfile(H2F hi, double fraction) {
+        GraphErrors graph = new GraphErrors();
+        graph.setTitleX(hi.getTitleX());
+        graph.setTitleY(hi.getTitleY());
+        List<H1F> hslices = hi.getSlicesX();
+        for(int ix=0; ix<hi.getDataSize(0); ix++) {
+            H1F hix = hslices.get(ix);
+            if(hix.getMax()>10) {
+                graph.addPoint(hi.getDataX(ix), Histo.getThresholdCrossing(hix, fraction), 0, (hix.getDataX(1)-hix.getDataX(0))/2);
+            }
+        }
+        return graph;
+    }
+    
+    private static double getThresholdCrossing(H1F hi, double fraction) {
+        if(fraction<0 || fraction>=1) {
+            System.out.println("[ERROR] Invalid constant fraction threshold " + fraction + " for histogram " + hi.getName());
+            System.exit(1);
+        }
+        double hiMax = hi.getMax();
+        int iHalf = -1;
+        for(int i=0; i<hi.getDataSize(0); i++) {
+            if(hi.getDataY(i)>hiMax*fraction) {
+                iHalf = i;
+                break;
+            }
+        }
+        return hi.getDataX(iHalf);
+    }
+    
     private static double getRMSIDataSet(IDataSet data, double min, double max) {
             int nsamples = 0;
             double mean = getMeanIDataSet(data, min, max);

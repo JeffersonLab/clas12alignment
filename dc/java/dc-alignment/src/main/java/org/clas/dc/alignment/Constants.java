@@ -91,13 +91,22 @@ public class Constants {
     public static double TARGETLENGTH = DEFAULT[1];
     public static double WINDOWDIST   = DEFAULT[2];
     public static double SCEXIT       = DEFAULT[3];
+    public static double TARGETCENTER = DEFAULT[0]-DEFAULT[1]/2;
+    public static double PEAKWIDTH    = 2;
     public static double SCALE        = 1000;
+    
+    // moller cone entrance
+    public static double MOLLERZ     = 45.389;
+    public static double MOLLERR     = 3.2;
     
     public static void initTargetPars(double[] pars) {
         if(pars.length>0 && pars.length<=DEFAULT.length) {
             TARGETPOS = pars[0];
-            if(pars.length>1)
+            TARGETCENTER = pars[0];
+            if(pars.length>1) {
                 TARGETLENGTH = pars[1];
+                TARGETCENTER = pars[0]-pars[1]/2;
+            }
             if(pars.length>2)
                 WINDOWDIST   = pars[2];
             if(pars.length>3)
