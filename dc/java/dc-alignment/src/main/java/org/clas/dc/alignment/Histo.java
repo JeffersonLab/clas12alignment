@@ -1256,6 +1256,7 @@ public class Histo {
     public void readDataGroup(String folder, TDirectory dir) {
         electron = this.readDataGroup(folder + "/electron/electron", dir, electron);
         binning  = this.readDataGroup(folder + "/electron/binning", dir, binning);
+        offset   = this.readDataGroup(folder + "/electron/offset", dir, offset);
         for(int is=0; is<nSector; is++) {
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -1314,6 +1315,8 @@ public class Histo {
         this.writeDataGroup("electron", dir, electron);
         dir.cd("/" + root + "/" + folder + "/electron");
         this.writeDataGroup("binning", dir,  binning);
+        dir.cd("/" + root + "/" + folder + "/electron");
+        this.writeDataGroup("offset", dir,  offset);
         dir.cd("/" + root + "/" + folder);
         dir.mkdir("residuals");
         dir.cd("residuals");
