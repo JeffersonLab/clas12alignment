@@ -92,7 +92,7 @@ public class Constants {
     public static double WINDOWDIST   = DEFAULT[2];
     public static double SCEXIT       = DEFAULT[3];
     public static double TARGETCENTER = DEFAULT[0]-DEFAULT[1]/2;
-    public static double PEAKWIDTH    = TARGETPOS+WINDOWDIST+(SCEXIT-TARGETLENGTH/2)/2;
+    public static double PEAKWIDTH    = 4;
     public static double SCALE        = 1000;
     
     // moller cone entrance
