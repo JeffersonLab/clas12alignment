@@ -195,8 +195,15 @@ public class Histo {
             ftheta.setParameter(1, Constants.MOLLERZ);
             ftheta.setLineColor(2);
             ftheta.setLineWidth(2);
+            F1D fthetaOff = new F1D("fthetaOff","57.29*atan([r]/([z0]-x))",minVtx, maxVtx);
+            double y0=0.715;
+            fthetaOff.setParameter(0, -y0*Math.sin(Math.toRadians(is*60))+Math.sqrt(Math.pow(Constants.MOLLERR, 2)-Math.pow(y0*Math.cos(Math.toRadians(is*60)), 2)));
+            fthetaOff.setParameter(1, Constants.MOLLERZ);
+            fthetaOff.setLineColor(4);
+            fthetaOff.setLineWidth(2);
             this.binning.addDataSet(hi_vtxtheta, is);
             this.binning.addDataSet(ftheta, is);
+            this.binning.addDataSet(fthetaOff, is);
         }
         this.offset = new DataGroup(1,2);
         H2F hi_thetasc = new H2F("hi_thetasc", "", 36, -180, 180, 40, 0, 20.);
