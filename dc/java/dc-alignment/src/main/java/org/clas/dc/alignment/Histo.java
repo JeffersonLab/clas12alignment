@@ -321,23 +321,32 @@ public class Histo {
         if(trackBank!=null) event.read(trackBank);
         
         if(trackBank!=null && trackBank.getRows()>0) {
-            Line3D track = new Line3D(new  Point3D(trackBank.getFloat("t1_x", iele),
-                                                   trackBank.getFloat("t1_y", iele),
-                                                   trackBank.getFloat("t1_z", iele)),
-                                      new Vector3D(trackBank.getFloat("t1_px", iele),
-                                                   trackBank.getFloat("t1_py", iele),
-                                                   trackBank.getFloat("t1_pz", iele)));
-            Point3D vertex = track.distance(new Line3D(0,0,0,0,0,1)).lerpPoint(0);
+//            Line3D track = new Line3D(new  Point3D(trackBank.getFloat("t1_x", iele),
+//                                                   trackBank.getFloat("t1_y", iele),
+//                                                   trackBank.getFloat("t1_z", iele)),
+//                                      new Vector3D(trackBank.getFloat("t1_px", iele),
+//                                                   trackBank.getFloat("t1_py", iele),
+//                                                   trackBank.getFloat("t1_pz", iele)));
+//            Point3D vertex = track.distance(new Line3D(0,0,0,0,0,1)).lerpPoint(0);
+//            Electron elec = new Electron(11,
+//                                         trackBank.getFloat("t1_px", iele),
+//                                         trackBank.getFloat("t1_py", iele),
+//                                         trackBank.getFloat("t1_pz", iele),
+//                                         vertex.x(),//trackBank.getFloat("Vtx0_x", iele),
+//                                         vertex.y(),//trackBank.getFloat("Vtx0_y", iele),
+//                                         vertex.z(),//trackBank.getFloat("Vtx0_z", iele),
+//                                         trackBank.getInt("id", iele),
+//                                         trackBank.getByte("sector", iele));
+//            System.out.println(vertex + " " + elec.vertex() + "\n");
             Electron elec = new Electron(11,
-                                         trackBank.getFloat("t1_px", iele),
-                                         trackBank.getFloat("t1_py", iele),
-                                         trackBank.getFloat("t1_pz", iele),
-                                         vertex.x(),//trackBank.getFloat("Vtx0_x", iele),
-                                         vertex.y(),//trackBank.getFloat("Vtx0_y", iele),
-                                         vertex.z(),//trackBank.getFloat("Vtx0_z", iele),
+                                         trackBank.getFloat("p0_x", iele),
+                                         trackBank.getFloat("p0_y", iele),
+                                         trackBank.getFloat("p0_z", iele),
+                                         trackBank.getFloat("Vtx0_x", iele),
+                                         trackBank.getFloat("Vtx0_y", iele),
+                                         trackBank.getFloat("Vtx0_z", iele),
                                          trackBank.getInt("id", iele),
                                          trackBank.getByte("sector", iele));
-//            System.out.println(vertex + " " + elec.vertex() + "\n");
             return elec;
         }
         return null;
@@ -1140,16 +1149,19 @@ public class Histo {
         GraphErrors grOffset = new GraphErrors("R2");
         grOffset.setTitleX("#phi(deg)");
         grOffset.setTitleY("r(cm)");
+        double phimin = 0;
         for(int i=0; i<grTheta.getDataSize(0); i++) {
             double phi     = grTheta.getDataX(i);
             double thetasc = grTheta.getDataY(i);
             double errthsc = grTheta.getDataEY(i);
             double R       = deltaZ*Math.tan((Math.toRadians(thetasc)));
             grOffset.addPoint(phi, R, 0, 0.1);
+            if(R<=grOffset.getMin()) phimin=phi;
         }
         F1D f1 = new F1D("f1","sqrt([R]*[R]+[d0]*[d0]-2*[R]*[d0]*cos((x-[phi0])*" + Math.PI/180 + "))", -180, 180);
         f1.setParameter(0, (grOffset.getMax()+grOffset.getMin())/2.0);
         f1.setParameter(1, (grOffset.getMax()-grOffset.getMin())/(grOffset.getMax()+grOffset.getMin()));
+        f1.setParameter(2, phimin);
         DataFitter.fit(f1, grOffset, "Q");
         grOffset.getFunction().setOptStat("11111");
         grOffset.getFunction().setLineColor(2);
