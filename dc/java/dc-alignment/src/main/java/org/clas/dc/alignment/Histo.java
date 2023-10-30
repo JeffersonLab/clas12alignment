@@ -190,12 +190,12 @@ public class Histo {
             H2F hi_vtxtheta = new H2F("hi_S" + sector, "Sector " + sector, nbinsVtx, minVtx, maxVtx, 100, 0., 35);
             hi_vtxtheta.setTitleX("Vertex (cm)");
             hi_vtxtheta.setTitleY("#theta (deg)");
-            F1D ftheta = new F1D("ftheta","57.29*atan([r]/([z0]-x))",minVtx, maxVtx);
+            F1D ftheta = new F1D("ftheta_S" + sector,"57.29*atan([r]/([z0]-x))",minVtx, maxVtx);
             ftheta.setParameter(0, Constants.MOLLERR);
             ftheta.setParameter(1, Constants.MOLLERZ);
             ftheta.setLineColor(2);
             ftheta.setLineWidth(2);
-            F1D fthetaOff = new F1D("fthetaOff","57.29*atan([r]/([z0]-x))",minVtx, maxVtx);
+            F1D fthetaOff = new F1D("fthetaOff_S" + sector,"57.29*atan([r]/([z0]-x))",minVtx, maxVtx);
             double y0=0.715;
             fthetaOff.setParameter(0, -y0*Math.sin(Math.toRadians(is*60))+Math.sqrt(Math.pow(Constants.MOLLERR, 2)-Math.pow(y0*Math.cos(Math.toRadians(is*60)), 2)));
             fthetaOff.setParameter(1, Constants.MOLLERZ);
@@ -1317,6 +1317,13 @@ public class Histo {
                         String opts = "11";
                         for(int k=0; k<dsf.getNPars(); k++) opts += "1";
                         dsf.setOptStat(opts);
+                    }
+                    else if(dsread instanceof F1D && dg.getF1D(dsread.getName())!=null) {
+                        F1D dgf = (F1D) dg.getF1D(dsread.getName());
+                        F1D dsf = (F1D) dsread;
+                        dsf.setLineColor(dgf.getLineColor());
+                        dsf.setLineWidth(dgf.getLineWidth());
+                        dsf.setOptStat(dgf.getOptStat());
                     }
                     newGroup.addDataSet(dsread,i);                        
                 }
