@@ -527,17 +527,19 @@ public class Histo {
                 }
             }
         }         
-        GraphErrors grthetasc = Histo.getThresholdCrossingProfile(offset.getH2F("hi_thetasc"), 0.5);
-        if(grthetasc.getDataSize(0)>1) {
-            GraphErrors grradius = this.fitOffset(grthetasc, Constants.MOLLERZ-(Constants.SCEXIT+Constants.TARGETCENTER));
-            this.beamOffset[0][0] = grradius.getFunction().getParameter(1)*Math.cos(Math.toRadians(grradius.getFunction().getParameter(2)));
-            this.beamOffset[1][0] = grradius.getFunction().getParameter(1)*Math.sin(Math.toRadians(grradius.getFunction().getParameter(2)));
-            this.beamOffset[0][1] = Math.sqrt(Math.pow(grradius.getFunction().parameter(1).error()*Math.cos(Math.toRadians(grradius.getFunction().getParameter(2))),2)+
-                                              Math.pow(grradius.getFunction().getParameter(1)*Math.sin(Math.toRadians(grradius.getFunction().getParameter(2)))*Math.toRadians(grradius.getFunction().parameter(2).error()),2));
-            this.beamOffset[1][1] = Math.sqrt(Math.pow(grradius.getFunction().parameter(1).error()*Math.sin(Math.toRadians(grradius.getFunction().getParameter(2))),2)+
-                                              Math.pow(grradius.getFunction().getParameter(1)*Math.cos(Math.toRadians(grradius.getFunction().getParameter(2)))*Math.toRadians(grradius.getFunction().parameter(2).error()),2));
-            offset.addDataSet(grthetasc, 0);
-            offset.addDataSet(grradius,  1);
+        if(offset.getH2F("hi_thetasc")!=null) {
+            GraphErrors grthetasc = Histo.getThresholdCrossingProfile(offset.getH2F("hi_thetasc"), 0.5);
+            if(grthetasc.getDataSize(0)>1) {
+                GraphErrors grradius = this.fitOffset(grthetasc, Constants.MOLLERZ-(Constants.SCEXIT+Constants.TARGETCENTER));
+                this.beamOffset[0][0] = grradius.getFunction().getParameter(1)*Math.cos(Math.toRadians(grradius.getFunction().getParameter(2)));
+                this.beamOffset[1][0] = grradius.getFunction().getParameter(1)*Math.sin(Math.toRadians(grradius.getFunction().getParameter(2)));
+                this.beamOffset[0][1] = Math.sqrt(Math.pow(grradius.getFunction().parameter(1).error()*Math.cos(Math.toRadians(grradius.getFunction().getParameter(2))),2)+
+                                                  Math.pow(grradius.getFunction().getParameter(1)*Math.sin(Math.toRadians(grradius.getFunction().getParameter(2)))*Math.toRadians(grradius.getFunction().parameter(2).error()),2));
+                this.beamOffset[1][1] = Math.sqrt(Math.pow(grradius.getFunction().parameter(1).error()*Math.sin(Math.toRadians(grradius.getFunction().getParameter(2))),2)+
+                                                  Math.pow(grradius.getFunction().getParameter(1)*Math.cos(Math.toRadians(grradius.getFunction().getParameter(2)))*Math.toRadians(grradius.getFunction().parameter(2).error()),2));
+                offset.addDataSet(grthetasc, 0);
+                offset.addDataSet(grradius,  1);
+            }
         }
     }
     
