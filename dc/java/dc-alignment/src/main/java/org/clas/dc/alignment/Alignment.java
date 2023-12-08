@@ -1038,7 +1038,7 @@ public class Alignment {
             String   thetaBins    = parser.getOptionParser("-process").getOption("-theta").stringValue();
             String   phiBins      = parser.getOptionParser("-process").getOption("-phi").stringValue();
             String   optStats     = parser.getOptionParser("-process").getOption("-stats").stringValue();
-            boolean  time         = false;//parser.getOptionParser("-process").getOption("-time").intValue()!=0;
+            boolean  time         = parser.getOptionParser("-process").getOption("-time").intValue()!=0;
             int      residuals    = parser.getOptionParser("-process").getOption("-residuals").intValue();
             int      vertexFit    = parser.getOptionParser("-process").getOption("-vertfit").intValue();
             String   vertexPar    = parser.getOptionParser("-process").getOption("-vertpar").stringValue();   
