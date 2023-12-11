@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import org.jlab.clas.physics.Particle;
-import org.jlab.geom.prim.Line3D;
-import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
@@ -1357,18 +1355,18 @@ public class Histo {
                 }
             }
         }
-//        dir.cd("/" + root + "/" + folder);
-//        dir.mkdir("time");
-//        dir.cd("time");
-//        for(int is=0; is<nSector; is++) {
-//            for(int it=0; it<thetaBins.length; it++) {
-//                for(int ip=0; ip<phiBins.length; ip++) {
-//                    String subfolder = "sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
-//                    this.writeDataGroup(subfolder, dir, time[is][it][ip]);
-//                    dir.cd("/" + root + "/" + folder + "/time");
-//                }
-//            }
-//        }
+        dir.cd("/" + root + "/" + folder);
+        dir.mkdir("time");
+        dir.cd("time");
+        for(int is=0; is<nSector; is++) {
+            for(int it=0; it<thetaBins.length; it++) {
+                for(int ip=0; ip<phiBins.length; ip++) {
+                    String subfolder = "sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
+                    this.writeDataGroup(subfolder, dir, time[is][it][ip]);
+                    dir.cd("/" + root + "/" + folder + "/time");
+                }
+            }
+        }
         dir.cd("/" + root + "/" + folder);
         dir.mkdir("vertex");
         dir.cd("vertex");
