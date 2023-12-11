@@ -42,5 +42,7 @@ if [ $STATUS -ne 0 ]; then
     # TODO. Improve usage.txt.
     # NOTE. Currently, we print usage.txt even if there's a compilation. Ideally, we don't want
     #       this, but I'm not familiar enough with maven to fix this behavior. -- Bruno.
+    printf "Usage: $0 infile\n"
     cat usage.txt
+    printf "\n"
 fi
