@@ -31,4 +31,16 @@ else
 fi
 
 # If status is 1, cat usage.
-if [ $STATUS -eq 1 ]; then cat usage.txt; fi
+if [ $STATUS -ne 0 ]; then
+    if [ -f error_report.txt ]; then
+        printf "\nError: "
+        cat error_report.txt
+        rm error_report.txt
+    fi
+    printf "\n"
+
+    # TODO. Improve usage.txt.
+    # NOTE. Currently, we print usage.txt even if there's a compilation. Ideally, we don't want
+    #       this, but I'm not familiar enough with maven to fix this behavior. -- Bruno.
+    cat usage.txt
+fi
