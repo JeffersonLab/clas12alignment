@@ -16,10 +16,19 @@ DEXECEXECUTABLE="$JAVALOC"
 PREVARGS="$DEXECARGS $CLASSPATHARG"
 POSTARGS="-Dexec.executable=$DEXECEXECUTABLE process-classes org.codehaus.mojo:exec-maven-plugin:1.2.1:exec"
 
+# Get arguments from user.
 args=""
 for arg; do args="$args $arg"; done
 
-# Run
-export COAT_MAGFIELD_TORUSMAP="$TORUSMAP"
-export COAT_MAGFIELD_SOLENOIDMAP="$SOLENOIDMAP"
-$MVN "$PREVARGS org.clas.test.Main$args" $POSTARGS
+# If args are given, run. Otherwise, print usage and exit gracefully.
+if [ ! -z "$args" ]; then
+    export COAT_MAGFIELD_TORUSMAP="$TORUSMAP"
+    export COAT_MAGFIELD_SOLENOIDMAP="$SOLENOIDMAP"
+    $MVN "$PREVARGS org.clas.test.Main$args" $POSTARGS
+    STATUS=$?
+else
+    STATUS=1
+fi
+
+# If status is 1, cat usage.
+if [ $STATUS -eq 1 ]; then cat usage.txt; fi
