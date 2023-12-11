@@ -72,10 +72,6 @@ public final class IOHandler {
     public static boolean parseArgs(String[] args, Map<Character, List<String>> params) {
         // NOTE. Better error messages here would be cool, but not strictly necessary at the moment.
         if (initArgmap()) return true;
-        if (args.length < 1) {
-            System.out.printf("\n[ERROR] File to be opened needs to be added as positional arg.");
-            return true;
-        }
 
         // Get args.
         for (int i = 0; i < args.length; ++i) {
