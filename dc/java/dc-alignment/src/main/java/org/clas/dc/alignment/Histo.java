@@ -90,6 +90,14 @@ public class Histo {
         this.createHistos(optstats);
     }
     
+    public Histo(boolean shift, Bin[] thetabins, Bin[] phibins, boolean time, double[] vertexrange, String optstats) {
+        this.thetaBins = thetabins;
+        this.phiBins   = phibins;
+        this.shift     = shift;
+        this.tres      = time;
+        this.createHistos(optstats);
+    }
+    
     private void createHistos(String optStats) {
         LOGGER.info("Creating histograms for " + nSector              + " sectors, " 
                                                + (thetaBins.length-1) + " theta bins, " 
@@ -1284,14 +1292,16 @@ public class Histo {
                 }
             }
         }
-//        for(int is=0; is<nSector; is++) {
-//            for(int it=0; it<thetaBins.length; it++) {
-//                for(int ip=0; ip<phiBins.length; ip++) {
-//                    String subfolder = folder + "/time/sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
-//                    time[is][it][ip]=this.readDataGroup(subfolder, dir, time[is][it][ip]);
-//                }
-//            }
-//        }
+        if(tres) {
+            for(int is=0; is<nSector; is++) {
+                for(int it=0; it<thetaBins.length; it++) {
+                    for(int ip=0; ip<phiBins.length; ip++) {
+                        String subfolder = folder + "/time/sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
+                        time[is][it][ip]=this.readDataGroup(subfolder, dir, time[is][it][ip]);
+                    }
+                }
+            }
+        }
         for(int it=0; it<thetaBins.length; it++) {
             for(int ip=0; ip<phiBins.length; ip++) {
                 String subfolder = folder + "/vertex/theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
@@ -1355,15 +1365,17 @@ public class Histo {
                 }
             }
         }
-        dir.cd("/" + root + "/" + folder);
-        dir.mkdir("time");
-        dir.cd("time");
-        for(int is=0; is<nSector; is++) {
-            for(int it=0; it<thetaBins.length; it++) {
-                for(int ip=0; ip<phiBins.length; ip++) {
-                    String subfolder = "sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
-                    this.writeDataGroup(subfolder, dir, time[is][it][ip]);
-                    dir.cd("/" + root + "/" + folder + "/time");
+        if(tres) {
+            dir.cd("/" + root + "/" + folder);
+            dir.mkdir("time");
+            dir.cd("time");
+            for(int is=0; is<nSector; is++) {
+                for(int it=0; it<thetaBins.length; it++) {
+                    for(int ip=0; ip<phiBins.length; ip++) {
+                        String subfolder = "sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
+                        this.writeDataGroup(subfolder, dir, time[is][it][ip]);
+                        dir.cd("/" + root + "/" + folder + "/time");
+                    }
                 }
             }
         }

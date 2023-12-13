@@ -896,10 +896,13 @@ public class Alignment {
         dir.cd("/" + folder);
         dir.ls();
         for(Object entry : dir.getDir().getDirectoryMap().entrySet()) {
+            dir.cd("/" + folder);
             Map.Entry<String,Directory> object = (Map.Entry<String,Directory>) entry;
             String key = object.getKey();
             boolean shift = !key.equals("nominal") && subtractedShifts;
-            this.addHistoSet(key, new Histo(shift, thetaBins, phiBins, vertexRange, optStats));
+            Map<String,Directory> dgs = dir.getDirectoryByPath(key).getDirectoryMap();
+            boolean time = dgs.containsKey("time");
+            this.addHistoSet(key, new Histo(shift, thetaBins, phiBins, time, vertexRange, optStats));
             histos.get(key).readDataGroup(folder+"/"+key, dir);
         }
         System.setOut(outStream);
