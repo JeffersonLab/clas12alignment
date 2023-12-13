@@ -83,7 +83,7 @@ public class Fitter  implements FCNBase {
         
         double chi2 = 0.0;
         int    ndf  = 0;
-        for(int im=0; im<currentValues.length; im++) {
+        for(int im=1; im<currentValues.length; im++) {
             for(int it=0; it<currentValues[0].length; it++) {
                 for(int ip=0; ip<currentValues[0][0].length; ip++) {
                     
