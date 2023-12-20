@@ -525,7 +525,7 @@ public class Histo {
                         }
                         if(hvtx.getFunction().getName().equals("f4vertex") && 
                             isc>=0 && iscw>=0 &&
-                            hvtx.getFunction().getParameter(isc)>0) {
+                            hvtx.getFunction().getParameter(isc)>10) {
                             this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] = (hvtx.getFunction().getParameter(iscw)-Constants.SCEXIT)*Constants.SCALE;
                             this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] =  hvtx.getFunction().parameter(iscw).error()*Constants.SCALE;
                         }
