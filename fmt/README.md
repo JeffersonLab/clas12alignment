@@ -157,3 +157,18 @@ shifts and rotations found as
       0      4     0         0.0    0.0      0.0  0.0  0.0   0.0
       0      5     0         0.0    0.0      0.0  0.0  0.0   0.0
       0      6     0         0.0    0.0      0.0  0.0  0.0   0.0
+
+## Pending work
+* [ ] The format of histograms.hipo is not compatible with the latest hipo-browser.
+* [ ] Upgrade the code so that it runs with coatjava 10.0.4.
+* [ ] Upgrade the code to run with the same java version as coatjava 10.0.4.
+* [ ] pom.xml uses old 6.5.3 version and doesn't show the plots after running run.sh. When updating to 10.0.4, shows an error:
+* [ ] Make sure that `run.sh` runs on the farm.
+
+```
+Exception in thread "main" java.lang.NoSuchMethodError: 'void org.jlab.clas.swimtools.MagFieldsEngine.initializeMagneticFields()'
+    at org.clas.analysis.TrkSwim.<init>(TrkSwim.java:22)
+    at org.clas.analysis.ResolutionAnalysis.setupSwim(ResolutionAnalysis.java:90)
+    at org.clas.analysis.ResolutionAnalysis.shiftAnalysis(ResolutionAnalysis.java:123)
+    at org.clas.test.Main.main(Main.java:69)
+```
