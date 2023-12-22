@@ -1,4 +1,8 @@
+# Compiled java files.
 target/
-fmt/*.hipo
 *.class
 *.jar
+
+# FMT-specific files.
+fmt/*.hipo
+fmt/error_report.txt

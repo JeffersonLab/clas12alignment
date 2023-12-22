@@ -1,5 +1,9 @@
 package org.clas.test;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.lang.NumberFormatException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +26,23 @@ public final class IOHandler {
     private static Set<Character> LFMTARGS =
             new HashSet<>(Arrays.asList('x', 'y', 'z', 'X', 'Y', 'Z'));
     private static Map<String, Character> argmap;
+
+    /**
+     * Write a short error report to file `error_report.txt`. This file will be
+     *     then read, printed, and deleted by `run.sh`.
+     */
+    private static boolean writeErrReport(String report) {
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(
+            new FileOutputStream("error_report.txt"), "utf-8"))) {
+            writer.write(report);
+        } catch (Exception ex) {
+            // If error_report.txt cannot be written, simply print the report to stdout and hope the
+            //     user catches it.
+            System.out.printf("\n\n\n%s\n\n\n", report);
+        }
+
+        return true;
+    }
 
     /** Associate char-indexed args with String-indexed args. */
     private static boolean initArgmap() {
@@ -54,54 +75,6 @@ public final class IOHandler {
         return false;
     }
 
-    /** Print usage to stdout and exit. */
-    private static boolean usage() {
-        System.out.printf("\n");
-        System.out.printf("Usage: alignment <file> [-n --nevents] [-v --var] [-i --inter]\n");
-        System.out.printf("                        [-s --swim] [-c --cutsinfo] [-V --variation]\n");
-        System.out.printf("                        [-p -plot]\n");
-        System.out.printf("                        [-x --dx] [-y --dy] [-z --dz]\n");
-        System.out.printf("                        [-X --rx] [-Y --ry] [-Z --rz]\n");
-        System.out.printf("  * file      : hipo input file.\n");
-        System.out.printf("  * nevents   : number of events to run. If unspecified, runs all\n");
-        System.out.printf("                events in input file.\n");
-        System.out.printf("  * var       : variable to be aligned. Can be dXY, dZ, rXY, or rZ.\n");
-        System.out.printf("  * inter (2) : [0] range between nominal position and position to\n");
-        System.out.printf("                    be tested.\n");
-        System.out.printf("                [1] step size for each tested value between\n");
-        System.out.printf("                    <nominal - range> and <nominal + range>.\n");
-        System.out.printf("  * swim  (3) : Setup for the Swim class. If unspecified, uses\n");
-        System.out.printf("                default from RG-F data (-0.75, -1.0, 3.0).\n");
-        System.out.printf("                [0] Solenoid magnet scale.\n");
-        System.out.printf("                [1] Torus magnet scale.\n");
-        System.out.printf("                [2] Solenoid magnet shift.\n");
-        System.out.printf("  * cutsinfo  : int describing how much info on the cuts should be\n");
-        System.out.printf("                printed. 0 is no info, 1 is minimal, 2 is detailed.\n");
-        System.out.printf("                Default is 1.\n");
-        System.out.printf("  * variation : CCDB variation to be used. Default is\n");
-        System.out.printf("                ``rgf_spring2020''.\n");
-        System.out.printf("  * plot      : int describing if plots are to be shown. 1 means\n");
-        System.out.printf("                show them. Plots are always saved in the\n");
-        System.out.printf("                ``histograms.hipo'' file.\n");
-        System.out.printf("  * dx    (3) : x shift for each FMT layer.\n");
-        System.out.printf("  * dy    (3) : y shift for each FMT layer.\n");
-        System.out.printf("  * dz    (3) : z shift for each FMT layer.\n");
-        System.out.printf("  * rx    (3) : x rotation for each FMT layer.\n");
-        System.out.printf("  * ry    (3) : y rotation for each FMT layer.\n");
-        System.out.printf("  * rz    (3) : z rotation for each FMT layer.\n");
-        System.out.printf("\n");
-        System.out.printf("For example, if var == dZ, inter == 0.2 0.1, and\n");
-        System.out.printf("dz == 0.5, then the values tested for z are:\n");
-        System.out.printf("            (0.3, 0.4, 0.5, 0.6, 0.7).\n");
-        System.out.printf("If a position or rotation is not specified, it is assumed to be 0\n");
-        System.out.printf("for all FMT layers. If no argument is specified, a plot showing\n");
-        System.out.printf("the residuals is shown.\n");
-        System.out.printf("\n");
-        System.out.printf("NOTE. All measurements are in cm, while the ccdb works in mm.\n");
-        System.out.printf("\n");
-        return true;
-    }
-
     /** Check if an argument can be parsed into an int. */
     private static boolean checkInt(String arg) {
         try {Integer.parseInt(arg);}
@@ -116,14 +89,10 @@ public final class IOHandler {
         return false;
     }
 
-    /** Arguments parser. Arguments are detailed in usage(). */
+    /** Arguments parser. Arguments are detailed in usage.txt. */
     public static boolean parseArgs(String[] args, Map<Character, List<String>> params) {
         // NOTE. Better error messages here would be cool, but not strictly necessary at the moment.
         if (initArgmap()) return true;
-        if (args.length < 1) {
-            System.out.printf("\n[ERROR] File to be opened needs to be added as positional arg.");
-            return usage();
-        }
 
         // Get args.
         for (int i = 0; i < args.length; ++i) {
@@ -131,28 +100,20 @@ public final class IOHandler {
             char argC;
             if (argS.charAt(0) == '-') {
                 int count = 0;
-                if (argS.length() < 2) {
-                    System.out.printf("\n[ERROR] Invalid char-indexed optional argument: ");
-                    System.out.printf("``%s''", argS);
-                    return usage();
-                }
+                if (argS.length() < 2)
+                    return writeErrReport("char-indexed argument `" + argS + "` is invalid.");
                 if (argS.charAt(1) == '-') { // string-indexed argument.
-                    if (argS.length() < 3) {
-                        System.out.printf("\n[ERROR] Invalid string-indexed optional argument: ");
-                        System.out.printf("``%s''", argS);
-                        return usage();
-                    }
-                    if (argmap.get(argS) == null) {
-                        System.out.printf("\n[ERROR] Unknown argument: ``%s''", argS);
-                        return usage();
-                    }
+                    if (argS.length() < 3)
+                        return writeErrReport("argument: `" + argS + "` is invalid.");
+                    if (argmap.get(argS) == null)
+                        return writeErrReport("argument: `" + argS + "` is unknown.");
                     argC = argmap.get(argS);
                 }
                 else { // char-indexed argument.
                     if (argS.length() > 2) {
-                        System.out.printf("\n[ERROR] String-indexed argument needs two dashes: ");
-                        System.out.printf("``%s''", argS);
-                        return usage();
+                        return writeErrReport(
+                            "string-indexed argument `" + argS + "` should have two dashes."
+                        );
                     }
                     argC = argS.charAt(1);
                 }
@@ -161,71 +122,61 @@ public final class IOHandler {
                 else if (L2ARGS.contains(argC))   count = 2;
                 else if (L3ARGS.contains(argC))   count = 3;
                 else if (LFMTARGS.contains(argC)) count = Constants.FMTLAYERS;
-                else {
-                    System.out.printf("\n[ERROR] Unknown argument: ``-%s''", argC);
-                    return usage();
-                }
+                else
+                    return writeErrReport("Argument `" + argC + "` is unknown.");
                 for (int j = 0; j < count; ++j) {
-                    if (i == args.length-1) {
-                        System.out.printf("\n[ERROR] Key ``%s'' needs more values!", argS);
-                        return usage();
-                    }
+                    if (i == args.length-1)
+                        return writeErrReport("Argument `" + argS + "` needs more values.");
                     params.get(argC).add(args[++i]);
                 }
             }
             else { // positional argument.
-                if (params.get('f') != null) {
-                    System.out.printf("\n[ERROR] Only one positional argument is allowed.");
-                    return usage();
-                }
+                if (params.get('f') != null)
+                    return writeErrReport("Program can only receive one positional argument.");
                 params.put('f', new ArrayList<String>());
                 params.get('f').add(argS);
             }
         }
 
         // Check that args are of correct type.
-        if (params.get('f') == null) {
-            System.out.printf("\n[ERROR] File to be opened needs to be added as positional arg.");
-            return usage();
-        }
+        if (params.get('f') == null)
+            return writeErrReport("Missing input hipo file.");
         if (!params.get('f').get(0).endsWith(".hipo")) {
-            System.out.printf("\n[ERROR] Program can only process .hipo files. filename is ");
-            System.out.printf("``%s''", params.get('f').get(0));
-            return usage();
+            return writeErrReport(
+                "Input file `" + params.get('f').get(0) + "` is not a valid hipo file."
+            );
         }
         for (Map.Entry<Character, List<String>> entry : params.entrySet()) {
             Character    key = entry.getKey();
             List<String> vals = entry.getValue();
             for (String val : vals) {
-                if (val == null) {
-                    System.out.printf("[ERROR] Key ``-%s'' has a null value.", key);
-                    return usage();
+                if (val == null)
+                    return writeErrReport("Key `" + key + "` has a null value.");
+                if ((key.equals('c') || key.equals('n') || key.equals('p')) && checkInt(val)) {
+                    return writeErrReport(
+                        "Key `"+key+"` requires integer values, while `"+val+"` was provided."
+                    );
                 }
-                if ((key.equals('c') || key.equals('n') || key.equals('p'))
-                        && checkInt(val)) {
-                    System.out.printf("[ERROR] Key ``-%s'' requires integer values ", key);
-                    System.out.printf("(``%s'' provided)", val);
-                    return usage();
+                if (key.equals('v') && (
+                    !val.equals("dXY") && !val.equals("dZ") &&
+                    !val.equals("rXY") && !val.equals("rZ"))
+                ) {
+                    return writeErrReport(
+                        "Key `-v` only accepts `dXY`, `dZ`, `rXY`, or `rZ`. `"+val+"` was provided."
+                    );
                 }
-                if (key.equals('v') && (!val.equals("dXY") && !val.equals("dZ")
-                                     && !val.equals("rXY") && !val.equals("rZ"))) {
-                    System.out.printf("[ERROR] The only allowed values for key ``-v'' are ``dXY''");
-                    System.out.printf(", ``dZ'', ``rXY'', and ``rZ'' (``%s'' provided).", val);
-                    return usage();
-                }
-                if ((L2ARGS.contains(key) || L3ARGS.contains(key) || LFMTARGS.contains(key))
-                        && checkDouble(val)) {
-                    System.out.printf("[ERROR] Key ``%s'' requires Double values", key);
-                    System.out.printf(" (``%s'' provided).", val);
-                    return usage();
+                if (
+                    (L2ARGS.contains(key) || L3ARGS.contains(key) || LFMTARGS.contains(key)) &&
+                    checkDouble(val)
+                ) {
+                    return writeErrReport(
+                        "Key `" + key + "` only accepts double values. `" + val + "` was provided."
+                    );
                 }
             }
         }
-        if ((params.get('v') == null) != (params.get('i') == null)) {
-            System.out.printf("[ERROR] Both ``-v'' and ``i'' arguments need to be specified if ");
-            System.out.printf("one of them is.");
-            return usage();
-        }
+        if ((params.get('v') == null) != (params.get('i') == null))
+            return writeErrReport("If `-v` is specified, `-i` must be too (and vice versa).");
 
         return false;
     }
