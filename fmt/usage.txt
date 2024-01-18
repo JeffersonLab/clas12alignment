@@ -46,8 +46,8 @@
         z rotation for each FMT layer.
 
 Fit FMT hits to DC tracks, assigning different shifts and rotations to each
-FMT layer each time. Alternatively, when no argument is specified, plot the
-residuals of each layer.
+FMT layer each time. Alternatively, when no optional argument is specified,
+plot the residuals of each layer.
 
 For example, if called with:
     ./run.sh infile -v dZ -i 0.2 0.1 --dz 0.3 0.5 0.7 -dx 0.3 0.4 0.5

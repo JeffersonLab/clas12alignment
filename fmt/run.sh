@@ -5,7 +5,7 @@ TORUSMAP="Symm_torus_r2501_phi16_z251_24Apr2018.dat"
 SOLENOIDMAP="Symm_solenoid_r601_phi1_z1201_13June2018.dat"
 MVN="mvn"
 JAVAHOME="/usr"
-COATJAVA="/path/to/coatjava"
+COATJAVA="/home/twig/code/clas12/coatjava/coatjava"
 
 # Don't touch anything from this point forward!
 JAVALOC="$JAVAHOME/bin/java"
@@ -39,9 +39,10 @@ if [ $STATUS -ne 0 ]; then
     fi
     printf "\n"
 
-    # TODO. Improve usage.txt.
-    # NOTE. Currently, we print usage.txt even if there's a compilation. Ideally, we don't want
-    #       this, but I'm not familiar enough with maven to fix this behavior. -- Bruno.
+    # NOTE. Currently, we print usage.txt even if there's a compilation error.
+    #       Ideally, we want it only to be printed if there's an execution er-
+    #       ror, but I'm not familiar enough with maven to fix this behavior.
+    #       -- Bruno.
     printf "Usage: $0 infile\n"
     cat usage.txt
     printf "\n"
