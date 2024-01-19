@@ -20,7 +20,7 @@ public class TrkSwim {
     public TrkSwim(double[] swmSetup, double yaw, double pitch) {
         MagFieldsEngine mf = new MagFieldsEngine();
         mf.initializeMagneticFields();
-        Swimmer.setMagneticFieldsScales(swmSetup[0], swmSetup[1], swmSetup[2]); // vabbe
+        Swimmer.setMagneticFieldsScales(swmSetup[0], swmSetup[1], swmSetup[2]);
 
         // Obtain the plane angle from the yaw and the pitch.
         double x = -Math.sin(Math.toRadians(yaw));
