@@ -5,7 +5,7 @@ TORUSMAP="Symm_torus_r2501_phi16_z251_24Apr2018.dat"
 SOLENOIDMAP="Symm_solenoid_r601_phi1_z1201_13June2018.dat"
 MVN="mvn"
 JAVAHOME="/usr"
-COATJAVA="/home/twig/code/clas12/coatjava/coatjava"
+COATJAVA="/path/to/coatjava-10.0.5"
 
 # Don't touch anything from this point forward!
 JAVALOC="$JAVAHOME/bin/java"
