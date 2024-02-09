@@ -1058,15 +1058,15 @@ public class Histo {
             ibin1 = ibin0;
             ibin0 = ibin2;
         }
-        int ibinsc = Histo.getMaximumBinBetween(histo, (Constants.SCEXIT-Constants.TARGETPOS)*0.9, (Constants.SCEXIT-Constants.TARGETPOS)*1.1);
+        int ibinsc = Histo.getMaximumBinBetween(histo, (Constants.SCEXIT+Constants.TARGETCENTER)*0.9, (Constants.SCEXIT+Constants.TARGETCENTER)*1.1);
         
         double mean  = histo.getDataX(ibin0);
         double amp   = histo.getBinContent(ibin0);
         double sc    = histo.getBinContent(ibinsc);
-        double sigma = 0.5;
+        double sigma = 0.3;
         double bg = histo.getBinContent((ibin1+ibin0)/2);
-        String function = "[amp]*gaus(x,[exw]-[tl],[sigma])+"
-                        + "[amp]*gaus(x,[exw],[sigma])*1.2+"
+        String function = "[ampU]*gaus(x,[exw]-[tl],[sigma])+"
+                        + "[ampD]*gaus(x,[exw],[sigma])+"
                         + "[bg]*gaus(x,[exw]-[tl]/2,[tl]*0.6)+"
                         + "[sc]*gaus(x,[exw]+[scw]-[tl]/2,[sigma])+"
                         + "[air]*landau(x,[exw]+[scw]-[tl]/2+[sigma]*2,[sigma]*4)";
@@ -1074,15 +1074,16 @@ public class Histo {
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
         f1_vtx.setOptStat("11111111111");
-        f1_vtx.setParameter(0, amp/2);
+        f1_vtx.setParameter(0, amp);
         f1_vtx.setParameter(1, mean);
         f1_vtx.setParameter(2, Constants.TARGETLENGTH);
-        f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.99, Constants.TARGETLENGTH*1.01);
+        f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.9, Constants.TARGETLENGTH*1.1);
         f1_vtx.setParameter(3, sigma);
-        f1_vtx.setParameter(4, bg);
-        f1_vtx.setParameter(5, sc);
-        f1_vtx.setParameter(6, Constants.SCEXIT-Constants.TARGETPOS);
-        f1_vtx.setParLimits(6, (Constants.SCEXIT-Constants.TARGETPOS)*0.9, (Constants.SCEXIT-Constants.TARGETPOS)*1.1);
+        f1_vtx.setParameter(4, amp);        
+        f1_vtx.setParameter(5, bg);
+        f1_vtx.setParameter(6, sc);
+        f1_vtx.setParameter(7, Constants.SCEXIT);
+        f1_vtx.setParLimits(7, (Constants.SCEXIT)*0.9, (Constants.SCEXIT)*1.1);
         f1_vtx.setRange(mean-Constants.TARGETLENGTH*1.5,Constants.SCEXIT+Constants.TARGETLENGTH*0.6);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
 //        if(f1_vtx.getParameter(6)<f1_vtx.getParameter(0)/4) f1_vtx.setParameter(6, 0);
