@@ -29,11 +29,13 @@ public class Histo {
     
     private final int nSector = Constants.NSECTOR;
     private final int nLayer  = Constants.NLAYER;
+    private final int nSLayer = Constants.NSUPERLAYER;
     private final int nTarget = Constants.NTARGET;
     
     private DataGroup       electron  = null; 
     private DataGroup       binning   = null; 
     private DataGroup       offset    = null; 
+    private DataGroup       calib     = null; 
     private DataGroup[][][] residuals = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][][] time      = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][]   vertex    = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains sectors
@@ -121,6 +123,7 @@ public class Histo {
             maxVtx = Constants.VDFMAX;
         }
         
+        this.calib = new DataGroup(nSector, nSLayer);
         for(int is=0; is<nSector; is++) {
             int sector = is+1;
             for(int it=0; it<thetaBins.length; it++) {
@@ -137,6 +140,14 @@ public class Histo {
                     }
                 }
             }
+            for(int isl=0; isl<nSLayer; isl++) {
+                int superlayer = isl+1;
+                H1F hi_time = new H1F("hi_SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                hi_time.setTitleX("Residuals (um)");
+                hi_time.setTitleY("Counts");
+                hi_time.setOptStat(optStats);
+                this.calib.addDataSet(hi_time, is+isl*nSector);
+            }
         }
         if(tres) {
             for(int is=0; is<nSector; is++) {
@@ -152,7 +163,6 @@ public class Histo {
                             hi_time.setOptStat(optStats);
                             this.time[is][it][ip].addDataSet(hi_time, il);
                         }
-
                     } 
                 }
             }
@@ -222,6 +232,7 @@ public class Histo {
         public int id = -1;
         public int wire  = -1;
         public int layer  = -1;
+        public int superlayer = -1;
         public int sector = -1;
         public double residual;
         public double time;
@@ -229,6 +240,7 @@ public class Histo {
         public Hit(int sector, int layer, int wire, double residual, double time) {
             this.sector = sector;
             this.layer  = layer;
+            this.superlayer = (layer-1)/6 +1;
             this.residual = residual;
             this.time = time;
         }       
@@ -410,6 +422,7 @@ public class Histo {
                         if (phiBins[ip].contains(phi)) {
                             for(Hit hit : hits) {
                                 this.residuals[sector - 1][it][ip].getH1F("hi_L" + hit.layer).fill(hit.residual);
+                                this.calib.getH1F("hi_SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
                                 if(tres)
                                     this.time[sector - 1][it][ip].getH1F("hi_L" + hit.layer).fill(hit.time);
                             }
@@ -486,6 +499,12 @@ public class Histo {
     public void analyzeHisto(int fit, int vertexFit) {
         for(int is=0; is<nSector; is++) {
             int s = is +1;
+            for(int isl=0; isl<nSLayer; isl++) {
+                int sl = isl+1;
+                H1F hres = calib.getH1F("hi_SL"+sl+"_S"+s);
+                if(fit==2) Histo.fitResiduals(hres);
+                else       hres.setOptStat("1111");
+            }
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
                     for(int l=1; l<=nLayer; l++) {
@@ -527,7 +546,12 @@ public class Histo {
                             isc>=0 && iscw>=0 &&
                             hvtx.getFunction().getParameter(isc)>10) {
                             this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] = (hvtx.getFunction().getParameter(iscw)-Constants.SCEXIT)*Constants.SCALE;
-                            this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] =  hvtx.getFunction().parameter(iscw).error()*Constants.SCALE;
+                            this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] =  Math.max(hvtx.getFunction().parameter(iscw).error()*Constants.SCALE, Constants.SCALE*dx);
+                        }
+                        if(hvtx.getFunction().getName().equals("f4vertex") && 
+                            hvtx.getFunction().getParameter(0)>10) {
+                            this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-2] = (hvtx.getFunction().getParameter(2)-Constants.TARGETLENGTH)*Constants.SCALE;
+                            this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-2] =  Math.max(hvtx.getFunction().parameter(2).error()*Constants.SCALE, Constants.SCALE*dx);
                         }
                     }
                 }
@@ -588,7 +612,8 @@ public class Histo {
     }
     
     public EmbeddedCanvasTabbed plotHistos() {
-        EmbeddedCanvasTabbed canvas = null;
+        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("TimeResiduals");
+        canvas.getCanvas("TimeResiduals").draw(calib);
         if(tres) {
             for(int is=0; is<nSector; is++) {
                 int    sector = is+1;
@@ -663,6 +688,8 @@ public class Histo {
             default:
                 break;
         }
+        histo.getFunction().setStatBoxFormat("%.2f");
+        histo.getFunction().setStatBoxErrorFormat("%.2f");
     }
     
     
@@ -679,6 +706,8 @@ public class Histo {
         f1.setLineColor(2);
         f1.setLineWidth(2);
         f1.setOptStat("1111");
+        f1.setStatBoxFormat("%.1f");
+        f1.setStatBoxErrorFormat("%.1f");
         f1.setParameter(0, amp);
         f1.setParameter(1, mean);
         f1.setParameter(2, sigma);
@@ -1285,6 +1314,7 @@ public class Histo {
         electron = this.readDataGroup(folder + "/electron/electron", dir, electron);
         binning  = this.readDataGroup(folder + "/electron/binning", dir, binning);
         offset   = this.readDataGroup(folder + "/electron/offset", dir, offset);
+        calib    = this.readDataGroup(folder + "/time/residuals", dir, calib);
         for(int is=0; is<nSector; is++) {
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -1366,9 +1396,12 @@ public class Histo {
                 }
             }
         }
+        dir.cd("/" + root + "/" + folder);
+        dir.mkdir("time");
+        dir.cd("time");
+        this.writeDataGroup("residuals", dir,  calib);
         if(tres) {
             dir.cd("/" + root + "/" + folder);
-            dir.mkdir("time");
             dir.cd("time");
             for(int is=0; is<nSector; is++) {
                 for(int it=0; it<thetaBins.length; it++) {
