@@ -10,9 +10,10 @@ public class Constants {
 
     public static int NSECTOR = 6;
     public static int NLAYER  = 36;
+    public static int NSUPERLAYER  = 6;
     public static int NREGION = 3;
     public static double THTHILT = 25;
-    public static int NTARGET = 2;
+    public static int NTARGET = 3;
     
     // electron cuts
     public static double NPHEMIN = 2;
@@ -71,7 +72,7 @@ public class Constants {
                                               1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 
-                                              1,      1,      1,       1,       1,       1,   1};               
+                                              1,      1,      1,       1,       1,       1,   1,   1};               
     
     // target parameter sets:
     // - target cell exit window position, 

@@ -35,6 +35,7 @@ import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.graphics.EmbeddedPad;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.jnp.utils.options.OptionStore;
+import org.jlab.logging.DefaultLogger;
 
 /**
  * DC alignment code, implementing the procedure developed by T. Hayward
@@ -75,6 +76,7 @@ public class Alignment {
     private static PrintStream errStream = System.err;
     
     private static final Logger LOGGER = Logger.getLogger(Constants.LOGGERNAME);
+    private static Level LEVEL = Level.CONFIG;
     
     public Alignment() {
         this.initInputs();
@@ -90,42 +92,13 @@ public class Alignment {
     }
     
     private void initLogger(Level level) {
-        
-        LOGGER.setUseParentHandlers(false);
-        
-        try{
-            SimpleFormatter formatter = new SimpleFormatter() {
-                private static final String format = " %3$s %n";
-
-                @Override
-                public synchronized String format(LogRecord lr) {
-                    return String.format("%s\n", lr.getMessage());
-                }
-            };  
-            //Creating consoleHandler and fileHandler
-            Handler consoleHandler = new ConsoleHandler();
-            Handler fileHandler    = new FileHandler(Constants.LOGGERNAME + ".log");
-             
-            //Assigning handlers to LOGGER object
-            LOGGER.addHandler(consoleHandler);
-            LOGGER.addHandler(fileHandler);
-             
-            //Setting logger format
-            consoleHandler.setFormatter(formatter);  
-            fileHandler.setFormatter(formatter);  
-
-            //Setting levels to handlers and LOGGER
-            this.setLoggerLevel(level);
-        } 
-        catch(IOException exception){
-            LOGGER.log(Level.SEVERE, "Error occur in configuring Logging file", exception);
-        }
-        LOGGER.config("[CONFIG] Completed logger configuration, level set to " + LOGGER.getLevel().getName());
+        DefaultLogger.debug();
+        this.setLoggerLevel(level);
     }
     
     private void setLoggerLevel(Level level) {
-        LOGGER.setLevel(level);
-        for(Handler handler : LOGGER.getHandlers()) handler.setLevel(level);
+         LEVEL = level;
+         LOGGER.setLevel(level);
     }
     
     public void setFitOptions(boolean sector, int iteration) {
@@ -216,7 +189,7 @@ public class Alignment {
         this.initVertexPar(vertexFit, vertexPar);
         for(String key : histos.keySet()) {
             if(test && !key.equals("nominal")) continue;
-            LOGGER.info("\nAnalyzing histos for variation " + key);
+            LOGGER.log(LEVEL,"\nAnalyzing histos for variation " + key);
             histos.get(key).analyzeHisto(resFit, vertexFit);
             for(int i=0; i<Constants.NPARS; i++)
                 if(key.equals(Constants.PARNAME[i])) Constants.PARACTIVE[i] = true;
@@ -354,7 +327,7 @@ public class Alignment {
         this.getBeamOffset();
         
         EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("nominal");
-        LOGGER.info("\nPlotting nominal geometry residuals");
+        LOGGER.log(LEVEL,"\nPlotting nominal geometry residuals");
         canvas.getCanvas("nominal").draw(this.getResidualGraphs(null));
         canvas.getCanvas().setFont(fontName);
         for(EmbeddedPad pad : canvas.getCanvas("nominal").getCanvasPads())
@@ -366,7 +339,7 @@ public class Alignment {
         for(EmbeddedPad pad : canvas.getCanvas("nominal vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
-        LOGGER.info("\nPlotting corrected geometry residuals");        
+        LOGGER.log(LEVEL,"\nPlotting corrected geometry residuals");        
         canvas.addCanvas("CCDB corrected");
         canvas.getCanvas("CCDB corrected").draw(this.getResidualGraphs(compareAlignment.subtract(initAlignment)));
         canvas.getCanvas().setFont(fontName);
@@ -380,7 +353,7 @@ public class Alignment {
             pad.getAxisX().setRange(-2000, 2000);
         
         // shifts
-        LOGGER.info("\nPlotting shifted geometry residuals");
+        LOGGER.log(LEVEL,"\nPlotting shifted geometry residuals");
         canvas.addCanvas("shift magnitude");
         canvas.getCanvas("shift magnitude").draw(this.getShiftsHisto(1));
         for(String key : histos.keySet()) {
@@ -393,9 +366,9 @@ public class Alignment {
             }
         }
         if(compareAlignment!=null) {
-            LOGGER.info("\nFitting residuals");
-            LOGGER.info("\nInitial alignment parameters (variation: " + this.initVariation + ") in the DC tilted sector frame\n" + this.initAlignment.toString());
-            LOGGER.info("\nInitial alignment parameters (variation: " + this.initVariation + ") in CCDB format\n" + this.initAlignment.toCCDBTable());
+            LOGGER.log(LEVEL,"\nFitting residuals");
+            LOGGER.log(LEVEL,"\nInitial alignment parameters (variation: " + this.initVariation + ") in the DC tilted sector frame\n" + this.initAlignment.toString());
+            LOGGER.log(LEVEL,"\nInitial alignment parameters (variation: " + this.initVariation + ") in CCDB format\n" + this.initAlignment.toCCDBTable());
             Table fittedAlignment = new Table();
             if(this.setActiveParameters()>0) {
                 for(int is=0; is<Constants.NSECTOR; is++) {
@@ -404,9 +377,9 @@ public class Alignment {
                     fittedAlignment.update(sector, par);
                 }
                 Table finalAlignment = fittedAlignment.copy().add(initAlignment);
-                LOGGER.info("\nFitted alignment parameters in the DC tilted sector frame\n" +fittedAlignment.toString());
-                LOGGER.info("\nFinal alignment parameters in CCDB format (sum of this and previous iteration costants)\n" +finalAlignment.toCCDBTable());
-                LOGGER.info("\nCompare to " +this.compareVariation + " variation constants\n" +this.compareAlignment.toCCDBTable());
+                LOGGER.log(LEVEL,"\nFitted alignment parameters in the DC tilted sector frame\n" +fittedAlignment.toString());
+                LOGGER.log(LEVEL,"\nFinal alignment parameters in CCDB format (sum of this and previous iteration costants)\n" +finalAlignment.toCCDBTable());
+                LOGGER.log(LEVEL,"\nCompare to " +this.compareVariation + " variation constants\n" +this.compareAlignment.toCCDBTable());
                 finalAlignment.toFile("dc-alignment.txt");
                 
                 canvas.addCanvas("corrected (with new parameters)");
@@ -495,17 +468,17 @@ public class Alignment {
         Fitter residualFitter = new Fitter(shifts, values, errors);
         // check chi2 of "compare" misalignments
         residualFitter.setPars(compareAlignment.subtract(initAlignment).getParameters(sector));
-        LOGGER.info(String.format("\nSector %d", sector));
-        LOGGER.info("Chi2 and benchmark with constants from variation " + this.compareVariation + ":");
+        LOGGER.log(LEVEL,String.format("\nSector %d", sector));
+        LOGGER.log(LEVEL,"Chi2 and benchmark with constants from variation " + this.compareVariation + ":");
         residualFitter.printChi2AndNDF();
         // reinit
-        LOGGER.info("Current minuit results:");
+        LOGGER.log(LEVEL,"Current minuit results:");
         residualFitter.zeroPars();
         double chi2 = Double.POSITIVE_INFINITY;
         Parameter[] fittedPars = residualFitter.getParCopy();
         String benchmark = "";
         for(int i=0; i<fitIteration; i++) {
-            LOGGER.info("iteration "+i + "\t" + benchmark);
+            LOGGER.log(LEVEL,"iteration "+i + "\t" + benchmark);
 //            residualFitter.randomizePars(fittedPars);
 //            residualFitter.printChi2AndNDF();
             residualFitter.fit(options);
@@ -516,7 +489,7 @@ public class Alignment {
                 benchmark = residualFitter.getBenchmarkString();
             }
         }
-        LOGGER.info("");
+        LOGGER.log(LEVEL,"");
         residualFitter.setPars(fittedPars);
         residualFitter.printChi2AndNDF();
         residualFitter.printPars();
@@ -525,7 +498,7 @@ public class Alignment {
 
     private void getBeamOffset() {
         double[][] offset = this.histos.get("nominal").getBeamOffset();
-        LOGGER.info(String.format("\nBeam offset from scattering-chamber exit window analysis: x=(%.3f \u00B1 %.3f), y=(%.3f \u00B1 %.3f)", 
+        LOGGER.log(LEVEL,String.format("\nBeam offset from scattering-chamber exit window analysis: x=(%.3f \u00B1 %.3f), y=(%.3f \u00B1 %.3f)", 
                                                                                    offset[0][0], offset[0][1], offset[1][0], offset[1][1]));
     }
     
@@ -659,7 +632,7 @@ public class Alignment {
                     gr_fit.setTitle("Sector " + sector);
                     gr_fit.setTitleX("Residual (um)");
                     gr_fit.setTitleY("#theta bin/layer");
-                    if(il==0 || il==Constants.NLAYER+Constants.NTARGET-1) gr_fit.setMarkerColor(1);
+                    if(il==0 || il>=Constants.NLAYER+Constants.NTARGET-2) gr_fit.setMarkerColor(1);
                     else      gr_fit.setMarkerColor(this.markerColor[(il-1)/6]);
                     gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
                     gr_fit.setMarkerSize(this.markerSize);
@@ -799,6 +772,33 @@ public class Alignment {
     
     public Table getGlobalOffsets(Table table) {
             
+        // apply global translation based on region 1 position
+        int refRegion = 1;
+        Table global = table.copy();
+        for(int is=0; is<Constants.NSECTOR; is++) {
+            int sector = is+1;
+            Parameter[] pars = table.getParameters(sector);
+            
+            Point3D refPoint = new Point3D(pars[(refRegion-1)*6+0].value(),
+                                           pars[(refRegion-1)*6+1].value(),
+                                           pars[(refRegion-1)*6+2].value());
+            for(int ir=0; ir<Constants.NREGION; ir++) {
+                pars[ir*6 + 0].setValue(refPoint.x());
+                pars[ir*6 + 1].setValue(refPoint.y());
+                pars[ir*6 + 2].setValue(refPoint.z());
+                for(int ic=0; ic<3; ic++) {
+                    pars[ir*6 + ic].setError(0);
+                    pars[ir*6 + ic+3].setValue(0);
+                    pars[ir*6 + ic+3].setError(0);
+                }
+            }
+            global.update(sector, pars);
+        }       
+        return global;
+    }
+    
+        public Table getGlobalOffsetsOld(Table table) {
+            
         Point3D target = new Point3D(0,0,0);
         Point3D[] idealRegion   = new Point3D[3];
         Vector3D[] toIdealRegion = new Vector3D[3];
@@ -841,7 +841,8 @@ public class Alignment {
         }       
         return global;
     }
-    
+        
+        
     public Parameter[] removeGlobalComponent(Parameter[] pars) {
             
         Point3D target = new Point3D(0,0,0);
@@ -884,7 +885,7 @@ public class Alignment {
     }
 
     public void readHistos(String fileName, String optStats) {
-        LOGGER.info("Opening file: " + fileName);
+        LOGGER.log(LEVEL,"Opening file: " + fileName);
         PrintStream pipeStream = new PrintStream(pipeOut);
         System.setOut(pipeStream);
         System.setErr(pipeStream);
@@ -911,7 +912,7 @@ public class Alignment {
     }
 
     public void saveHistos(String fileName) {
-        LOGGER.info("\nSaving histograms to file " + fileName);
+        LOGGER.log(LEVEL,"\nSaving histograms to file " + fileName);
         PrintStream pipeStream = new PrintStream(pipeOut);
         System.setOut(pipeStream);
         System.setErr(pipeStream);
