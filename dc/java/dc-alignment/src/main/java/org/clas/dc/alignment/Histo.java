@@ -502,8 +502,10 @@ public class Histo {
             for(int isl=0; isl<nSLayer; isl++) {
                 int sl = isl+1;
                 H1F hres = calib.getH1F("hi_SL"+sl+"_S"+s);
-                if(fit==2) Histo.fitResiduals(hres);
-                else       hres.setOptStat("1111");
+                if(fit==2) 
+                    Histo.fitResiduals(hres);
+                else if(hres.getFunction()==null)
+                    hres.setOptStat("1111");
             }
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -536,22 +538,21 @@ public class Histo {
                     if(!shift) {
                         this.parValues[is][it][ip][0] -= Constants.TARGETPOS*Constants.SCALE;
                         this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*dx/2);
+                        int itl  = -1;
                         int isc  = -1;
                         int iscw = -1;
                         for(int i=0; i<hvtx.getFunction().getNPars(); i++) {
+                            if(hvtx.getFunction().parameter(i).name().equals("tl"))  itl = i;
                             if(hvtx.getFunction().parameter(i).name().equals("sc"))  isc = i;
                             if(hvtx.getFunction().parameter(i).name().equals("scw")) iscw = i;
                         }
-                        if(hvtx.getFunction().getName().equals("f4vertex") && 
-                            isc>=0 && iscw>=0 &&
-                            hvtx.getFunction().getParameter(isc)>10) {
+                        if(isc>=0 && iscw>=0 && hvtx.getFunction().getParameter(isc)>10) {
                             this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] = (hvtx.getFunction().getParameter(iscw)-Constants.SCEXIT)*Constants.SCALE;
                             this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] =  Math.max(hvtx.getFunction().parameter(iscw).error()*Constants.SCALE, Constants.SCALE*dx);
                         }
-                        if(hvtx.getFunction().getName().equals("f4vertex") && 
-                            hvtx.getFunction().getParameter(0)>10) {
-                            this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-2] = (hvtx.getFunction().getParameter(2)-Constants.TARGETLENGTH)*Constants.SCALE;
-                            this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-2] =  Math.max(hvtx.getFunction().parameter(2).error()*Constants.SCALE, Constants.SCALE*dx);
+                        if(itl>=0 && hvtx.getFunction().getParameter(0)>10) {
+                            this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-2] = (hvtx.getFunction().getParameter(itl)-Constants.TARGETLENGTH)*Constants.SCALE;
+                            this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-2] =  Math.max(hvtx.getFunction().parameter(itl).error()*Constants.SCALE, Constants.SCALE*dx);
                         }
                     }
                 }
@@ -612,8 +613,8 @@ public class Histo {
     }
     
     public EmbeddedCanvasTabbed plotHistos() {
-        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("TimeResiduals");
-        canvas.getCanvas("TimeResiduals").draw(calib);
+        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("Calibration");
+        canvas.getCanvas("Calibration").draw(calib);
         if(tres) {
             for(int is=0; is<nSector; is++) {
                 int    sector = is+1;
@@ -702,7 +703,7 @@ public class Histo {
         double min = mean - rms;
         double max = mean + rms;
         
-        F1D f1   = new F1D("f1res","[amp]*gaus(x,[mean],[sigma])", min, max);
+        F1D f1   = new F1D("f"+histo.getName(),"[amp]*gaus(x,[mean],[sigma])", min, max);
         f1.setLineColor(2);
         f1.setLineWidth(2);
         f1.setOptStat("1111");
@@ -773,7 +774,7 @@ public class Histo {
         f1_bckgr.setOptStat("1111");
         
         
-        F1D fdouble_peak = new F1D("upStream_window",
+        F1D fdouble_peak = new F1D("f"+histo.getName(),
                                    "[amp]*gaus(x,[mean],[sigma])+" +
                                    "[amp]/[secondGausAmpFactor]*gaus(x,[mean]-[peak_sep],[sigma])+" + 
                                    "[amp]/[thirdGaussAmpFactor]*gaus(x,[mean]+[thirdGausMeanOffset],[sigma]*[thirdGausSigmaFactor])+" +
@@ -849,7 +850,7 @@ public class Histo {
         double max = histo.getDataX(histo.getDataSize(0)-1);
         int nbin = histo.getData().length;
         
-        F1D f1   = new F1D("f1res","[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", min, max);
+        F1D f1   = new F1D("f"+histo.getName(),"[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", min, max);
         f1.setLineColor(2);
         f1.setLineWidth(2);
         f1.setOptStat("1111");
@@ -923,7 +924,7 @@ public class Histo {
                         + "[amp]*gaus(x,[exw],[sigma])+"
                         + "[amp]*gaus(x,[exw]+[wd],[sigma])/1.8+"
                         + "[bg]*gaus(x,[exw]-[tl]/2,[tl]*0.8)";
-        F1D f1_vtx   = new F1D("f3vertex", function, -10, 10);
+        F1D f1_vtx   = new F1D("f"+histo.getName(), function, -10, 10);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
         f1_vtx.setOptStat("11111111");
@@ -977,7 +978,7 @@ public class Histo {
                         + "[bg]*gaus(x,[exw]-[tl]/2,[tl]*0.6)+"
                         + "[sc]*gaus(x,[exw]+[scw]-[tl]/2,[sigma])+"
                         + "[air]*landau(x,[exw]+[scw]-[tl]/2+[sigma]*2,[sigma]*4)";
-        F1D f1_vtx   = new F1D("f4vertex", function, -10, 10);
+        F1D f1_vtx   = new F1D("f"+histo.getName(), function, -10, 10);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
         f1_vtx.setOptStat("11111111111");
@@ -1043,7 +1044,7 @@ public class Histo {
                         + "gaus(x,[exw]+[wd],[sigma])*[sc]*1.4+"
                         + "[sc]*gaus(x,[exw]+[scw]-[tl]/2,[sigma])+"
                         + "[air]*landau(x,[exw]+[scw]-[tl]/2,[sigma]*5)";
-        F1D f1_vtx   = new F1D("f4vertex", function, mean - Constants.TARGETLENGTH*2, mean + Constants.TARGETLENGTH/2 + Constants.SCEXIT);
+        F1D f1_vtx   = new F1D("f"+histo.getName(), function, mean - Constants.TARGETLENGTH*2, mean + Constants.TARGETLENGTH/2 + Constants.SCEXIT);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
         f1_vtx.setOptStat("11111111111");
@@ -1099,7 +1100,7 @@ public class Histo {
                         + "[bg]*gaus(x,[exw]-[tl]/2,[tl]*0.6)+"
                         + "[sc]*gaus(x,[exw]+[scw]-[tl]/2,[sigma])+"
                         + "[air]*landau(x,[exw]+[scw]-[tl]/2+[sigma]*2,[sigma]*4)";
-        F1D f1_vtx   = new F1D("f4vertex", function, -10, 10);
+        F1D f1_vtx   = new F1D("f"+histo.getName(), function, -10, 10);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
         f1_vtx.setOptStat("11111111111");
@@ -1161,7 +1162,7 @@ public class Histo {
         //The if statement checks if there is a peak (at least 2/3 of the plot's max peak) to the left of the max peak
         //If so, it fits the max peak since the downstream peak is desired
         if(binMaxAmp3 >= 0.67 * amp) {
-            F1D f1_vtx   = new F1D("f1vertex","[amp]*gaus(x,[mean],[sigma])", -10, 10);
+            F1D f1_vtx   = new F1D("f"+histo.getName(),"[amp]*gaus(x,[mean],[sigma])", -10, 10);
             f1_vtx.setLineColor(2);
             f1_vtx.setLineWidth(2);
             f1_vtx.setOptStat("1111");
@@ -1175,7 +1176,7 @@ public class Histo {
         //So max peak is the leftmost peak (upstream peak)
         //Since the downstream peak is desired, the peak to the right of the max peak is fit
         else {
-            F1D f2_vtx   = new F1D("f2vertex","[amp2]*gaus(x,[mean2],[sigma2])", -10, 10);
+            F1D f2_vtx   = new F1D("f"+histo.getName(),"[amp2]*gaus(x,[mean2],[sigma2])", -10, 10);
             f2_vtx.setLineColor(2);
             f2_vtx.setLineWidth(2);
             f2_vtx.setOptStat("1111");
@@ -1314,7 +1315,7 @@ public class Histo {
         electron = this.readDataGroup(folder + "/electron/electron", dir, electron);
         binning  = this.readDataGroup(folder + "/electron/binning", dir, binning);
         offset   = this.readDataGroup(folder + "/electron/offset", dir, offset);
-        calib    = this.readDataGroup(folder + "/time/residuals", dir, calib);
+        calib    = this.readDataGroup(folder + "/calibration/residuals", dir, calib);
         for(int is=0; is<nSector; is++) {
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -1351,6 +1352,12 @@ public class Histo {
             for(IDataSet ds : dsList){
                 if(dir.getObject(folder, ds.getName())!=null) {
                     IDataSet dsread = dir.getObject(folder, ds.getName());
+                    if(dsread instanceof H1F) {
+                        H1F h1 = (H1F) dsread;
+                        Func1D f1 = (Func1D) dir.getObject(folder, "f"+h1.getName());
+                        if(f1!=null)
+                            h1.setFunction(f1);
+                    }
                     if(dsread instanceof H1F && ((H1F) dsread).getFunction()!=null) {
                         Func1D dsf = ((H1F) dsread).getFunction();
                         dsf.setLineColor(2);
@@ -1397,11 +1404,12 @@ public class Histo {
             }
         }
         dir.cd("/" + root + "/" + folder);
-        dir.mkdir("time");
-        dir.cd("time");
+        dir.mkdir("calibration");
+        dir.cd("calibration");
         this.writeDataGroup("residuals", dir,  calib);
         if(tres) {
             dir.cd("/" + root + "/" + folder);
+            dir.mkdir("time");
             dir.cd("time");
             for(int is=0; is<nSector; is++) {
                 for(int it=0; it<thetaBins.length; it++) {
@@ -1437,6 +1445,14 @@ public class Histo {
             for(IDataSet ds : dsList){
 //                    System.out.println("\t --> " + ds.getName());
                 dir.addDataSet(ds);
+                if(ds instanceof H1F) {
+                    H1F h1 = (H1F) ds;
+                    if(h1.getFunction()!=null) {
+                        Func1D f1 = h1.getFunction();
+                        f1.setName("f"+h1.getName());
+                        dir.addDataSet(f1);
+                    }
+                }
             }
         }
     }
