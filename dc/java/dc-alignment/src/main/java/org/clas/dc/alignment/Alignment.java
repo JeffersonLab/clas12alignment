@@ -578,8 +578,8 @@ public class Alignment {
                 int icol = 1;
                 if(it>0) icol = this.markerColor[(it-1)%6];
                 icol += 20*(ip%phiBins.length);
-                H1F hi_res = new H1F("hi_res" + "_theta " + it + "_phi" + ip, "Shift", "#Deltaresidual (um)", nbin, 0, inputs.length-1);
-                H1F hi_vtx = new H1F("hi_vtx" + "_theta " + it + "_phi" + ip, "Shift", "#Deltavertex (cm)",   nbin, 0, inputs.length-1);
+                H1F hi_res = new H1F("hi-res" + "_theta " + it + "_phi" + ip, "Shift", "#Deltaresidual (um)", nbin, 0, inputs.length-1);
+                H1F hi_vtx = new H1F("hi-vtx" + "_theta " + it + "_phi" + ip, "Shift", "#Deltavertex (cm)",   nbin, 0, inputs.length-1);
                 hi_res.setLineColor(icol);
                 hi_res.setFillColor(icol);
                 hi_res.setLineWidth(0);
@@ -648,7 +648,7 @@ public class Alignment {
         DataGroup residuals = new DataGroup(3,2);
         for(int is=0; is<Constants.NSECTOR; is++ ) {
             int sector = is+1;
-            H1F hi_res = new H1F("hi_res_S" + sector, "Residual (um)", "Counts", 100, -300, 300);
+            H1F hi_res = new H1F("hi-res_S" + sector, "Residual (um)", "Counts", 100, -300, 300);
             hi_res.setTitle("Sector " + sector);
             hi_res.setLineColor(icol);
             residuals.addDataSet(hi_res, is);
