@@ -497,15 +497,13 @@ public class Histo {
     
  
     public void analyzeHisto(int fit, int vertexFit) {
+        this.fitVertex(vertexFit,electron.getH1F("hi_vtx"));
         for(int is=0; is<nSector; is++) {
             int s = is +1;
             for(int isl=0; isl<nSLayer; isl++) {
                 int sl = isl+1;
                 H1F hres = calib.getH1F("hi_SL"+sl+"_S"+s);
-                if(fit==2) 
-                    Histo.fitResiduals(hres);
-                else if(hres.getFunction()==null)
-                    hres.setOptStat("1111");
+                Histo.fitResiduals(fit, hres);
             }
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -517,15 +515,15 @@ public class Histo {
                             this.parErrors[is][it][ip][l] = 0;
                         }
                         else {
-                            if(fit==2) Histo.fitResiduals(hres);
+                            Histo.fitResiduals(fit, hres);
                             if(hres.getFunction()!=null) {
                                 this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
                                 this.parErrors[is][it][ip][l] = hres.getFunction().parameter(1).error();        
                             }
-                            else {
-                                this.parValues[is][it][ip][l] = hres.getMean(); 
-                                this.parErrors[is][it][ip][l] = hres.getRMS()/Math.sqrt(hres.getIntegral());
-                            }
+//                            else {
+//                                this.parValues[is][it][ip][l] = hres.getMean(); 
+//                                this.parErrors[is][it][ip][l] = hres.getRMS()/Math.sqrt(hres.getIntegral());
+//                            }
                             if(!shift) this.parErrors[is][it][ip][l] = Math.max(this.parErrors[is][it][ip][l],(Constants.RESMAX-Constants.RESMIN)/Constants.RESBINS/2);
                         }
                         System.out.print("\r");
@@ -666,7 +664,7 @@ public class Histo {
     private void fitVertex(int mode, H1F histo) {
         switch (mode) {
             case 1:
-                Histo.fitResiduals(histo);
+                Histo.fitResiduals(2, histo);
                 break;
             case 2:
                 Histo.fit1Vertex(histo);
@@ -694,7 +692,7 @@ public class Histo {
     }
     
     
-    public static boolean fitResiduals(H1F histo) {
+    public static boolean fitResiduals(int fit, H1F histo) {
         double mean  = Histo.getMeanIDataSet(histo, histo.getMean()-histo.getRMS(), 
                                                     histo.getMean()+histo.getRMS());
         double amp   = histo.getBinContent(histo.getMaximumBin());
@@ -707,13 +705,12 @@ public class Histo {
         f1.setLineColor(2);
         f1.setLineWidth(2);
         f1.setOptStat("1111");
-        f1.setStatBoxFormat("%.1f");
-        f1.setStatBoxErrorFormat("%.1f");
         f1.setParameter(0, amp);
         f1.setParameter(1, mean);
         f1.setParameter(2, sigma);
-            
-        if(amp>5) {
+        f1.parameter(1).setError(sigma/Math.sqrt(histo.getIntegral()));
+                
+        if(fit==2 && amp>5) {
             f1.setParLimits(0, amp*0.2,   amp*1.2);
             f1.setParLimits(1, mean*0.5,  mean*1.5);
             f1.setParLimits(2, sigma*0.2, sigma*2);
@@ -727,14 +724,13 @@ public class Histo {
             f1.setRange(mean-2.0*sigma,mean+2.0*sigma);
             DataFitter.fit(f1, histo, "Q");
 //            System.out.print("2nd");
-            return true;
         }
-        else {
-            double integral = Histo.getIntegralIDataSet(histo, f1.getMin(), f1.getMax());
-            f1.parameter(1).setError(sigma/Math.sqrt(integral));
+        else if(fit==1) {
             histo.setFunction(f1);
-            return false;
         }
+        histo.getFunction().setStatBoxFormat("%.1f");
+        histo.getFunction().setStatBoxErrorFormat("%.1f");
+        return histo.getFunction().isFitValid();
     }    
 
     /**
