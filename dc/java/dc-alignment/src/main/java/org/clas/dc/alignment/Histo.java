@@ -2,6 +2,8 @@ package org.clas.dc.alignment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import org.jlab.clas.physics.Particle;
 import org.jlab.geom.prim.Vector3D;
@@ -497,6 +499,7 @@ public class Histo {
     
  
     public void analyzeHisto(int fit, int vertexFit) {
+        Logger.getLogger("org.freehep.math.minuit").setLevel(Level.WARNING);
         this.fitVertex(vertexFit,electron.getH1F("hi-vtx"));
         for(int is=0; is<nSector; is++) {
             int s = is +1;
@@ -570,6 +573,7 @@ public class Histo {
                 offset.addDataSet(grradius,  1);
             }
         }
+        Logger.getLogger("org.freehep.math.minuit").setLevel(Level.INFO);
     }
     
     public double[][] getBeamOffset() {
@@ -689,6 +693,7 @@ public class Histo {
         }
         histo.getFunction().setStatBoxFormat("%.2f");
         histo.getFunction().setStatBoxErrorFormat("%.2f");
+  //      if(!histo.getFunction().isFitValid()) System.out.println("failed fit");
     }
     
     
