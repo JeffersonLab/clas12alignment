@@ -132,7 +132,7 @@ public class Histo {
                     if(tres) this.time[is][it][ip] = new DataGroup(6,6);
                     for(int il=0; il<nLayer; il++) {
                         int layer = il+1;
-                        H1F hi_residual = new H1F("hi_L" + layer,"Layer " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                        H1F hi_residual = new H1F("hi-L" + layer,"Layer " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
                         hi_residual.setTitleX("Residuals (um)");
                         hi_residual.setTitleY("Counts");
                         hi_residual.setOptStat(optStats);
@@ -142,7 +142,7 @@ public class Histo {
             }
             for(int isl=0; isl<nSLayer; isl++) {
                 int superlayer = isl+1;
-                H1F hi_time = new H1F("hi_SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                H1F hi_time = new H1F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes);
                 hi_time.setTitleX("Residuals (um)");
                 hi_time.setTitleY("Counts");
                 hi_time.setOptStat(optStats);
@@ -157,7 +157,7 @@ public class Histo {
                         this.time[is][it][ip] = new DataGroup(6,6);
                         for(int il=0; il<nLayer; il++) {
                             int layer = il+1;
-                            H1F hi_time = new H1F("hi_L" + layer,"Layer " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                            H1F hi_time = new H1F("hi-L" + layer,"Layer " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
                             hi_time.setTitleX("Residuals (um)");
                             hi_time.setTitleY("Counts");
                             hi_time.setOptStat(optStats);
@@ -172,7 +172,7 @@ public class Histo {
                 this.vertex[it][ip] = new DataGroup(3,2);
                 for(int is=0; is<nSector; is++) {
                     int sector = is+1;
-                    H1F hi_vertex = new H1F("hi_S" + sector,"Sector " + sector, nbinsVtx, minVtx, maxVtx);
+                    H1F hi_vertex = new H1F("hi-S" + sector,"Sector " + sector, nbinsVtx, minVtx, maxVtx);
                     hi_vertex.setTitleX("Vertex (cm)");
                     hi_vertex.setTitleY("Counts");
                     hi_vertex.setOptStat(optStats);
@@ -181,17 +181,17 @@ public class Histo {
             }
         }           
         this.electron = new DataGroup(3,2);
-        H1F hi_nphe  = new H1F("hi_nphe",  "HTCC NPhe",   "Counts", 100, 0., 50.);
+        H1F hi_nphe  = new H1F("hi-nphe",  "HTCC NPhe",   "Counts", 100, 0., 50.);
         hi_nphe.setFillColor(4);
-        H1F hi_ecal  = new H1F("hi_ecal",  "ECAL E(GeV)", "Counts", 100, 0., 4.);
+        H1F hi_ecal  = new H1F("hi-ecal",  "ECAL E(GeV)", "Counts", 100, 0., 4.);
         hi_ecal.setFillColor(4);
-        H1F hi_vtx   = new H1F("hi_vtx",   "Vertex(cm)",  "Counts", nbinsVtx, minVtx, maxVtx);
+        H1F hi_vtx   = new H1F("hi-vtx",   "Vertex(cm)",  "Counts", nbinsVtx, minVtx, maxVtx);
         hi_vtx.setFillColor(4);
-        H1F hi_theta = new H1F("hi_theta", "#theta(deg)", "Counts", 100, 0., 40.);
+        H1F hi_theta = new H1F("hi-theta", "#theta(deg)", "Counts", 100, 0., 40.);
         hi_theta.setFillColor(4);
-        H1F hi_phi   = new H1F("hi_phi",   "#phi(deg)",   "Counts", 100, -180, 180);
+        H1F hi_phi   = new H1F("hi-phi",   "#phi(deg)",   "Counts", 100, -180, 180);
         hi_phi.setFillColor(4);
-        H2F hi_thetaphi = new H2F("hi_thetaphi", "", 100, -180, 180, 100, 0, 40.);
+        H2F hi_thetaphi = new H2F("hi-thetaphi", "", 100, -180, 180, 100, 0, 40.);
         hi_thetaphi.setTitleX("#phi(deg)");
         hi_thetaphi.setTitleY( "#theta(deg)");
         this.electron.addDataSet(hi_nphe,     0);
@@ -203,7 +203,7 @@ public class Histo {
         this.binning = new DataGroup(3,2);
         for(int is=0; is<nSector; is++) {
             int sector = is+1;
-            H2F hi_vtxtheta = new H2F("hi_S" + sector, "Sector " + sector, nbinsVtx, minVtx, maxVtx, 100, 0., 35);
+            H2F hi_vtxtheta = new H2F("hi-S" + sector, "Sector " + sector, nbinsVtx, minVtx, maxVtx, 100, 0., 35);
             hi_vtxtheta.setTitleX("Vertex (cm)");
             hi_vtxtheta.setTitleY("#theta (deg)");
             F1D ftheta = new F1D("ftheta_S" + sector,"57.29*atan([r]/([z0]-x))",minVtx, maxVtx);
@@ -222,7 +222,7 @@ public class Histo {
             this.binning.addDataSet(fthetaOff, is);
         }
         this.offset = new DataGroup(1,2);
-        H2F hi_thetasc = new H2F("hi_thetasc", "", 36, -180, 180, 40, 0, 20.);
+        H2F hi_thetasc = new H2F("hi-thetasc", "", 36, -180, 180, 40, 0, 20.);
         hi_thetasc.setTitleX("#phi(deg)");
         hi_thetasc.setTitleY("#theta(deg)");
         this.offset.addDataSet(hi_thetasc, 0);
@@ -327,8 +327,8 @@ public class Histo {
                     }
                 }
                 if(iele>=0) {
-                    electron.getH1F("hi_nphe").fill(nphe);
-                    electron.getH1F("hi_ecal").fill(energy);
+                    electron.getH1F("hi-nphe").fill(nphe);
+                    electron.getH1F("hi-ecal").fill(energy);
                     break;
                 }
             }
@@ -382,15 +382,15 @@ public class Histo {
         Electron electron = this.getElectron(event);
         
         if(electron!=null) {
-            this.electron.getH1F("hi_vtx").fill(electron.vz());
-            this.electron.getH1F("hi_theta").fill(Math.toDegrees(electron.theta()));
-            this.electron.getH1F("hi_phi").fill(Math.toDegrees(electron.phi()));
-            this.electron.getH2F("hi_thetaphi").fill(Math.toDegrees(electron.phi()), Math.toDegrees(electron.theta()));
+            this.electron.getH1F("hi-vtx").fill(electron.vz());
+            this.electron.getH1F("hi-theta").fill(Math.toDegrees(electron.theta()));
+            this.electron.getH1F("hi-phi").fill(Math.toDegrees(electron.phi()));
+            this.electron.getH2F("hi-thetaphi").fill(Math.toDegrees(electron.phi()), Math.toDegrees(electron.theta()));
                         
-            this.binning.getH2F("hi_S" + electron.sector()).fill(electron.vz(), Math.toDegrees(electron.theta()));
+            this.binning.getH2F("hi-S" + electron.sector()).fill(electron.vz(), Math.toDegrees(electron.theta()));
             
             if(Math.abs(electron.vz()-(Constants.SCEXIT+Constants.TARGETCENTER))<Constants.PEAKWIDTH && Math.abs(Math.toDegrees(electron.phiSector()))<10)
-                this.offset.getH2F("hi_thetasc").fill(Math.toDegrees(electron.phi()), Math.toDegrees(electron.theta()));
+                this.offset.getH2F("hi-thetasc").fill(Math.toDegrees(electron.phi()), Math.toDegrees(electron.theta()));
             
             electron.vector().rotateZ(Math.toRadians(-60*(electron.sector()-1)));
             double theta = Math.toDegrees(electron.theta());
@@ -421,12 +421,12 @@ public class Histo {
                     for (int ip = 0; ip < phiBins.length; ip++) {
                         if (phiBins[ip].contains(phi)) {
                             for(Hit hit : hits) {
-                                this.residuals[sector - 1][it][ip].getH1F("hi_L" + hit.layer).fill(hit.residual);
-                                this.calib.getH1F("hi_SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
+                                this.residuals[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.residual);
+                                this.calib.getH1F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
                                 if(tres)
-                                    this.time[sector - 1][it][ip].getH1F("hi_L" + hit.layer).fill(hit.time);
+                                    this.time[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.time);
                             }
-                            this.vertex[it][ip].getH1F("hi_S" + sector).fill(vz);
+                            this.vertex[it][ip].getH1F("hi-S" + sector).fill(vz);
                     
                         }
                     }
@@ -497,18 +497,18 @@ public class Histo {
     
  
     public void analyzeHisto(int fit, int vertexFit) {
-        this.fitVertex(vertexFit,electron.getH1F("hi_vtx"));
+        this.fitVertex(vertexFit,electron.getH1F("hi-vtx"));
         for(int is=0; is<nSector; is++) {
             int s = is +1;
             for(int isl=0; isl<nSLayer; isl++) {
                 int sl = isl+1;
-                H1F hres = calib.getH1F("hi_SL"+sl+"_S"+s);
+                H1F hres = calib.getH1F("hi-SL"+sl+"_S"+s);
                 Histo.fitResiduals(fit, hres);
             }
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
                     for(int l=1; l<=nLayer; l++) {
-                        H1F hres = residuals[is][it][ip].getH1F("hi_L"+l);
+                        H1F hres = residuals[is][it][ip].getH1F("hi-L"+l);
                         System.out.print(String.format("\tsector=%1d theta bin=%1d phi bin=%1d layer=%2d",s,it,ip,l));
                         if(hres.getIntegral()==0) {
                             this.parValues[is][it][ip][l] = 0; 
@@ -528,7 +528,7 @@ public class Histo {
                         }
                         System.out.print("\r");
                     }
-                    H1F hvtx = vertex[it][ip].getH1F("hi_S"+s);
+                    H1F hvtx = vertex[it][ip].getH1F("hi-S"+s);
                     double dx = hvtx.getDataX(1)-hvtx.getDataX(0);
                     this.fitVertex(vertexFit, hvtx);
                     this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*Constants.SCALE;
@@ -556,8 +556,8 @@ public class Histo {
                 }
             }
         }         
-        if(offset.getH2F("hi_thetasc")!=null) {
-            GraphErrors grthetasc = Histo.getThresholdCrossingProfile(offset.getH2F("hi_thetasc"), 0.5);
+        if(offset.getH2F("hi-thetasc")!=null) {
+            GraphErrors grthetasc = Histo.getThresholdCrossingProfile(offset.getH2F("hi-thetasc"), 0.5);
             if(grthetasc.getDataSize(0)>1) {
                 GraphErrors grradius = this.fitOffset(grthetasc, Constants.MOLLERZ-(Constants.SCEXIT+Constants.TARGETCENTER));
                 this.beamOffset[0][0] = grradius.getFunction().getParameter(1)*Math.cos(Math.toRadians(grradius.getFunction().getParameter(2)));
