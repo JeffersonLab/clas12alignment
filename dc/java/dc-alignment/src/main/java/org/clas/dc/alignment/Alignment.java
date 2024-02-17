@@ -71,10 +71,6 @@ public class Alignment {
     private int[]             markerStyle = {2, 3, 1, 4};
     private String            fontName = "Arial";
     
-    ByteArrayOutputStream pipeOut = new ByteArrayOutputStream();
-    private static PrintStream outStream = System.out;
-    private static PrintStream errStream = System.err;
-    
     private static final Logger LOGGER = Logger.getLogger(Constants.LOGGERNAME);
     private static Level LEVEL = Level.CONFIG;
     
@@ -886,16 +882,12 @@ public class Alignment {
 
     public void readHistos(String fileName, String optStats) {
         LOGGER.log(LEVEL,"Opening file: " + fileName);
-        PrintStream pipeStream = new PrintStream(pipeOut);
-        System.setOut(pipeStream);
-        System.setErr(pipeStream);
         TDirectory dir = new TDirectory();
         dir.readFile(fileName);
         String folder = dir.getDirectoryList().get(0);
         String[] bins = folder.split("_");
         this.setAngularBins(bins[1], bins[2]);
         dir.cd("/" + folder);
-        dir.ls();
         for(Object entry : dir.getDir().getDirectoryMap().entrySet()) {
             dir.cd("/" + folder);
             Map.Entry<String,Directory> object = (Map.Entry<String,Directory>) entry;
@@ -903,19 +895,13 @@ public class Alignment {
             boolean shift = !key.equals("nominal") && subtractedShifts;
             Map<String,Directory> dgs = dir.getDirectoryByPath(key).getDirectoryMap();
             boolean time = dgs.containsKey("time");
-            this.addHistoSet(key, new Histo(shift, thetaBins, phiBins, time, vertexRange, optStats));
+            this.addHistoSet(key, new Histo(key, shift, thetaBins, phiBins, time, vertexRange, optStats));
             histos.get(key).readDataGroup(folder+"/"+key, dir);
         }
-        System.setOut(outStream);
-        System.setErr(errStream);
-        this.setAngularBins(bins[1],bins[2]); // just to get the printout
     }
 
     public void saveHistos(String fileName) {
         LOGGER.log(LEVEL,"\nSaving histograms to file " + fileName);
-        PrintStream pipeStream = new PrintStream(pipeOut);
-        System.setOut(pipeStream);
-        System.setErr(pipeStream);
         TDirectory dir = new TDirectory();
         String folder = "angles_" + this.getBinString(thetaBins) + "_" + this.getBinString(phiBins);
         dir.mkdir("/" + folder);
@@ -924,8 +910,6 @@ public class Alignment {
             histos.get(key).writeDataGroup(folder, key, dir);
         }
         dir.writeFile(fileName);
-        System.setOut(outStream);
-        System.setErr(errStream);
     }    
 
     public static void main(String[] args){
@@ -1064,16 +1048,18 @@ public class Alignment {
             align.setFitOptions(sector, iter);
             align.initConstants(11, initVar, compareVar);
             
-            align.addHistoSet(inputs[0], new Histo(Alignment.getFileNames(nominal),align.getThetaBins(),align.getPhiBins(), time, align.getVertexRange(), optStats));
+            align.addHistoSet(inputs[0], new Histo(inputs[0], Alignment.getFileNames(nominal),align.getThetaBins(),align.getPhiBins(), time, align.getVertexRange(), optStats));
             for(int i=1; i<inputs.length; i++) {
                 String input = parser.getOptionParser("-process").getOption("-" + inputs[i]).stringValue();
                 if(!input.isEmpty()) { 
                     if(shifts)
-                        align.addHistoSet(inputs[i], new Histo(Alignment.getFileNames(input), 
+                        align.addHistoSet(inputs[i], new Histo(inputs[i],
+                                                               Alignment.getFileNames(input), 
                                                                Alignment.getFileNames(nominal), 
                                                                align.getThetaBins(),align.getPhiBins(),align.getVertexRange(),optStats));
                     else 
-                        align.addHistoSet(inputs[i], new Histo(Alignment.getFileNames(input), 
+                        align.addHistoSet(inputs[i], new Histo(inputs[i],
+                                                               Alignment.getFileNames(input), 
                                                                align.getThetaBins(),align.getPhiBins(),align.getVertexRange(),optStats));
                 }
             }

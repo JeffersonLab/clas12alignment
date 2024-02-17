@@ -3,7 +3,6 @@ package org.clas.dc.alignment;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import org.jlab.clas.physics.Particle;
 import org.jlab.geom.prim.Vector3D;
@@ -28,6 +27,8 @@ import org.jlab.utils.benchmark.ProgressPrintout;
  * @author devita
  */
 public class Histo {
+    
+    private String name;
     
     private final int nSector = Constants.NSECTOR;
     private final int nLayer  = Constants.NLAYER;
@@ -61,14 +62,16 @@ public class Histo {
     
     private static final Logger LOGGER = Logger.getLogger(Constants.LOGGERNAME);
     
-    public Histo(List<String> files, Bin[] thetabins, Bin[] phibins, double[] vertexrange, String optstats) {
+    public Histo(String name, List<String> files, Bin[] thetabins, Bin[] phibins, double[] vertexrange, String optstats) {
+        this.name      = name;
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
         this.nominalFiles = files;
         this.createHistos(optstats);
     }
     
-    public Histo(List<String> files, Bin[] thetabins, Bin[] phibins, boolean time, double[] vertexrange, String optstats) {
+    public Histo(String name, List<String> files, Bin[] thetabins, Bin[] phibins, boolean time, double[] vertexrange, String optstats) {
+        this.name      = name;
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
         this.minVtx    = vertexrange[0];
@@ -78,7 +81,8 @@ public class Histo {
         this.createHistos(optstats);
     }
     
-    public Histo(List<String> files, List<String> shifted, Bin[] thetabins, Bin[] phibins, double[] vertexrange, String optstats) {
+    public Histo(String name, List<String> files, List<String> shifted, Bin[] thetabins, Bin[] phibins, double[] vertexrange, String optstats) {
+        this.name      = name;
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
         this.nominalFiles = files;
@@ -87,14 +91,16 @@ public class Histo {
         this.createHistos(optstats);
     }
     
-    public Histo(boolean shift, Bin[] thetabins, Bin[] phibins, double[] vertexrange, String optstats) {
+    public Histo(String name, boolean shift, Bin[] thetabins, Bin[] phibins, double[] vertexrange, String optstats) {
+        this.name      = name;
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
         this.shift     = shift;
         this.createHistos(optstats);
     }
     
-    public Histo(boolean shift, Bin[] thetabins, Bin[] phibins, boolean time, double[] vertexrange, String optstats) {
+    public Histo(String name, boolean shift, Bin[] thetabins, Bin[] phibins, boolean time, double[] vertexrange, String optstats) {
+        this.name      = name;
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
         this.shift     = shift;
@@ -103,9 +109,10 @@ public class Histo {
     }
     
     private void createHistos(String optStats) {
-        LOGGER.info("Creating histograms for " + nSector              + " sectors, " 
-                                               + (thetaBins.length-1) + " theta bins, " 
-                                               + (phiBins.length-1)   + " phi bins");
+        LOGGER.info("[Histo] Creating histograms for " + nSector              + " sectors, " 
+                                                       + (thetaBins.length-1) + " theta bins, " 
+                                                       + (phiBins.length-1)   + " phi bins "
+                                                       + "for variation " + name);
         this.residuals = new DataGroup[nSector][thetaBins.length][phiBins.length];
         if(tres) this.time = new DataGroup[nSector][thetaBins.length][phiBins.length];
         this.vertex    = new DataGroup[thetaBins.length][phiBins.length];
@@ -500,7 +507,7 @@ public class Histo {
  
     public void analyzeHisto(int fit, int vertexFit) {
         Logger.getLogger("org.freehep.math.minuit").setLevel(Level.WARNING);
-        this.fitVertex(vertexFit,electron.getH1F("hi-vtx"));
+        Histo.fitVertex(vertexFit,electron.getH1F("hi-vtx"));
         for(int is=0; is<nSector; is++) {
             int s = is +1;
             for(int isl=0; isl<nSLayer; isl++) {
@@ -510,50 +517,44 @@ public class Histo {
             }
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
+                    for(int il=0; il<nLayer+nTarget; il++) {
+                        this.parValues[is][it][ip][il] = 0; 
+                        this.parErrors[is][it][ip][il] = 0;
+                    }
                     for(int l=1; l<=nLayer; l++) {
                         H1F hres = residuals[is][it][ip].getH1F("hi-L"+l);
                         System.out.print(String.format("\tsector=%1d theta bin=%1d phi bin=%1d layer=%2d",s,it,ip,l));
-                        if(hres.getIntegral()==0) {
-                            this.parValues[is][it][ip][l] = 0; 
-                            this.parErrors[is][it][ip][l] = 0;
-                        }
-                        else {
-                            Histo.fitResiduals(fit, hres);
-                            if(hres.getFunction()!=null) {
-                                this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
-                                this.parErrors[is][it][ip][l] = hres.getFunction().parameter(1).error();        
-                            }
-//                            else {
-//                                this.parValues[is][it][ip][l] = hres.getMean(); 
-//                                this.parErrors[is][it][ip][l] = hres.getRMS()/Math.sqrt(hres.getIntegral());
-//                            }
+                        if(Histo.fitResiduals(fit, hres)) {
+                            this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
+                            this.parErrors[is][it][ip][l] = hres.getFunction().parameter(1).error();        
                             if(!shift) this.parErrors[is][it][ip][l] = Math.max(this.parErrors[is][it][ip][l],(Constants.RESMAX-Constants.RESMIN)/Constants.RESBINS/2);
                         }
                         System.out.print("\r");
                     }
                     H1F hvtx = vertex[it][ip].getH1F("hi-S"+s);
                     double dx = hvtx.getDataX(1)-hvtx.getDataX(0);
-                    this.fitVertex(vertexFit, hvtx);
-                    this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*Constants.SCALE;
-                    this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*Constants.SCALE;
-                    if(!shift) {
-                        this.parValues[is][it][ip][0] -= Constants.TARGETPOS*Constants.SCALE;
-                        this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*dx/2);
-                        int itl  = -1;
-                        int isc  = -1;
-                        int iscw = -1;
-                        for(int i=0; i<hvtx.getFunction().getNPars(); i++) {
-                            if(hvtx.getFunction().parameter(i).name().equals("tl"))  itl = i;
-                            if(hvtx.getFunction().parameter(i).name().equals("sc"))  isc = i;
-                            if(hvtx.getFunction().parameter(i).name().equals("scw")) iscw = i;
-                        }
-                        if(isc>=0 && iscw>=0 && hvtx.getFunction().getParameter(isc)>10) {
-                            this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] = (hvtx.getFunction().getParameter(iscw)-Constants.SCEXIT)*Constants.SCALE;
-                            this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-1] =  Math.max(hvtx.getFunction().parameter(iscw).error()*Constants.SCALE, Constants.SCALE*dx);
-                        }
-                        if(itl>=0 && hvtx.getFunction().getParameter(0)>10) {
-                            this.parValues[is][it][ip][Constants.NLAYER+Constants.NTARGET-2] = (hvtx.getFunction().getParameter(itl)-Constants.TARGETLENGTH)*Constants.SCALE;
-                            this.parErrors[is][it][ip][Constants.NLAYER+Constants.NTARGET-2] =  Math.max(hvtx.getFunction().parameter(itl).error()*Constants.SCALE, Constants.SCALE*dx);
+                    if(Histo.fitVertex(vertexFit, hvtx)) {
+                        this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*Constants.SCALE;
+                        this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*Constants.SCALE;
+                        if(!shift) {
+                            this.parValues[is][it][ip][0] -= Constants.TARGETPOS*Constants.SCALE;
+                            this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*dx/2);
+                            int itl  = -1;
+                            int isc  = -1;
+                            int iscw = -1;
+                            for(int i=0; i<hvtx.getFunction().getNPars(); i++) {
+                                if(hvtx.getFunction().parameter(i).name().equals("tl"))  itl = i;
+                                if(hvtx.getFunction().parameter(i).name().equals("sc"))  isc = i;
+                                if(hvtx.getFunction().parameter(i).name().equals("scw")) iscw = i;
+                            }
+                            if(isc>=0 && iscw>=0 && hvtx.getFunction().getParameter(isc)>10) {
+                                this.parValues[is][it][ip][nLayer+nTarget-1] = (hvtx.getFunction().getParameter(iscw)-Constants.SCEXIT)*Constants.SCALE;
+                                this.parErrors[is][it][ip][nLayer+nTarget-1] =  Math.max(hvtx.getFunction().parameter(iscw).error()*Constants.SCALE, Constants.SCALE*dx);
+                            }
+                            if(itl>=0 && hvtx.getFunction().getParameter(0)>10) {
+                                this.parValues[is][it][ip][nLayer+nTarget-2] = (hvtx.getFunction().getParameter(itl)-Constants.TARGETLENGTH)*Constants.SCALE;
+                                this.parErrors[is][it][ip][nLayer+nTarget-2] =  Math.max(hvtx.getFunction().parameter(itl).error()*Constants.SCALE, Constants.SCALE*dx);
+                            }
                         }
                     }
                 }
@@ -573,8 +574,35 @@ public class Histo {
                 offset.addDataSet(grradius,  1);
             }
         }
+        System.out.print("\n");
         Logger.getLogger("org.freehep.math.minuit").setLevel(Level.INFO);
+        this.getFailedFitStats();
     }
+    
+    
+    public void getFailedFitStats() {
+        int nfailed = 0;
+        for(int is=0; is<nSector; is++) {
+            for(int it=1; it<thetaBins.length; it++) {
+                for(int ip=1; ip<phiBins.length; ip++) {
+                    for(int l=1; l<=nLayer; l++) {
+                        if(residuals[is][it][ip].getH1F("hi-L"+l).getFunction()!=null &&
+                          !residuals[is][it][ip].getH1F("hi-L"+l).getFunction().isFitValid()) {
+                            nfailed++;
+                            LOGGER.log(Level.WARNING, String.format("\tResidual fit for sector=%1d theta bin=%1d phi bin=%1d layer=%2d FAILED",is+1,it,ip,l));
+                        }
+                    }
+                    if(vertex[it][ip].getH1F("hi-S"+(is+1)).getFunction()!=null &&
+                      !vertex[it][ip].getH1F("hi-S"+(is+1)).getFunction().isFitValid()) {
+                        nfailed++;
+                        LOGGER.log(Level.WARNING, String.format("\tVertex fit for sector=%1d theta bin=%1d phi bin=%1d FAILED",is+1,it,ip));
+                    }
+                }
+            }
+        }
+        LOGGER.log(Level.WARNING, String.format("\tTotal number of failed fits %d out of %d",nfailed, nSector*(thetaBins.length-1)*(phiBins.length-1)*(nLayer+1)));        
+    }
+    
     
     public double[][] getBeamOffset() {
         return this.beamOffset;
@@ -621,8 +649,7 @@ public class Histo {
             for(int is=0; is<nSector; is++) {
                 int    sector = is+1;
                 String title  = "TSec" + sector;
-                if(canvas==null) canvas = new EmbeddedCanvasTabbed(title);
-                else             canvas.addCanvas(title);
+                canvas.addCanvas(title);
                 canvas.getCanvas(title).draw(this.time[is][0][0]);
                 for(int it=0; it<thetaBins.length; it++) {
                     for(int ip=0; ip<phiBins.length; ip++) {
@@ -639,8 +666,7 @@ public class Histo {
         for(int is=0; is<nSector; is++) {
             int    sector = is+1;
             String title  = "Sec" + sector;
-            if(canvas==null) canvas = new EmbeddedCanvasTabbed(title);
-            else             canvas.addCanvas(title);
+            canvas.addCanvas(title);
             canvas.getCanvas(title).draw(this.residuals[is][0][0]);
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -655,7 +681,6 @@ public class Histo {
         }
         for(int it=0; it<thetaBins.length; it++) {
             for(int ip=0; ip<phiBins.length; ip++) {
-//                if((it==0 && ip!=0) || (it!=0 && ip==0)) continue;
                 String title = "Theta:" + thetaBins[it].getRange() + " Phi:" + phiBins[ip].getRange();
                 canvas.addCanvas(title);
                 canvas.getCanvas(title).draw(vertex[it][ip]);
@@ -665,7 +690,7 @@ public class Histo {
     }
     
     
-    private void fitVertex(int mode, H1F histo) {
+    private static boolean fitVertex(int mode, H1F histo) {
         switch (mode) {
             case 1:
                 Histo.fitResiduals(2, histo);
@@ -689,11 +714,13 @@ public class Histo {
                 Histo.fitRGDVertex(histo);
                 break;
             default:
+                if(histo.getFunction()!=null)
+                    histo.getFunction().setFitValid(true);
                 break;
         }
         histo.getFunction().setStatBoxFormat("%.2f");
         histo.getFunction().setStatBoxErrorFormat("%.2f");
-  //      if(!histo.getFunction().isFitValid()) System.out.println("failed fit");
+        return histo.getFunction().isFitValid();
     }
     
     
@@ -715,11 +742,17 @@ public class Histo {
         f1.setParameter(2, sigma);
         f1.parameter(1).setError(sigma/Math.sqrt(histo.getIntegral()));
                 
-        if(fit==2 && amp>5) {
+        if(amp<5) {
+            return false;
+        }
+        else if(fit==1) {
+            f1.setFitValid(true);
+            histo.setFunction(f1);
+        }
+        else if(fit==2) {
             f1.setParLimits(0, amp*0.2,   amp*1.2);
             f1.setParLimits(1, mean*0.5,  mean*1.5);
             f1.setParLimits(2, sigma*0.2, sigma*2);
-//            System.out.print("1st...");
             DataFitter.fit(f1, histo, "Q");
             mean  = f1.getParameter(1);
             sigma = f1.getParameter(2);
@@ -728,10 +761,9 @@ public class Histo {
             f1.setParLimits(2, 0, sigma*2);
             f1.setRange(mean-2.0*sigma,mean+2.0*sigma);
             DataFitter.fit(f1, histo, "Q");
-//            System.out.print("2nd");
         }
-        else if(fit==1) {
-            histo.setFunction(f1);
+        else if(histo.getFunction()!=null) {
+            histo.getFunction().setFitValid(true);
         }
         histo.getFunction().setStatBoxFormat("%.1f");
         histo.getFunction().setStatBoxErrorFormat("%.1f");
@@ -1089,12 +1121,14 @@ public class Histo {
             ibin1 = ibin0;
             ibin0 = ibin2;
         }
-        int ibinsc = Histo.getMaximumBinBetween(histo, (Constants.SCEXIT+Constants.TARGETCENTER)*0.9, (Constants.SCEXIT+Constants.TARGETCENTER)*1.1);
+        int ibinsc = Histo.getMaximumBinBetween(histo, (Constants.SCEXIT+Constants.TARGETCENTER)*0.8, (Constants.SCEXIT+Constants.TARGETCENTER)*1.2);
         
         double mean  = histo.getDataX(ibin0);
         double amp   = histo.getBinContent(ibin0);
         double sc    = histo.getBinContent(ibinsc);
-        double sigma = 0.3;
+        double scw   = Constants.SCEXIT;
+        if(sc>10) scw = histo.getDataX(ibinsc)-mean+Constants.TARGETLENGTH/2;
+        double sigma = 0.5;
         double bg = histo.getBinContent((ibin1+ibin0)/2);
         String function = "[ampU]*gaus(x,[exw]-[tl],[sigma])+"
                         + "[ampD]*gaus(x,[exw],[sigma])+"
@@ -1113,8 +1147,8 @@ public class Histo {
         f1_vtx.setParameter(4, amp);        
         f1_vtx.setParameter(5, bg);
         f1_vtx.setParameter(6, sc);
-        f1_vtx.setParameter(7, Constants.SCEXIT);
-        f1_vtx.setParLimits(7, (Constants.SCEXIT)*0.9, (Constants.SCEXIT)*1.1);
+        f1_vtx.setParameter(7, scw);
+        f1_vtx.setParLimits(7, (Constants.SCEXIT)*0.7, (Constants.SCEXIT)*1.3);
         f1_vtx.setRange(mean-Constants.TARGETLENGTH*1.5,Constants.SCEXIT+Constants.TARGETLENGTH*0.6);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
 //        if(f1_vtx.getParameter(6)<f1_vtx.getParameter(0)/4) f1_vtx.setParameter(6, 0);
