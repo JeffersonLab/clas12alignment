@@ -2,15 +2,12 @@ package org.clas.dc.alignment;
 
 
 import eu.mihosoft.vrl.v3d.Vector3d;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -89,12 +86,37 @@ public class Alignment {
     
     private void initLogger(Level level) {
         DefaultLogger.debug();
-        this.setLoggerLevel(level);
+        LEVEL = level;
+        try{
+            SimpleFormatter formatter = new SimpleFormatter() {
+                private static final String format = " %3$s %n";
+
+                @Override
+                public synchronized String format(LogRecord lr) {
+                    return String.format("%s\n", lr.getMessage());
+                }
+            };  
+            //Creating fileHandler
+            Handler fileHandler    = new FileHandler(Constants.LOGGERNAME + ".log");
+             
+            //Assigning handlers to LOGGER object
+            LOGGER.addHandler(fileHandler);
+             
+            //Setting logger format
+            fileHandler.setFormatter(formatter);  
+
+            //Setting levels to handlers and LOGGER
+            LOGGER.setLevel(level);
+        } 
+        catch(IOException exception){
+            LOGGER.log(Level.SEVERE, "Error occur in configuring Logging file", exception);
+        }
+        LOGGER.config("[CONFIG] Completed logger configuration, level set to " + LOGGER.getLevel().getName());
     }
     
     private void setLoggerLevel(Level level) {
-         LEVEL = level;
-         LOGGER.setLevel(level);
+        LOGGER.setLevel(level);
+        for(Handler handler : LOGGER.getHandlers()) handler.setLevel(level);
     }
     
     public void setFitOptions(boolean sector, int iteration) {
