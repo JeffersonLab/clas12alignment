@@ -447,9 +447,10 @@ public class Histo {
                             for(Hit hit : hits) {
                                 this.residuals[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.residual);
                                 this.calib.getH1F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
-                            if(tres)
+                                if(tres) {
                                     this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.time, hit.wire);
                                     this.time[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.time);
+                                }
                             }
                             this.vertex[it][ip].getH1F("hi-S" + sector).fill(vz);
                     
