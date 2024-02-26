@@ -171,8 +171,9 @@ public class Table {
     }
 
     public final void update(IndexedTable table) {
-        for(int ir=0; ir<Constants.NREGION; ir++) {
-            for(int is=0; is<Constants.NSECTOR; is++) {
+        for(int is=0; is<Constants.NSECTOR; is++) {
+            Vector3D global = new Vector3D(0,0,0);
+            for(int ir=0; ir<Constants.NREGION; ir++) {
                 for(String n : names) {
                     if(table.hasEntry(ir+1, is+1, 0)) {
                         this.alignment.setDoubleValue(table.getDoubleValue(n, ir+1, is+1, 0), n, ir+1, is+1, 0);
@@ -182,10 +183,11 @@ public class Table {
                                                this.alignment.getDoubleValue("dy", ir+1, is+1, 0),
                                                this.alignment.getDoubleValue("dz", ir+1, is+1, 0));
                 offset.rotateZ(Math.toRadians(-60*is));
-                offset.rotateY(Math.toRadians(-25));
-                this.alignment.setDoubleValue(offset.x(), "dx", ir+1, is+1, 0);
-                this.alignment.setDoubleValue(offset.y(), "dy", ir+1, is+1, 0);
-                this.alignment.setDoubleValue(offset.z(), "dz", ir+1, is+1, 0);            
+                offset.rotateY(Math.toRadians(-Constants.THTHILT));
+                this.alignment.setDoubleValue(offset.x()-global.x(), "dx", ir+1, is+1, 0);
+                this.alignment.setDoubleValue(offset.y()-global.y(), "dy", ir+1, is+1, 0);
+                this.alignment.setDoubleValue(offset.z()-global.z(), "dz", ir+1, is+1, 0);            
+                if(ir==0) global.copy(offset);
             }
         }
 
@@ -249,7 +251,7 @@ public class Table {
                 Vector3D offset = new Vector3D(this.alignment.getDoubleValue("dx", ir+1, is+1, 0),
                                                this.alignment.getDoubleValue("dy", ir+1, is+1, 0),
                                                this.alignment.getDoubleValue("dz", ir+1, is+1, 0));
-                offset.rotateY(Math.toRadians(25));
+                offset.rotateY(Math.toRadians(Constants.THTHILT));
                 offset.rotateZ(Math.toRadians(60*is));
                 transformed.alignment.setDoubleValue(offset.x(), "dx", ir+1, is+1, 0);
                 transformed.alignment.setDoubleValue(offset.y(), "dy", ir+1, is+1, 0);
@@ -265,16 +267,21 @@ public class Table {
     public String toCCDBTable() {
         Table transformed = this.toCLAS12Frame();
         String s = "";
-        for(int ir=0; ir<Constants.NREGION; ir++) {
-            for(int is=0; is<Constants.NSECTOR; is++) {
+        for(int is=0; is<Constants.NSECTOR; is++) {
+            Vector3D global = new Vector3D(0,0,0);
+            for(int ir=0; ir<Constants.NREGION; ir++) {
                 s += String.format("%4d %4d %4d   %10.4f %10.4f %10.4f   %10.4f %10.4f %10.4f\n",
                         (ir+1), (is+1), 0,
-                        transformed.alignment.getDoubleValue("dx", ir+1, is+1, 0),
-                        transformed.alignment.getDoubleValue("dy", ir+1, is+1, 0),
-                        transformed.alignment.getDoubleValue("dz", ir+1, is+1, 0),
+                        transformed.alignment.getDoubleValue("dx", ir+1, is+1, 0)+global.x(),
+                        transformed.alignment.getDoubleValue("dy", ir+1, is+1, 0)+global.y(),
+                        transformed.alignment.getDoubleValue("dz", ir+1, is+1, 0)+global.z(),
                         transformed.alignment.getDoubleValue("dtheta_x", ir+1, is+1, 0),
                         transformed.alignment.getDoubleValue("dtheta_y", ir+1, is+1, 0),
                         transformed.alignment.getDoubleValue("dtheta_z", ir+1, is+1, 0));
+                if(ir==0) 
+                    global.setXYZ(transformed.alignment.getDoubleValue("dx", ir+1, is+1, 0),
+                                  transformed.alignment.getDoubleValue("dy", ir+1, is+1, 0),
+                                  transformed.alignment.getDoubleValue("dz", ir+1, is+1, 0));
             }
         }
         return s;
