@@ -282,9 +282,11 @@ public class Histo {
     private class Electron extends Particle {
         private int id;
         private int sector;
+        private Vector3D traj;
         
-        public Electron(int pid, double px, double py, double pz, double vx, double vy, double vz, int trackId, int sector) {
+        public Electron(int pid, double px, double py, double pz, double vx, double vy, double vz, double tx, double ty, double tz, int trackId, int sector) {
             super(pid, px, py, pz, vx, vy, vz);
+            this.traj = new Vector3D(tx, ty, tz);
             this.id = trackId;
             this.sector = sector;
         }
@@ -301,6 +303,10 @@ public class Histo {
             Vector3D dir = new Vector3D(this.px(), this.py(), this.pz());
             dir.rotateZ(-Math.PI/3*(sector-1));
             return dir.phi();
+        }
+        
+        public double thetaDC() {
+            return this.traj.theta();
         }
     }
     
@@ -366,10 +372,9 @@ public class Histo {
         if(iele<0) return null;
 
         Bank trackBank = new Bank(schema.getSchema("TimeBasedTrkg::TBTracks"));
-					
-        if(trackBank!=null) event.read(trackBank);
+	event.read(trackBank);
         
-        if(trackBank!=null && trackBank.getRows()>0) {
+        if(trackBank.getRows()>0) {
 //            Line3D track = new Line3D(new  Point3D(trackBank.getFloat("t1_x", iele),
 //                                                   trackBank.getFloat("t1_y", iele),
 //                                                   trackBank.getFloat("t1_z", iele)),
@@ -394,6 +399,9 @@ public class Histo {
                                          trackBank.getFloat("Vtx0_x", iele),
                                          trackBank.getFloat("Vtx0_y", iele),
                                          trackBank.getFloat("Vtx0_z", iele),
+                                         trackBank.getFloat("t1_x", iele),
+                                         trackBank.getFloat("t1_y", iele),
+                                         trackBank.getFloat("t1_z", iele),
                                          trackBank.getInt("id", iele),
                                          trackBank.getByte("sector", iele));
             return elec;
@@ -417,7 +425,7 @@ public class Histo {
                 this.offset.getH2F("hi-thetasc").fill(Math.toDegrees(electron.phi()), Math.toDegrees(electron.theta()));
             
             electron.vector().rotateZ(Math.toRadians(-60*(electron.sector()-1)));
-            double theta = Math.toDegrees(electron.theta());
+            double theta = Math.toDegrees(electron.thetaDC());
             double phi   = Math.toDegrees(electron.phi());
             double vz    = electron.vz();
             int sector   = electron.sector();
