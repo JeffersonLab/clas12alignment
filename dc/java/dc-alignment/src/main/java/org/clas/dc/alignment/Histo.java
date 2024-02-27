@@ -162,7 +162,7 @@ public class Histo {
                 hi_time.setTitleY("Counts");
                 hi_time.setOptStat(optStats);
                 this.calib.addDataSet(hi_time, is+isl*nSector);
-                H2F hi_alpha = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes, 100, -35, 35);
+                H2F hi_alpha = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes, 100, 0, 36);
                 hi_alpha.setTitleX("Residuals (um)");
                 hi_alpha.setTitleY("Wire");
                 this.alpha.addDataSet(hi_alpha, is+isl*nSector);   
@@ -273,8 +273,13 @@ public class Histo {
             this.superlayer = (layer-1)/6 +1;
             this.residual = residual;
             this.time = time;
-            this.alpha = alpha;
             this.status = status;
+            
+            this.alpha = Math.abs(alpha);
+            if(this.alpha>60)
+                this.alpha = this.alpha%60;
+            if(this.alpha>30)
+                this.alpha = 60-this.alpha;
         }       
         
         public boolean equals(Hit h) {
