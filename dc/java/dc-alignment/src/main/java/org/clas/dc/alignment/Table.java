@@ -19,16 +19,19 @@ public class Table {
     private final String[] names = {"dx", "ex", "dy", "ey", "dz", "ez", "dtheta_x", "etheta_x", "dtheta_y", "etheta_y", "dtheta_z", "etheta_z"}; 
     private IndexedTable alignment;
     
-    public Table() {
-        this.init();
+    private boolean tilted = true;
+    private boolean global = false;
+    
+    public Table(boolean tilted, boolean global) {
+        this.init(tilted, global);
     }
 
-    public Table(IndexedTable table) {
-        this.init();
+    public Table(IndexedTable table, boolean tilted, boolean global) {
+        this.init(tilted, global);
         this.update(table);
     }
 
-    public final void init() {
+    private void init(boolean tilted, boolean global) {
         String[] nameTypes = new String[names.length];
         for(int i=0; i<names.length; i++) 
             nameTypes[i] = names[i]+"/F";
@@ -44,6 +47,8 @@ public class Table {
                 }
             }
         }
+        this.tilted = tilted;
+        this.global = global;
     }
         
     public double getShiftSize(String key, int sector) {
@@ -125,7 +130,7 @@ public class Table {
     }
     
     public Table copy() {
-        Table t = new Table();
+        Table t = new Table(this.tilted, this.global);
         for(int ir=0; ir<Constants.NREGION; ir++) {
             for(int is=0; is<Constants.NSECTOR; is++) {
                 for(String n : names) {
@@ -183,11 +188,11 @@ public class Table {
                                                this.alignment.getDoubleValue("dy", ir+1, is+1, 0),
                                                this.alignment.getDoubleValue("dz", ir+1, is+1, 0));
                 offset.rotateZ(Math.toRadians(-60*is));
-                offset.rotateY(Math.toRadians(-Constants.THTHILT));
+                if(this.tilted) offset.rotateY(Math.toRadians(-Constants.THTHILT));
                 this.alignment.setDoubleValue(offset.x()-global.x(), "dx", ir+1, is+1, 0);
                 this.alignment.setDoubleValue(offset.y()-global.y(), "dy", ir+1, is+1, 0);
                 this.alignment.setDoubleValue(offset.z()-global.z(), "dz", ir+1, is+1, 0);            
-                if(ir==0) global.copy(offset);
+                if(ir==0 && this.global) global.copy(offset);
             }
         }
 
@@ -251,7 +256,7 @@ public class Table {
                 Vector3D offset = new Vector3D(this.alignment.getDoubleValue("dx", ir+1, is+1, 0),
                                                this.alignment.getDoubleValue("dy", ir+1, is+1, 0),
                                                this.alignment.getDoubleValue("dz", ir+1, is+1, 0));
-                offset.rotateY(Math.toRadians(Constants.THTHILT));
+                if(this.tilted) offset.rotateY(Math.toRadians(Constants.THTHILT));
                 offset.rotateZ(Math.toRadians(60*is));
                 transformed.alignment.setDoubleValue(offset.x(), "dx", ir+1, is+1, 0);
                 transformed.alignment.setDoubleValue(offset.y(), "dy", ir+1, is+1, 0);
@@ -278,7 +283,7 @@ public class Table {
                         transformed.alignment.getDoubleValue("dtheta_x", ir+1, is+1, 0),
                         transformed.alignment.getDoubleValue("dtheta_y", ir+1, is+1, 0),
                         transformed.alignment.getDoubleValue("dtheta_z", ir+1, is+1, 0));
-                if(ir==0) 
+                if(ir==0 && this.global) 
                     global.setXYZ(transformed.alignment.getDoubleValue("dx", ir+1, is+1, 0),
                                   transformed.alignment.getDoubleValue("dy", ir+1, is+1, 0),
                                   transformed.alignment.getDoubleValue("dz", ir+1, is+1, 0));

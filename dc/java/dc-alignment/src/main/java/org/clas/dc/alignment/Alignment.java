@@ -57,13 +57,14 @@ public class Alignment {
     private String            initVariation     = null;
     private Table             compareAlignment  = null;
     private Table             previousAlignment = null;
-    private Table             initAlignment     = new Table();
+    private Table             initAlignment     = null;
     private DCGeant4Factory   dcDetector        = null;
         
-    private boolean           subtractedShifts = true;
+    private boolean           subtractedShifts  = true;
     private boolean           sectorShifts      = false;
-    private boolean           initFitPar       = false;
-    private int               fitIteration     = 1;
+    private int               fitIteration      = 1;
+    private boolean           tscFrame          = true;
+    private boolean           globalTranslation = false;
     
     private int               markerSize = 4;
     private int[]             markerColor = {2,3,4,5,7,9};
@@ -126,11 +127,15 @@ public class Alignment {
         for(Handler handler : LOGGER.getHandlers()) handler.setLevel(level);
     }
     
-    public void setFitOptions(boolean sector, int iteration) {
-        this.sectorShifts = sector;
-        this.fitIteration = iteration;
-        this.printConfig(sectorShifts, "sectorShifts", "");
-        this.printConfig(fitIteration, "fitIteration", "");
+    public void setFitOptions(boolean sector, int iteration, boolean tsc, boolean global) {
+        this.sectorShifts      = sector;
+        this.fitIteration      = iteration;
+        this.tscFrame          = tsc;
+        this.globalTranslation = global;
+        this.printConfig(sectorShifts,      "sectorShifts", "");
+        this.printConfig(fitIteration,      "fitIteration", "");
+        this.printConfig(tscFrame,          "tscFrame", "");
+        this.printConfig(globalTranslation, "globalTranslation", "");
     }
     
     private void setShiftsMode(boolean shifts) {
@@ -193,7 +198,7 @@ public class Alignment {
         if(!variation.isEmpty()) {
             manager.reset();
             manager.setVariation(variation);
-            alignment = new Table(manager.getConstants(run, table));
+            alignment = new Table(manager.getConstants(run, table), tscFrame, globalTranslation);
         }
         return alignment;
     }
@@ -394,7 +399,7 @@ public class Alignment {
             LOGGER.log(LEVEL,"\nFitting residuals");
             LOGGER.log(LEVEL,"\nInitial alignment parameters (variation: " + this.previousVariation + ") in the DC tilted sector frame\n" + this.previousAlignment.toString());
             LOGGER.log(LEVEL,"\nInitial alignment parameters (variation: " + this.previousVariation + ") in CCDB format\n" + this.previousAlignment.toCCDBTable());
-            Table fittedAlignment = new Table();
+            Table fittedAlignment = new Table(tscFrame, globalTranslation);
             if(this.setActiveParameters()>0) {
                 for(int is=0; is<Constants.NSECTOR; is++) {
                     int sector = is+1;
@@ -986,6 +991,8 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-previous" , "nominal",      "database variation with previous iteration constants");
         parser.getOptionParser("-process").addOption("-init"     , "",             "init global fit from previous constants from the selected variation");
         parser.getOptionParser("-process").addOption("-iter"     , "1",            "number of global fit iterations");
+        parser.getOptionParser("-process").addOption("-frame"    , "0",            "translations defined in the CLAS12 tilted sector frame (0) or sector frame (1)");
+        parser.getOptionParser("-process").addOption("-global"   , "0",            "r1 translations defined as relative (0) or global (1) translations");
         parser.getOptionParser("-process").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
         parser.getOptionParser("-process").addOption("-test"     , "0",            "analyze nominal geometry only for fit testing (1/0 = on/off)");
 
@@ -1015,6 +1022,8 @@ public class Alignment {
         parser.getOptionParser("-analyze").addOption("-previous" , "nominal",      "database variation with previous iteration constants");
         parser.getOptionParser("-analyze").addOption("-init"     , "",             "init global fit from previous constants from the selected variation");
         parser.getOptionParser("-analyze").addOption("-iter"     , "1",            "number of global fit iterations");
+        parser.getOptionParser("-analyze").addOption("-frame"    , "0",            "translations defined in the CLAS12 tilted sector frame (0) or sector frame (1)");
+        parser.getOptionParser("-analyze").addOption("-global"   , "0",            "r1 translations defined as relative (0) or global (1) translations");
         parser.getOptionParser("-analyze").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
         parser.getOptionParser("-analyze").addOption("-test"     , "0",            "analyze nominal geometry only for fit testing (1/0 = on/off)");
         
@@ -1043,6 +1052,8 @@ public class Alignment {
         parser.getOptionParser("-fit").addOption("-previous" , "nominal",      "database variation with previous iteration constants");
         parser.getOptionParser("-fit").addOption("-init"     , "",             "init global fit from previous constants from the selected variation");
         parser.getOptionParser("-fit").addOption("-iter"     , "1",            "number of global fit iterations");
+        parser.getOptionParser("-fit").addOption("-frame"    , "0",            "translations defined in the CLAS12 tilted sector frame (0) or sector frame (1)");
+        parser.getOptionParser("-fit").addOption("-global"   , "0",            "r1 translations defined as relative (0) or global (1) translations");
         parser.getOptionParser("-fit").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
         
         parser.parse(args);
@@ -1072,16 +1083,18 @@ public class Alignment {
             String   initVar      = parser.getOptionParser("-process").getOption("-init").stringValue();
             String   previousVar  = parser.getOptionParser("-process").getOption("-previous").stringValue();
             int      iter         = parser.getOptionParser("-process").getOption("-iter").intValue();
+            boolean  tscFrame     = parser.getOptionParser("-process").getOption("-frame").intValue()==0;
+            boolean  r1Global     = parser.getOptionParser("-process").getOption("-global").intValue()!=0;
             boolean  verbose      = parser.getOptionParser("-process").getOption("-verbose").intValue()!=0;
             boolean  testFit      = parser.getOptionParser("-process").getOption("-test").intValue()!=0;
-            openWindow           = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
+            openWindow            = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
             if(verbose)     align.setLoggerLevel(Level.FINE);
             
             align.setShiftsMode(shifts);
             align.setAngularBins(thetaBins, phiBins);
             align.setVertexRange(vertexRange);
-            align.setFitOptions(sector, iter);
+            align.setFitOptions(sector, iter, tscFrame, r1Global);
             align.initConstants(11, initVar, previousVar, compareVar);
             
             align.addHistoSet(inputs[0], new Histo(inputs[0], Alignment.getFileNames(nominal),align.getThetaBins(),align.getPhiBins(), time, align.getVertexRange(), optStats));
@@ -1115,6 +1128,8 @@ public class Alignment {
             String  initVar     = parser.getOptionParser("-analyze").getOption("-init").stringValue();
             String  previousVar = parser.getOptionParser("-analyze").getOption("-previous").stringValue();
             int     iter        = parser.getOptionParser("-analyze").getOption("-iter").intValue();
+            boolean  tscFrame   = parser.getOptionParser("-analyze").getOption("-frame").intValue()==0;
+            boolean  r1Global   = parser.getOptionParser("-analyze").getOption("-global").intValue()!=0;
             boolean verbose     = parser.getOptionParser("-analyze").getOption("-verbose").intValue()!=0;
             boolean testFit     = parser.getOptionParser("-analyze").getOption("-test").intValue()!=0;
             openWindow          = parser.getOptionParser("-analyze").getOption("-display").intValue()!=0;
@@ -1124,7 +1139,7 @@ public class Alignment {
             String histoName   = parser.getOptionParser("-analyze").getOption("-input").stringValue();
 
             align.setShiftsMode(shifts);
-            align.setFitOptions(sector, iter);
+            align.setFitOptions(sector, iter, tscFrame, r1Global);
             align.initConstants(11, initVar, previousVar, compareVar);
             align.readHistos(histoName, optStats);
             align.analyzeHistos(residuals, vertexFit, vertexPar, testFit);
@@ -1140,6 +1155,8 @@ public class Alignment {
             String  initVar     = parser.getOptionParser("-fit").getOption("-init").stringValue();
             String  previousVar = parser.getOptionParser("-fit").getOption("-previous").stringValue();
             int     iter        = parser.getOptionParser("-fit").getOption("-iter").intValue();
+            boolean tscFrame    = parser.getOptionParser("-fit").getOption("-frame").intValue()==0;
+            boolean r1Global    = parser.getOptionParser("-fit").getOption("-global").intValue()!=0;
             boolean verbose     = parser.getOptionParser("-fit").getOption("-verbose").intValue()!=0;
             openWindow          = parser.getOptionParser("-fit").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
@@ -1148,7 +1165,7 @@ public class Alignment {
             String histoName   = parser.getOptionParser("-fit").getOption("-input").stringValue();
 
             align.setShiftsMode(shifts);
-            align.setFitOptions(sector, iter);
+            align.setFitOptions(sector, iter, tscFrame, r1Global);
             align.initConstants(11, initVar, previousVar, compareVar);
             align.readHistos(histoName, optStats);
             align.analyzeHistos(0, -vertexFit, vertexPar, false);
