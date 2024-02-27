@@ -203,20 +203,7 @@ public class Fitter  implements FCNBase {
 
             MnUserParameters upar = new MnUserParameters();
             
-            if(options.contains("G")) {
                 for(int loop = 0; loop < pars.length; loop++){
-                    UserParameter par = this.pars[loop%6];
-	            upar.add(par.name(),par.value(),par.getStep());
-	            if(par.getStep()<EPS || (loop%6)>=3){
-	                upar.fix(par.name());
-	            }
-	            if(par.min()>-1e9&&par.max()<1e9){
-	                upar.setLimits(par.name(), par.min(), par.max());
-	            }
-	        }
-            }
-            else {
-	        for(int loop = 0; loop < pars.length; loop++){
                     UserParameter par = this.pars[loop];
 	            upar.add(par.name(),par.value(),par.getStep());
 	            if(par.getStep()<EPS){
@@ -226,7 +213,7 @@ public class Fitter  implements FCNBase {
 	                upar.setLimits(par.name(), par.min(), par.max());
 	            }
 	        }
-            }
+            
 	        
 	        MnScan  scanner = new MnScan(this,upar);
                 for(int i = 0; i < pars.length; i++){
