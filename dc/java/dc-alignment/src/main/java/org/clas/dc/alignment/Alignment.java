@@ -816,9 +816,16 @@ public class Alignment {
                                            pars[(refRegion-1)*6+1].value(),
                                            pars[(refRegion-1)*6+2].value());
             for(int ir=0; ir<Constants.NREGION; ir++) {
-                pars[ir*6 + 0].setValue(refPoint.x());
-                pars[ir*6 + 1].setValue(refPoint.y());
-                pars[ir*6 + 2].setValue(refPoint.z());
+                if(!this.globalTranslation || ir==0) {
+                    pars[ir*6 + 0].setValue(refPoint.x());
+                    pars[ir*6 + 1].setValue(refPoint.y());
+                    pars[ir*6 + 2].setValue(refPoint.z());
+                }
+                else {
+                    pars[ir*6 + 0].setValue(0);
+                    pars[ir*6 + 1].setValue(0);
+                    pars[ir*6 + 2].setValue(0);                    
+                }
                 for(int ic=0; ic<3; ic++) {
                     pars[ir*6 + ic].setError(0);
                     pars[ir*6 + ic+3].setValue(0);
