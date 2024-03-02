@@ -4,12 +4,15 @@ import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 import org.jlab.clas.pdg.PhysicsConstants;
 import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.PhysicsEvent;
 import org.jlab.groot.base.GStyle;
+import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
@@ -33,6 +36,9 @@ import org.jlab.jnp.utils.options.OptionStore;
 public class Kinematics {
     
     private double ebeam = 10.6;
+    private double targetPos = -3.5;
+    private double targetLength = 5;
+    private double scWindow = 27+targetPos;
     private String fontName = "Arial";
     private File lundfile = null;
 
@@ -60,7 +66,7 @@ public class Kinematics {
     
     public double getMaxW() {
         double maxW = ebeam*0.4+0.6;
-        if(ebeam>6) maxW = 4.5;
+        if(ebeam>6.5) maxW = 4.5;
         return maxW;
     }
     
@@ -82,10 +88,10 @@ public class Kinematics {
         
     public void createHistos() {
         // General
-        H2F hi_q2w = new H2F("hi_q2w","hi_q2w",100, 0.6, this.getMaxW(), 100, 0.5, this.getMaxQ2()); 
+        H2F hi_q2w = new H2F("hi_q2w","hi_q2w",100, 0.6, this.getMaxW(), 100, 0.0, this.getMaxQ2()); 
         hi_q2w.setTitleX("W (GeV)");
         hi_q2w.setTitleY("Q2 (GeV2)");
-        H1F hi_w = new H1F("hi_w","hi_w",250, 0.6, this.getMaxW()); 
+        H1F hi_w = new H1F("hi_w","hi_w",500, 0.6, this.getMaxW()); 
         hi_w.setTitleX("W (GeV)");
         hi_w.setTitleY("Counts");
         H2F hi_w_phi = new H2F("hi_w_phi","hi_w_phi",100, -180.0, 180.0, 250, 0.6, this.getMaxW()); 
@@ -112,10 +118,47 @@ public class Kinematics {
         dg_general.addDataSet(hi_w_phi, 4);
         dg_general.addDataSet(hi_z_phi, 5);
         histos.put("General", dg_general);
+        // Elastic
+        H1F hi_ela = new H1F("hi_w","hi_w",500, 0.6, 1.3); 
+        hi_ela.setTitleX("W (GeV)");
+        hi_ela.setTitleY("Counts");
+        H2F hi_ela_phi = new H2F("hi_w_phi","hi_w_phi",100, -180.0, 180.0, 250, 0.6, 1.3); 
+        hi_ela_phi.setTitleX("#phi (deg)");
+        hi_ela_phi.setTitleY("W (GeV)");
+        H2F hi_ela_theta = new H2F("hi_w_theta","hi_w_theta",100, 5.0, 15.0, 250, 0.6, 1.3); 
+        hi_ela_theta.setTitleX("#theta (deg)");
+        hi_ela_theta.setTitleY("W (GeV)");
+        H2F hi_ela_p = new H2F("hi_w_p","hi_w_p",100, ebeam*0.8, ebeam, 100, 0.6, 1.3);
+        hi_ela_p.setTitleX("p (GeV)");
+        hi_ela_p.setTitleY("W (GeV)");
+        hi_ela_p.setTitle("Electron");
+        DataGroup dg_elastic = new DataGroup(2,2);
+        dg_elastic.addDataSet(hi_ela, 0);
+        dg_elastic.addDataSet(hi_ela_p,    1);
+        dg_elastic.addDataSet(hi_ela_theta,        2);  
+        dg_elastic.addDataSet(hi_ela_phi,     3);
+        histos.put("Elastic", dg_elastic);
+        // vertex
+        String[] names= ["pi+", "pi-", "el"]; 
+        DataGroup dg_vertex = new DataGroup(3, 4);
+        for(int i=0; i<names.length; i++) {
+            dg_vertex.addDataSet(new H1F("h1_vz_"+names[i],"vz (cm)","Counts",100,-20,30),0+i);
+            dg_vertex.addDataSet(new H2F("h2_theta_"+names[i],names[i],100,-20,30, 100, 5, 45),3+i);
+            dg_vertex.addDataSet(new H2F("h2_phi_"+names[i],names[i], 100,-20,30, 100, -180, 180),6+i);
+            dg_vertex.addDataSet(new H2F("h2_p_"+names[i],names[i], 100,-20,30, 100, 0.5, 8),9+i);
+            dg_vertex.getH1F("h1_vz_"+names[i]).setTitle(names[i]);
+            dg_vertex.getH2F("h2_theta_"+names[i]).setTitleX("vz (cm)");
+            dg_vertex.getH2F("h2_theta_"+names[i]).setTitleY("#theta (deg)");
+            dg_vertex.getH2F("h2_phi_"+names[i]).setTitleX("vz (cm)");
+            dg_vertex.getH2F("h2_phi_"+names[i]).setTitleY("#phi (deg)");
+            dg_vertex.getH2F("h2_p_"+names[i]).setTitleX("vz (cm)");
+            dg_vertex.getH2F("h2_p_"+names[i]).setTitleY("p (GeV)");
+        }
+        histos.put("Vertex", dg_vertex);
         // W
         DataGroup dg_w = new DataGroup(2,3);
         for(int sector=1; sector <= 6; sector++) {
-            H1F hi_w_sec = new H1F("hi_w_" + sector, "hi_w_" + sector, 250, 0.6, this.getMaxW());  
+            H1F hi_w_sec = new H1F("hi_w_" + sector, "hi_w_" + sector, 500, 0.6, this.getMaxW());  
             hi_w_sec.setTitleX("W (GeV)");
             hi_w_sec.setTitleY("Counts");
             hi_w_sec.setTitle("Sector " + sector);
@@ -127,16 +170,16 @@ public class Kinematics {
             f1_w_sec.setLineColor(2);
             f1_w_sec.setOptStat("1111");
             dg_w.addDataSet(hi_w_sec, sector-1);
-            dg_w.addDataSet(f1_w_sec    , sector-1);
+//            dg_w.addDataSet(f1_w_sec, sector-1);
         }  
         histos.put("W", dg_w);
         // 2 pi
         DataGroup dg_2pi = new DataGroup(3,2);
         String[] a2pimx = ["M_X(ep#rarrow e'^#pi+^#pi-X) (GeV)","M_^X2(ep#rarrow e'p^#pi+X) (Ge^V2)","M_^X2(ep#rarrow e'p^#pi-X) (Ge^V2)"];
         for(int i=1; i<=3; i++) {
-            double rmin = 0;
-            double rmax = 3;
-            if(i>1) rmin = -1;
+            double rmin = 0.5;
+            double rmax = 2;
+            if(i>1) rmin = -0.5;
             H1F hi_mmass = new H1F("mxt" + i, "", 200, rmin, rmax);     
             hi_mmass.setTitleX(a2pimx[i-1]);
             hi_mmass.setTitleY("Counts");
@@ -153,14 +196,14 @@ public class Kinematics {
         DataGroup dg_1pi = new DataGroup(2,2);
         String[] atitle = ["M_X(ep#rarrow e'^#pi+X) (GeV)","M_^X2(ep#rarrow e'pX) (Ge^V2)"];
         for(int i=1; i<=2; i++) {
-            double rmin = 0;
-            double rmax = 3;
-            if(i>1) rmin = -1;
+            double rmin = 0.5;
+            double rmax = 2;
+            if(i>1) rmin = -0.5;
             H2F hi_mw = new H2F("W" + i, "", 100, -180, 180, 100, rmin, rmax);     
             hi_mw.setTitleX("W (GeV)");
             hi_mw.setTitleY(atitle[i-1]);
         //    hi_w.setLineColor(col);
-            H1F hi_mmass = new H1F("mxt" + i, "", 200, rmin, rmax);      
+            H1F hi_mmass = new H1F("mxt" + i, "", 400, rmin, rmax);      
             hi_mmass.setTitleX(atitle[i-1]);
             hi_mmass.setTitleY("Counts");
         //    hi_mmass.setLineColor(col);
@@ -274,7 +317,7 @@ public class Kinematics {
                         if(track.getShort("pindex", j)==loop) recEl.setProperty("sector", (double) track.getByte("sector", j));
                     }
                 }
-                else if(bank.getInt("charge", loop)!=0 && status==2 && Math.abs(bank.getFloat("vz", loop)+3)<10 && Math.abs(bank.getFloat("chi2pid",loop))<5) {
+                else if(bank.getInt("charge", loop)!=0 && status==2 && Math.abs(bank.getFloat("vz", loop)+3)<30 && Math.abs(bank.getFloat("chi2pid",loop))<5) {
                     Particle part = new Particle(
                                         bank.getInt("pid", loop),
                                         bank.getFloat("px", loop),
@@ -315,7 +358,15 @@ public class Kinematics {
                     histos.get("General").getH2F("hi_w_phi").fill(Math.toDegrees(recEl.phi()), hadronSystem.mass());
                     histos.get("General").getH2F("hi_w_theta").fill(Math.toDegrees(recEl.theta()), hadronSystem.mass());
                     histos.get("General").getH2F("hi_el").fill(recEl.p(),Math.toDegrees(recEl.theta()));
+                    histos.get("Elastic").getH1F("hi_w").fill(hadronSystem.mass());
+                    histos.get("Elastic").getH2F("hi_w_phi").fill(Math.toDegrees(recEl.phi()), hadronSystem.mass());
+                    histos.get("Elastic").getH2F("hi_w_theta").fill(Math.toDegrees(recEl.theta()), hadronSystem.mass());
+                    histos.get("Elastic").getH2F("hi_w_p").fill(recEl.p(),hadronSystem.mass());
                     histos.get("W").getH1F("hi_w_" + secEl).fill(hadronSystem.mass());
+                    histos.get("Vertex").getH1F("h1_vz_el").fill(recEl.vz());
+                    histos.get("Vertex").getH2F("h2_theta_el").fill(recEl.vz(), Math.toDegrees(recEl.theta()));
+                    histos.get("Vertex").getH2F("h2_phi_el").fill(recEl.vz()), Math.toDegrees(recEl.phi());
+                    histos.get("Vertex").getH2F("h2_p_el").fill(recEl.vz(), recEl.p());
                 }
                 if(hadronSystem.mass()<1.1) {
                     if(recPr != null) {
@@ -341,6 +392,18 @@ public class Kinematics {
                         }
                     }
                 }
+                if(recPip!=null) {
+                    histos.get("Vertex").getH1F("h1_vz_pi+").fill(recPip.vz());
+                    histos.get("Vertex").getH2F("h2_theta_pi+").fill(recPip.vz(), Math.toDegrees(recPip.theta()));
+                    histos.get("Vertex").getH2F("h2_phi_pi+").fill(recPip.vz(), Math.toDegrees(recPip.phi()));
+                    histos.get("Vertex").getH2F("h2_p_pi+").fill(recPip.vz(), recPip.p());
+                }
+                if(recPim!=null) {
+                    histos.get("Vertex").getH1F("h1_vz_pi-").fill(recPim.vz());
+                    histos.get("Vertex").getH2F("h2_theta_pi-").fill(recPim.vz(), Math.toDegrees(recPim.theta()));
+                    histos.get("Vertex").getH2F("h2_phi_pi-").fill(recPim.vz(), Math.toDegrees(recPim.phi()));
+                    histos.get("Vertex").getH2F("h2_p_pi-").fill(recPim.vz(), recPim.p());
+                }                
             }
             if(recEl!=null && recPip!=null && recPim!=null) {
                 recPro = new Particle();
@@ -412,11 +475,17 @@ public class Kinematics {
     }
 
     public void analyzeHistos() {
-        fitW(histos.get("General").getH1F("hi_w"));
-        fitW(histos.get("2pi").getH1F("mxt1"));
-        fitW(histos.get("1pi").getH1F("mxt1"));
+        Logger.getLogger("org.freehep.math.minuit").setLevel(Level.WARNING);
+
+        fitW(histos.get("General").getH1F("hi_w"), 0.8, 1.1);
+        fitW(histos.get("Elastic").getH1F("hi_w")), 0.8, 1.1;
+        fitW(histos.get("2pi").getH1F("mxt1"), 0.8, 1.1);
+        fitW(histos.get("2pi").getH1F("mxt2"), -0.1, 0.2);
+        fitW(histos.get("2pi").getH1F("mxt3"), -0.1, 0.2);
+        fitW(histos.get("1pi").getH1F("mxt1"), 0.8, 1.1);
+        fitW(histos.get("1pi").getH1F("mxt2"), -0.1, 0.2);
         for(int sector=1; sector <= 6; sector++) {
-            fitW(histos.get("W").getH1F("hi_w_" + sector));
+            fitW(histos.get("W").getH1F("hi_w_" + sector), 0.8, 1.1);
             fitGauss(histos.get("Phi").getH1F("hi_dphi_" + sector));
             fitGauss(histos.get("Beam").getH1F("hi_beam_" + sector));
         }
@@ -451,6 +520,29 @@ public class Kinematics {
                 }
             }
         }
+        for(EmbeddedPad pad : canvas.getCanvas("Vertex").getCanvasPads()) {
+            IDataSet ds = pad.getDatasetPlotters().get(0).getDataSet();
+            if(ds instanceof H2F) {
+               pad.getAxisZ().setLog(true);
+               DataLine lineU = new DataLine(targetPos-targetLength/2,((H2F) ds).getYAxis().min(),targetPos-targetLength/2,((H2F) ds).getYAxis().max());
+               DataLine lineD = new DataLine(targetPos+targetLength/2,((H2F) ds).getYAxis().min(),targetPos+targetLength/2,((H2F) ds).getYAxis().max());
+               DataLine lineX = new DataLine(scWindow,((H2F) ds).getYAxis().min(),scWindow,((H2F) ds).getYAxis().max());
+               pad.draw(lineU);
+               pad.draw(lineD);
+               pad.draw(lineX);
+            }
+            else if(ds instanceof H1F) {
+               DataLine lineU = new DataLine(targetPos-targetLength/2,0,targetPos-targetLength/2,((H1F) ds).getMax());
+               DataLine lineD = new DataLine(targetPos+targetLength/2,0,targetPos+targetLength/2,((H1F) ds).getMax());
+               DataLine lineX = new DataLine(scWindow,0,scWindow,((H1F) ds).getMax());
+               lineU.setLineColor(2);
+               lineD.setLineColor(2);
+               lineX.setLineColor(2);
+               pad.draw(lineU);
+               pad.draw(lineD);
+               pad.draw(lineX);
+            }
+        }    
         return canvas;
     }
         
@@ -498,12 +590,12 @@ public class Kinematics {
         }
     }
     
-    private void fitW(H1F hiw) {
+    private void fitW(H1F hiw, double min, double max) {
 
-	F1D f1w = new F1D("f1_w", "[amp]*gaus(x,[mean],[sigma])", 0.8, 1.1);
+	F1D f1w = new F1D("f1_w", "[amp]*gaus(x,[mean],[sigma])", min, max);
         // get histogram maximum in the rane 0.7-1.1
-        int i1=hiw.getXaxis().getBin(0.7);
-        int i2=hiw.getXaxis().getBin(1.1);
+        int i1=hiw.getXaxis().getBin(min);
+        int i2=hiw.getXaxis().getBin(max);
         double hiMax=0;
         int    imax=i1;
         for(int i=i1; i<=i2; i++) {
@@ -533,13 +625,17 @@ public class Kinematics {
         amp = f1w.getParameter(0);
         mean = f1w.getParameter(1);
         sigma = f1w.getParameter(2);
-        rmax = mean + 4.0 * Math.abs(sigma);
-        rmin = mean - 4.0 * Math.abs(sigma);
+        rmax = mean + 5.0 * Math.abs(sigma);
+        rmin = mean - 6.0 * Math.abs(sigma);
         hiw.setFunction(null);
-        f1w = new F1D("f1_w", "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x", rmin, rmax);
+//        f1w = new F1D("f1_w", "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", rmin, rmax);
+        f1w = new F1D("f1_w", "[amp]*gaus(x,[mean],[sigma])+[amp1]*gaus(x,[mean1],[sigma1])", rmin, rmax);
         f1w.setParameter(0, amp);
         f1w.setParameter(1, mean);
         f1w.setParameter(2, sigma);
+        f1w.setParameter(3, amp*0.3);
+        f1w.setParameter(4, mean+0.1);
+        f1w.setParameter(5, sigma*10);
         f1w.setLineColor(2);
         f1w.setLineWidth(2);
         f1w.setOptStat("1111");
