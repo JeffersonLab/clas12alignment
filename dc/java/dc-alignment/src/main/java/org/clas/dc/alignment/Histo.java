@@ -476,11 +476,9 @@ public class Histo {
                                     this.calib.getH1F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
                                     this.alpha.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time, hit.alpha);
                                     this.doca.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time, hit.doca);
-                                    if(tres) {
-                                        this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.time, hit.wire);
-                                        this.time[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.time);
-                                    }
+                                    if(tres) this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.time, hit.wire);
                                 }
+                                if(tres) this.time[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.time);
                             }
                             this.vertex[it][ip].getH1F("hi-S" + sector).fill(vz);
                     
