@@ -625,8 +625,8 @@ public class Kinematics {
         amp = f1w.getParameter(0);
         mean = f1w.getParameter(1);
         sigma = f1w.getParameter(2);
-        rmax = mean + 5.0 * Math.abs(sigma);
-        rmin = mean - 6.0 * Math.abs(sigma);
+        rmax = mean + 6.0 * Math.abs(sigma);
+        rmin = mean - 7.0 * Math.abs(sigma);
         hiw.setFunction(null);
 //        f1w = new F1D("f1_w", "[amp]*gaus(x,[mean],[sigma])+[p0]+[p1]*x+[p2]*x*x", rmin, rmax);
         f1w = new F1D("f1_w", "[amp]*gaus(x,[mean],[sigma])+[amp1]*gaus(x,[mean1],[sigma1])", rmin, rmax);
