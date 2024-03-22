@@ -15,8 +15,12 @@ public class Constants {
     public static double THTHILT = 25;
     public static int NTARGET = 3;
     public static double[] WPDIST = new double[NSUPERLAYER];
+    
+    // hit cuts
     public static double[] DOCAMIN = new double[NSUPERLAYER];
     public static double[] DOCAMAX = new double[NSUPERLAYER];
+    public static double ALPHACUT = 5;
+    public static int CLUSMIN = 5;
     
     // electron cuts
     public static double NPHEMIN = 2;

@@ -166,7 +166,7 @@ public class Histo {
                 hi_time.setTitleY("Counts");
                 hi_time.setOptStat(optStats);
                 this.calib.addDataSet(hi_time, is+isl*nSector);
-                H2F hi_alpha = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, 100, -30, 30, 100, -30, 30);
+                H2F hi_alpha = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, 100, -25, 10, 100, -25, 10);
                 hi_alpha.setTitleX("#theta-25 (deg)");
                 hi_alpha.setTitleY("#alpha (deg)");
                 this.alpha.addDataSet(hi_alpha, is+isl*nSector);   
@@ -450,13 +450,13 @@ public class Histo {
             double vz    = electron.vz();
             int sector   = electron.sector();
             
-            List<Hit> hits = this.getHits(event, sector, electron.id());
+            List<Hit> hits = this.getHits(event, electron);
 
             if(shifted!=null) {
                 Electron shiftedElectron = this.getElectron(shifted);
                 if(shiftedElectron!=null) {
                     vz -= shiftedElectron.vz();
-                    List<Hit> shiftedHits = this.getHits(shifted, sector, shiftedElectron.id());
+                    List<Hit> shiftedHits = this.getHits(shifted, shiftedElectron);
                     for(Hit hit : hits) {
                         for(Hit shift : shiftedHits) {
                             if(hit.equals(shift)) {
@@ -492,7 +492,7 @@ public class Histo {
         }
     }
  
-    private List<Hit> getHits(Event event, int sec, int tid) {
+    private List<Hit> getHits(Event event, Electron e) {
         Map<Integer, List<Hit>> allhits = new HashMap<>();
         List<Hit> hits = new ArrayList<>();
         
@@ -501,7 +501,7 @@ public class Histo {
         
         if(hitBank!=null && hitBank.getRows()>0) {
             for (int i = 0; i < hitBank.getRows(); i++) {
-                if ((/*tid<0 ||*/ hitBank.getInt("trkID", i) == tid)) {
+                if ((/*tid<0 ||*/ hitBank.getInt("trkID", i) == e.id())) {
                     double residual = 10000 * hitBank.getFloat("fitResidual", i);
                     double time     = 10000 * hitBank.getFloat("timeResidual", i);
                     double alpha    = hitBank.getFloat("Alpha", i);
@@ -518,12 +518,13 @@ public class Histo {
                 }
             }
             for(int sl : allhits.keySet()) {
-                if(allhits.get(sl).size()>4) {
+                if(allhits.get(sl).size()>=Constants.CLUSMIN) {
                     for(Hit h : allhits.get(sl)) {
                         if( h.status==0 && 
                             h.doca>Constants.DOCAMIN[sl-1] &&
                             h.doca<Constants.DOCAMAX[sl-1] &&
-                            h.sector == sec) {
+                            Math.abs(Math.toDegrees(e.theta())-Constants.THTHILT-h.alpha)<Constants.ALPHACUT &&
+                            h.sector == e.sector()) {
                             hits.add(h);
                         }
                     }
@@ -823,11 +824,11 @@ public class Histo {
         if(amp<5) {
             return false;
         }
-        else if(fit==1) {
+        else if(fit==0) {
             f1.setFitValid(true);
             histo.setFunction(f1);
         }
-        else if(fit==2) {
+        else if(fit>0) {
             f1.setParLimits(0, amp*0.2,   amp*1.2);
             f1.setParLimits(1, mean*0.5,  mean*1.5);
             f1.setParLimits(2, sigma*0.2, sigma*2);
@@ -839,6 +840,25 @@ public class Histo {
             f1.setParLimits(2, 0, sigma*2);
             f1.setRange(mean-2.0*sigma,mean+2.0*sigma);
             DataFitter.fit(f1, histo, "Q");
+            if(fit==2) {
+                amp   = f1.getParameter(0);
+                mean  = f1.getParameter(1);
+                sigma = f1.getParameter(2);
+                f1   = new F1D("f"+histo.getName(),"[amp]*gaus(x,[mean],[sigma])+[amp1]*gaus(x,[mean1],[sigma1])", mean-5*sigma, mean+5*sigma);
+                f1.setLineColor(2);
+                f1.setLineWidth(2);
+                f1.setOptStat("1111111");
+                f1.setParameter(0, amp);
+                f1.setParameter(1, mean);
+                f1.setParameter(2, sigma);
+                f1.setParameter(3, 0);
+                f1.setParameter(4, mean);
+                f1.setParameter(5, sigma*5);
+                f1.setParLimits(0, amp*0.8, amp*1.2);
+                f1.setParLimits(1, mean-sigma, mean+sigma);
+                f1.setParLimits(2, sigma*0.8, sigma*1.2);        
+                DataFitter.fit(f1, histo, "Q");
+            }
         }
         else if(histo.getFunction()!=null) {
             histo.getFunction().setFitValid(true);
