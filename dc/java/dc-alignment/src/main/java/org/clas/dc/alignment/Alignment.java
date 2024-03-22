@@ -81,6 +81,11 @@ public class Alignment {
     private void initConstants(int run, String initVariation, String previousVariation, String compareVariation) {
         ConstantProvider provider  = GeometryFactory.getConstants(DetectorType.DC, 11, "default");
         dcDetector = new DCGeant4Factory(provider, DCGeant4Factory.MINISTAGGERON, false);
+        for(int isl=0; isl<Constants.NSUPERLAYER; isl++) {
+            Constants.WPDIST[isl] = dcDetector.getWireMidpoint(isl, 0,0).distance(dcDetector.getWireMidpoint(isl, 0, 1))/2; 
+            Constants.DOCAMIN[isl] = 0.1;
+            Constants.DOCAMAX[isl] = Constants.WPDIST[isl]*Math.sqrt(3)/2*(1.0-0.02*isl);
+        }
         this.compareVariation  = compareVariation;
         this.previousVariation = previousVariation;
         if(initVariation.isBlank())
@@ -977,7 +982,7 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-phi"      , "-30:0:30",     "phi bin limits, e.g. \"-30:-10:0:10:30\"");
         parser.getOptionParser("-process").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
-        parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
+        parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals with double gaussian (2), single gaussian (1), or use mean (0)");
         parser.getOptionParser("-process").addOption("-vertfit"  , "5",            "fit vertex plots with:\n" +
                                                                                    "\t\t- RG-D layout (7), new cryotarget, \n" +
                                                                                    "\t\t- RG-C layout (6),\n" +
