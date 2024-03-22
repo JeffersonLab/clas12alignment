@@ -579,7 +579,7 @@ public class Histo {
             for(int isl=0; isl<nSLayer; isl++) {
                 int sl = isl+1;
                 H1F hres = calib.getH1F("hi-SL"+sl+"_S"+s);
-                Histo.fitResiduals(fit, hres);
+                Histo.fitResiduals(1, hres);
             }
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -854,9 +854,9 @@ public class Histo {
                 f1.setParameter(3, 0);
                 f1.setParameter(4, mean);
                 f1.setParameter(5, sigma*5);
-                f1.setParLimits(0, amp*0.8, amp*1.2);
+                f1.setParLimits(0, 0, 2*amp);
                 f1.setParLimits(1, mean-sigma, mean+sigma);
-                f1.setParLimits(2, sigma*0.8, sigma*1.2);        
+                f1.setParLimits(2, 0, sigma*2);
                 DataFitter.fit(f1, histo, "Q");
             }
         }

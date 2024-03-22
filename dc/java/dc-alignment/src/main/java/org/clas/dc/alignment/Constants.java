@@ -20,7 +20,7 @@ public class Constants {
     public static double[] DOCAMIN = new double[NSUPERLAYER];
     public static double[] DOCAMAX = new double[NSUPERLAYER];
     public static double ALPHACUT = 5;
-    public static int CLUSMIN = 5;
+    public static int CLUSMIN = 4;
     
     // electron cuts
     public static double NPHEMIN = 2;
