@@ -982,7 +982,7 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-phi"      , "-30:0:30",     "phi bin limits, e.g. \"-30:-10:0:10:30\"");
         parser.getOptionParser("-process").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
-        parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals (2) or use mean (1)");
+        parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals with double gaussian (2), single gaussian (1), or use mean (0)");
         parser.getOptionParser("-process").addOption("-vertfit"  , "5",            "fit vertex plots with:\n" +
                                                                                    "\t\t- RG-D layout (7), new cryotarget, \n" +
                                                                                    "\t\t- RG-C layout (6),\n" +
