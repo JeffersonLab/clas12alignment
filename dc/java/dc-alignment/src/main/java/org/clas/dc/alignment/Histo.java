@@ -168,7 +168,7 @@ public class Histo {
                 hi_alpha.setTitleX("Residuals (um)");
                 hi_alpha.setTitleY("#alpha");
                 this.alpha.addDataSet(hi_alpha, is+isl*nSector);   
-                H2F hi_doca = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes, 100, 0, 1.7);
+                H2F hi_doca = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes, 100, 0, Constants.WPDIST[isl]);
                 hi_doca.setTitleX("Residuals (um)");
                 hi_doca.setTitleY("Doca (um)");
                 this.doca.addDataSet(hi_doca, is+isl*nSector);   
@@ -498,9 +498,7 @@ public class Histo {
         
         if(hitBank!=null && hitBank.getRows()>0) {
             for (int i = 0; i < hitBank.getRows(); i++) {
-                if ((/*tid<0 ||*/ hitBank.getInt("trkID", i) == tid) && 
-                     hitBank.getInt("status", i) == 0 &&
-                     hitBank.getInt("sector", i) == sector) {
+                if ((/*tid<0 ||*/ hitBank.getInt("trkID", i) == tid)) {
                     double residual = 10000 * hitBank.getFloat("fitResidual", i);
                     double time     = 10000 * hitBank.getFloat("timeResidual", i);
                     double alpha    = hitBank.getFloat("Alpha", i);
@@ -509,8 +507,13 @@ public class Histo {
                     int layer       = hitBank.getInt("layer", i) + 6 * (superlayer - 1);
                     int wire        = hitBank.getInt("wire", i);
                     int status      = hitBank.getInt("status", i);
-                    Hit hit = new Hit(sector, layer, wire, residual, time, doca, alpha, status);
-                    hits.add(hit);
+                    if( status==0 && 
+                        doca>Constants.DOCAMIN[superlayer-1] &&
+                        doca<Constants.DOCAMAX[superlayer-1] &&
+                        hitBank.getInt("sector", i) == sector) {
+                        Hit hit = new Hit(sector, layer, wire, residual, time, doca, alpha, status);
+                        hits.add(hit);
+                    }
                 }
             }
         }

@@ -14,6 +14,9 @@ public class Constants {
     public static int NREGION = 3;
     public static double THTHILT = 25;
     public static int NTARGET = 3;
+    public static double[] WPDIST = new double[NSUPERLAYER];
+    public static double[] DOCAMIN = new double[NSUPERLAYER];
+    public static double[] DOCAMAX = new double[NSUPERLAYER];
     
     // electron cuts
     public static double NPHEMIN = 2;
