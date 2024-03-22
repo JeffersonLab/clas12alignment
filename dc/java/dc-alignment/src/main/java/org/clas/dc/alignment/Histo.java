@@ -1,7 +1,9 @@
 package org.clas.dc.alignment;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jlab.clas.physics.Particle;
@@ -164,9 +166,9 @@ public class Histo {
                 hi_time.setTitleY("Counts");
                 hi_time.setOptStat(optStats);
                 this.calib.addDataSet(hi_time, is+isl*nSector);
-                H2F hi_alpha = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes, 100, -30, 30);
-                hi_alpha.setTitleX("Residuals (um)");
-                hi_alpha.setTitleY("#alpha");
+                H2F hi_alpha = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, 100, -30, 30, 100, -30, 30);
+                hi_alpha.setTitleX("#theta-25 (deg)");
+                hi_alpha.setTitleY("#alpha (deg)");
                 this.alpha.addDataSet(hi_alpha, is+isl*nSector);   
                 H2F hi_doca = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes, 100, 0, Constants.WPDIST[isl]);
                 hi_doca.setTitleX("Residuals (um)");
@@ -474,7 +476,7 @@ public class Histo {
                                 this.residuals[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.residual);
                                 if(it==0 && ip==0) {
                                     this.calib.getH1F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
-                                    this.alpha.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time, hit.alpha);
+                                    this.alpha.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(Math.toDegrees(electron.theta())-Constants.THTHILT, hit.alpha);
                                     this.doca.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time, hit.doca);
                                     if(tres) this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.time, hit.wire);
                                 }
@@ -490,7 +492,8 @@ public class Histo {
         }
     }
  
-    private List<Hit> getHits(Event event, int sector, int tid) {
+    private List<Hit> getHits(Event event, int sec, int tid) {
+        Map<Integer, List<Hit>> allhits = new HashMap<>();
         List<Hit> hits = new ArrayList<>();
         
         Bank hitBank = new Bank(schema.getSchema("TimeBasedTrkg::TBHits"));
@@ -503,16 +506,26 @@ public class Histo {
                     double time     = 10000 * hitBank.getFloat("timeResidual", i);
                     double alpha    = hitBank.getFloat("Alpha", i);
                     double doca     = hitBank.getFloat("doca", i);
+                    int sector      = hitBank.getInt("sector", i);
                     int superlayer  = hitBank.getInt("superlayer", i);
                     int layer       = hitBank.getInt("layer", i) + 6 * (superlayer - 1);
                     int wire        = hitBank.getInt("wire", i);
                     int status      = hitBank.getInt("status", i);
-                    if( status==0 && 
-                        doca>Constants.DOCAMIN[superlayer-1] &&
-                        doca<Constants.DOCAMAX[superlayer-1] &&
-                        hitBank.getInt("sector", i) == sector) {
-                        Hit hit = new Hit(sector, layer, wire, residual, time, doca, alpha, status);
-                        hits.add(hit);
+                    Hit hit = new Hit(sector, layer, wire, residual, time, doca, alpha, status);
+                    if(!allhits.containsKey(superlayer))
+                        allhits.put(superlayer, new ArrayList<>());
+                    allhits.get(superlayer).add(hit);
+                }
+            }
+            for(int sl : allhits.keySet()) {
+                if(allhits.get(sl).size()>4) {
+                    for(Hit h : allhits.get(sl)) {
+                        if( h.status==0 && 
+                            h.doca>Constants.DOCAMIN[sl-1] &&
+                            h.doca<Constants.DOCAMAX[sl-1] &&
+                            h.sector == sec) {
+                            hits.add(h);
+                        }
                     }
                 }
             }
@@ -701,6 +714,8 @@ public class Histo {
         EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("Calibration", "Alpha", "Doca");
         canvas.getCanvas("Calibration").draw(calib);
         canvas.getCanvas("Alpha").draw(alpha);
+        for(EmbeddedPad pad : canvas.getCanvas("Alpha").getCanvasPads())
+            pad.getAxisZ().setLog(true);
         canvas.getCanvas("Doca").draw(doca);
         if(tres) {
             for(int is=0; is<nSector; is++) {
