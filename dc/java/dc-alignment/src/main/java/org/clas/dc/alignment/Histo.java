@@ -579,7 +579,7 @@ public class Histo {
             for(int isl=0; isl<nSLayer; isl++) {
                 int sl = isl+1;
                 H1F hres = calib.getH1F("hi-SL"+sl+"_S"+s);
-                Histo.fitResiduals(fit, hres);
+                Histo.fitResiduals(1, hres);
             }
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -844,20 +844,37 @@ public class Histo {
                 amp   = f1.getParameter(0);
                 mean  = f1.getParameter(1);
                 sigma = f1.getParameter(2);
-                f1   = new F1D("f"+histo.getName(),"[amp]*gaus(x,[mean],[sigma])+[amp1]*gaus(x,[mean1],[sigma1])", mean-5*sigma, mean+5*sigma);
-                f1.setLineColor(2);
-                f1.setLineWidth(2);
-                f1.setOptStat("1111111");
-                f1.setParameter(0, amp);
-                f1.setParameter(1, mean);
-                f1.setParameter(2, sigma);
-                f1.setParameter(3, 0);
-                f1.setParameter(4, mean);
-                f1.setParameter(5, sigma*5);
-                f1.setParLimits(0, amp*0.8, amp*1.2);
-                f1.setParLimits(1, mean-sigma, mean+sigma);
-                f1.setParLimits(2, sigma*0.8, sigma*1.2);        
-                DataFitter.fit(f1, histo, "Q");
+                double amp1 = Math.max(Histo.getValueAt(histo, mean-3*sigma), Histo.getValueAt(histo, mean+3*sigma));
+                if(amp1>5 && amp1>0.05*amp) {
+                    F1D f2   = new F1D("f"+histo.getName(),"[amp]*gaus(x,[mean],[sigma])+[amp1]*gaus(x,[mean1],[sigma1])", mean-8*sigma, mean+8*sigma);
+                    f2.setLineColor(2);
+                    f2.setLineWidth(2);
+                    f2.setOptStat("11111111");
+                    f2.setParameter(0, amp);
+                    f2.setParameter(1, mean);
+                    f2.setParameter(2, sigma);
+                    f2.setParameter(3, amp1);
+                    f2.setParameter(4, mean);
+                    f2.setParameter(5, sigma*5);
+                    f2.setParLimits(0, 0.8*amp, 1.2*amp);
+                    f2.setParLimits(1, mean-sigma, mean+sigma);
+                    f2.setParLimits(2, 0.8*sigma, 1.2*sigma);
+                    f2.setParLimits(3, 0, 3*amp1);
+                    f2.setParLimits(4, mean-4*sigma, mean+4*sigma);
+                    f2.setParLimits(5, 2*sigma, 10*sigma);
+                    DataFitter.fit(f2, histo, "Q");
+                    for(int i=0; i<5; i++) {
+                        if(f2.isFitValid()) {
+                            break;
+                        }
+                        else {
+                            double mean1  = f2.getParameter(1);
+                            double sigma1 = f2.getParameter(5);
+                            f2.setRange(mean1-2*sigma1, mean1+2*sigma1);
+                            DataFitter.fit(f2, histo, "Q");                        
+                        }
+                    }
+                }
             }
         }
         else if(histo.getFunction()!=null) {
@@ -1366,6 +1383,17 @@ public class Histo {
             }
         }
         return max_bin_num;
+    }
+    
+    public static int getValueAt(H1F histo, double x) { 
+        int nbin = histo.getData().length;
+        double xmin = histo.getDataX(0);
+        double xmax = histo.getDataX(nbin-1);
+        if(x<xmin || x>xmax)
+            return 0;
+        else
+            return (int) ((x-xmin)*nbin/(xmax-xmin));
+
     }
     
     private static double getIntegralIDataSet(IDataSet data, double min, double max) {

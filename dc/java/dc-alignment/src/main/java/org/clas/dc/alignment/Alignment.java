@@ -84,7 +84,7 @@ public class Alignment {
         for(int isl=0; isl<Constants.NSUPERLAYER; isl++) {
             Constants.WPDIST[isl] = dcDetector.getWireMidpoint(isl, 0,0).distance(dcDetector.getWireMidpoint(isl, 0, 1))/2; 
             Constants.DOCAMIN[isl] = 0.1;
-            Constants.DOCAMAX[isl] = Constants.WPDIST[isl]*Math.sqrt(3)/2*(1.0-0.02*isl);
+            Constants.DOCAMAX[isl] = Constants.WPDIST[isl]*(0.9-0.02*isl);
         }
         this.compareVariation  = compareVariation;
         this.previousVariation = previousVariation;
