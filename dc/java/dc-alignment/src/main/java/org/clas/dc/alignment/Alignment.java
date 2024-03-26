@@ -765,6 +765,18 @@ public class Alignment {
         }
     }
     
+    private void setHitCuts(boolean doca, boolean alpha) {
+        if(!doca) {
+            for(int i=0; i<Constants.NSUPERLAYER; i++) {
+                Constants.DOCAMIN[i] = 0.0;
+                Constants.DOCAMAX[i] = Double.MAX_VALUE;
+            }
+        }
+        if(!alpha) {
+            Constants.ALPHACUT = Double.MAX_VALUE;
+        }
+    }
+    
     public Bin[] getThetaBins() {
         return thetaBins;
     }
@@ -998,6 +1010,8 @@ public class Alignment {
                                                                                    "\t\t- 27.3: distance between the scattering chamber exit window and the target center,\n" +
                                                                                    "\t\t leave empty to use defaults; units are cm");
         parser.getOptionParser("-process").addOption("-vertrange", "-20:35",       "comma-separated vertex histogram limits, e.g. -20:35; units are cm");
+        parser.getOptionParser("-process").addOption("-doca"     , "1",            "cut on doca (1) or not (0)");
+        parser.getOptionParser("-process").addOption("-alpha"    , "1",            "cut on alpha, i.e. local angle, (1) or not (0)");
         parser.getOptionParser("-process").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-process").addOption("-compare"  , "nominal",      "database variation for constant comparison");
         parser.getOptionParser("-process").addOption("-previous" , "nominal",      "database variation with previous iteration constants");
@@ -1089,6 +1103,8 @@ public class Alignment {
             int      vertexFit    = parser.getOptionParser("-process").getOption("-vertfit").intValue();
             String   vertexPar    = parser.getOptionParser("-process").getOption("-vertpar").stringValue();   
             String   vertexRange  = parser.getOptionParser("-process").getOption("-vertrange").stringValue();
+            boolean  docaCut      = parser.getOptionParser("-process").getOption("-doca").intValue()!=0;
+            boolean  alphaCut     = parser.getOptionParser("-process").getOption("-alpha").intValue()!=0;
             boolean  sector       = parser.getOptionParser("-process").getOption("-sector").intValue()!=0;
             boolean  shifts       = parser.getOptionParser("-process").getOption("-shifts").intValue()!=0;
             String   compareVar   = parser.getOptionParser("-process").getOption("-compare").stringValue();
@@ -1106,6 +1122,7 @@ public class Alignment {
             align.setShiftsMode(shifts);
             align.setAngularBins(thetaBins, phiBins);
             align.setVertexRange(vertexRange);
+            align.setHitCuts(docaCut, alphaCut);
             align.setFitOptions(sector, iter, tscFrame, r1Global);
             align.initConstants(11, initVar, previousVar, compareVar);
             
