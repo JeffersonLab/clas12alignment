@@ -825,8 +825,11 @@ public class Histo {
             return false;
         }
         else if(fit==0) {
+            if(histo.getFunction()==null)
+               histo.setFunction(f1);
+            else
+                f1 = (F1D) histo.getFunction();
             f1.setFitValid(true);
-            histo.setFunction(f1);
         }
         else if(fit>0) {
             f1.setParLimits(0, amp*0.2,   amp*1.2);
