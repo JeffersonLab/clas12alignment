@@ -83,8 +83,6 @@ public class Alignment {
         dcDetector = new DCGeant4Factory(provider, DCGeant4Factory.MINISTAGGERON, false);
         for(int isl=0; isl<Constants.NSUPERLAYER; isl++) {
             Constants.WPDIST[isl] = dcDetector.getWireMidpoint(isl, 0,0).distance(dcDetector.getWireMidpoint(isl, 0, 1))/2; 
-            Constants.DOCAMIN[isl] = 0.1;
-            Constants.DOCAMAX[isl] = Constants.WPDIST[isl]*(0.9-0.02*isl);
         }
         this.compareVariation  = compareVariation;
         this.previousVariation = previousVariation;
@@ -755,6 +753,7 @@ public class Alignment {
     private void setVertexRange(String range) {
         String[] limits = range.split(":");
         this.vertexRange = new double[2];
+        LOGGER.config("[CONFIG] Setting vertex range to:");
         if(limits.length==2) {
             this.vertexRange[0] = Double.parseDouble(limits[0]);
             this.vertexRange[1] = Double.parseDouble(limits[1]);            
@@ -763,18 +762,30 @@ public class Alignment {
             vertexRange[0] = Constants.VTXMIN;
             vertexRange[1] = Constants.VTXMAX;
         }
+        LOGGER.config("\t" + vertexRange[0]+" < vz < "+vertexRange[1] + " cm");
     }
     
     private void setHitCuts(boolean doca, boolean alpha) {
+        LOGGER.config("[CONFIG] Setting doca cuts to:");
         if(!doca) {
-            for(int i=0; i<Constants.NSUPERLAYER; i++) {
-                Constants.DOCAMIN[i] = 0.0;
-                Constants.DOCAMAX[i] = Double.MAX_VALUE;
+            for(int isl=0; isl<Constants.NSUPERLAYER; isl++) {
+                Constants.DOCAMIN[isl] = 0.0;
+                Constants.DOCAMAX[isl] = Double.MAX_VALUE;
+                LOGGER.config(String.format("\tSuperlayer %d: 0 - inf cm", (isl+1)));
             }
         }
+        else {
+            for(int isl=0; isl<Constants.NSUPERLAYER; isl++) {
+                Constants.DOCAMIN[isl] = 0.1;
+                Constants.DOCAMAX[isl] = Constants.WPDIST[isl]*(0.9-0.02*isl);
+                LOGGER.config(String.format("\tSuperlayer %d: %.2f - %.2f cm", (isl+1), Constants.DOCAMIN[isl], Constants.DOCAMAX[isl]));
+            }
+        }
+        LOGGER.config("[CONFIG] Setting local angle cuts to:");
         if(!alpha) {
             Constants.ALPHACUT = Double.MAX_VALUE;
         }
+        LOGGER.config("\t|trackTheta - 25 deg - alpha| < " + Constants.ALPHACUT + " deg");
     }
     
     public Bin[] getThetaBins() {
@@ -1121,10 +1132,10 @@ public class Alignment {
             
             align.setShiftsMode(shifts);
             align.setAngularBins(thetaBins, phiBins);
+            align.initConstants(11, initVar, previousVar, compareVar);
             align.setVertexRange(vertexRange);
             align.setHitCuts(docaCut, alphaCut);
             align.setFitOptions(sector, iter, tscFrame, r1Global);
-            align.initConstants(11, initVar, previousVar, compareVar);
             
             align.addHistoSet(inputs[0], new Histo(inputs[0], Alignment.getFileNames(nominal),align.getThetaBins(),align.getPhiBins(), time, align.getVertexRange(), optStats));
             for(int i=1; i<inputs.length; i++) {
