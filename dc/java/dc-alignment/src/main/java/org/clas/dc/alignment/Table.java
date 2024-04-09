@@ -117,6 +117,7 @@ public class Table {
         if(rotation) graph.setTitleX("Shift (deg)");
         else         graph.setTitleX("Shift (cm)");
         graph.setTitleY("Parameter");
+        graph.setTitle("Sector " + sector);
         return graph;
     }
     

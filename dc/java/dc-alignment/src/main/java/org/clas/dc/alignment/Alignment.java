@@ -433,9 +433,11 @@ public class Alignment {
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms(null, 1));
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms(compareAlignment.subtract(previousAlignment), 3));
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms(fittedAlignment, 2));
+                canvas.getCanvas().setFont(fontName);
                 canvas.addCanvas("misalignments");
                 canvas.getCanvas("misalignments").draw(comAlignPars);
                 canvas.getCanvas("misalignments").draw(newAlignPars);
+                canvas.getCanvas().setFont(fontName);
                 for(int i=0; i<canvas.getCanvas("misalignments").getCanvasPads().size(); i++) {
                     EmbeddedPad pad = canvas.getCanvas("misalignments").getCanvasPads().get(i);
                     if(i<Constants.NSECTOR) 
@@ -448,6 +450,7 @@ public class Alignment {
                 Table finalInternal   = finalAlignment.subtract(this.getGlobalOffsets(finalAlignment));
                 canvas.getCanvas("internal-only").draw(compareInternal.getDataGroup(1));
                 canvas.getCanvas("internal-only").draw(finalInternal.getDataGroup(2));
+                canvas.getCanvas().setFont(fontName);
                 for(int i=0; i<canvas.getCanvas("internal-only").getCanvasPads().size(); i++) {
                     EmbeddedPad pad = canvas.getCanvas("internal-only").getCanvasPads().get(i);
                     if(i<Constants.NSECTOR) 
@@ -460,6 +463,7 @@ public class Alignment {
                 Table finalGlobal   = finalAlignment.toCLAS12Frame();
                 canvas.getCanvas("clas12 frame").draw(compareGlobal.getDataGroup(1));
                 canvas.getCanvas("clas12 frame").draw(finalGlobal.getDataGroup(2));
+                canvas.getCanvas().setFont(fontName);
                 for(int i=0; i<canvas.getCanvas("clas12 frame").getCanvasPads().size(); i++) {
                     EmbeddedPad pad = canvas.getCanvas("clas12 frame").getCanvasPads().get(i);
                     if(i<Constants.NSECTOR) 
@@ -684,16 +688,18 @@ public class Alignment {
         DataGroup residuals = new DataGroup(3,2);
         for(int is=0; is<Constants.NSECTOR; is++ ) {
             int sector = is+1;
-            H1F hi_res = new H1F("hi-res_S" + sector, "Residual (um)", "Counts", 100, -300, 300);
+            H1F hi_res = new H1F("hi-res_S" + sector, "Pulls", "Counts", 100, -1, 1);
             hi_res.setTitle("Sector " + sector);
             hi_res.setLineColor(icol);
+            hi_res.setOptStat("1101");
             residuals.addDataSet(hi_res, is);
             for(int it=1; it<thetaBins.length; it++) {
                 for(int ip=1; ip<phiBins.length; ip++) {
                     for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
                         double shift = histos.get("nominal").getParValues(sector, it, ip)[il]
                                      - this.getFittedResidual(alignment, sector, it, ip)[il];
-                        hi_res.fill(shift);
+                        double sigma = histos.get("nominal").getParSigmas(sector, it, ip)[il];
+                        hi_res.fill(shift/sigma);
                     }
                 }        
             }
@@ -750,7 +756,7 @@ public class Alignment {
         for(int i=1; i<phiBins.length; i++) LOGGER.config(phiBins[i].toString());
     }
 
-    private void setVertexRange(String range) {
+    private void setTrackCuts(String range, double ecalMin) {
         String[] limits = range.split(":");
         this.vertexRange = new double[2];
         LOGGER.config("[CONFIG] Setting vertex range to:");
@@ -763,6 +769,9 @@ public class Alignment {
             vertexRange[1] = Constants.VTXMAX;
         }
         LOGGER.config("\t" + vertexRange[0]+" < vz < "+vertexRange[1] + " cm");
+        LOGGER.config("[CONFIG] Setting ECAL energy cut to:");
+        Constants.ECALMIN = ecalMin;
+        LOGGER.config("\tenergy > " + Constants.ECALMIN + " GeV");        
     }
     
     private void setHitCuts(boolean doca, boolean alpha) {
@@ -1021,6 +1030,7 @@ public class Alignment {
                                                                                    "\t\t- 27.3: distance between the scattering chamber exit window and the target center,\n" +
                                                                                    "\t\t leave empty to use defaults; units are cm");
         parser.getOptionParser("-process").addOption("-vertrange", "-20:35",       "comma-separated vertex histogram limits, e.g. -20:35; units are cm");
+        parser.getOptionParser("-process").addOption("-ecal"     , "0.5",          "cut on ECAL energy (GeV) for track selection ");
         parser.getOptionParser("-process").addOption("-doca"     , "1",            "cut on doca (1) or not (0)");
         parser.getOptionParser("-process").addOption("-alpha"    , "1",            "cut on alpha, i.e. local angle, (1) or not (0)");
         parser.getOptionParser("-process").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
@@ -1114,6 +1124,7 @@ public class Alignment {
             int      vertexFit    = parser.getOptionParser("-process").getOption("-vertfit").intValue();
             String   vertexPar    = parser.getOptionParser("-process").getOption("-vertpar").stringValue();   
             String   vertexRange  = parser.getOptionParser("-process").getOption("-vertrange").stringValue();
+            double   ecalCut      = parser.getOptionParser("-process").getOption("-ecal").doubleValue();
             boolean  docaCut      = parser.getOptionParser("-process").getOption("-doca").intValue()!=0;
             boolean  alphaCut     = parser.getOptionParser("-process").getOption("-alpha").intValue()!=0;
             boolean  sector       = parser.getOptionParser("-process").getOption("-sector").intValue()!=0;
@@ -1133,7 +1144,7 @@ public class Alignment {
             align.setShiftsMode(shifts);
             align.setAngularBins(thetaBins, phiBins);
             align.initConstants(11, initVar, previousVar, compareVar);
-            align.setVertexRange(vertexRange);
+            align.setTrackCuts(vertexRange, ecalCut);
             align.setHitCuts(docaCut, alphaCut);
             align.setFitOptions(sector, iter, tscFrame, r1Global);
             
