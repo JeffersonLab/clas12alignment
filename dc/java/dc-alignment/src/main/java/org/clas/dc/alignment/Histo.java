@@ -50,6 +50,7 @@ public class Histo {
 
     private double[][][][] parValues = null;
     private double[][][][] parErrors = null;
+    private double[][][][] parSigmas = null;
     private double[][]     beamOffset= {{0, 0}, {0, 0}};
     
     private Bin[] thetaBins = null;
@@ -126,6 +127,7 @@ public class Histo {
         this.vertex    = new DataGroup[thetaBins.length][phiBins.length];
         this.parValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.parErrors = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
+        this.parSigmas = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         
         int nbinsRes  = Constants.RESBINS;
         double minRes = Constants.RESMIN;
@@ -586,6 +588,7 @@ public class Histo {
                     for(int il=0; il<nLayer+nTarget; il++) {
                         this.parValues[is][it][ip][il] = 0; 
                         this.parErrors[is][it][ip][il] = 0;
+                        this.parSigmas[is][it][ip][il] = 1;
                     }
                     for(int l=1; l<=nLayer; l++) {
                         H1F hres = residuals[is][it][ip].getH1F("hi-L"+l);
@@ -593,6 +596,7 @@ public class Histo {
                         if(Histo.fitResiduals(fit, hres)) {
                             this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
                             this.parErrors[is][it][ip][l] = hres.getFunction().parameter(1).error();        
+                            this.parSigmas[is][it][ip][l] = hres.getFunction().getParameter(2); 
                             if(!shift) {
                                 this.parErrors[is][it][ip][l] = Math.max(this.parErrors[is][it][ip][l],(Constants.RESMAX-Constants.RESMIN)/Constants.RESBINS/2);
 //                                if(l>24) this.parErrors[is][it][ip][l] *= 2;
@@ -605,6 +609,7 @@ public class Histo {
                     if(Histo.fitVertex(vertexFit, hvtx)) {
                         this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*Constants.SCALE;
                         this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*Constants.SCALE;
+                        this.parSigmas[is][it][ip][0] = hvtx.getFunction().getParameter(2)*Constants.SCALE;
                         if(!shift) {
                             this.parValues[is][it][ip][0] -= Constants.TARGETPOS*Constants.SCALE;
                             this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*dx/2);
@@ -619,10 +624,12 @@ public class Histo {
                             if(isc>=0 && iscw>=0 && hvtx.getFunction().getParameter(isc)>10) {
                                 this.parValues[is][it][ip][nLayer+nTarget-1] = (hvtx.getFunction().getParameter(iscw)-Constants.SCEXIT)*Constants.SCALE;
                                 this.parErrors[is][it][ip][nLayer+nTarget-1] =  Math.max(hvtx.getFunction().parameter(iscw).error()*Constants.SCALE, Constants.SCALE*dx);
+                                this.parSigmas[is][it][ip][nLayer+nTarget-1] = hvtx.getFunction().getParameter(2)*Constants.SCALE;
                             }
                             if(itl>=0 && hvtx.getFunction().getParameter(0)>10) {
                                 this.parValues[is][it][ip][nLayer+nTarget-2] = (hvtx.getFunction().getParameter(itl)-Constants.TARGETLENGTH)*Constants.SCALE;
                                 this.parErrors[is][it][ip][nLayer+nTarget-2] =  Math.max(hvtx.getFunction().parameter(itl).error()*Constants.SCALE, Constants.SCALE*dx);
+                                this.parSigmas[is][it][ip][nLayer+nTarget-2] = hvtx.getFunction().getParameter(2)*Constants.SCALE;
                             }
                         }
                     }
@@ -695,6 +702,16 @@ public class Histo {
         if(iphi<0 || iphi>phiBins.length) 
             throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
         return this.parErrors[sector-1][itheta][iphi];
+    }
+    
+    public double[] getParSigmas(int sector, int itheta, int iphi) {
+        if(sector<1 || sector>6) 
+            throw new IllegalArgumentException("Error: invalid sector="+sector);
+        if(itheta<0 || itheta>=thetaBins.length) 
+            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
+        if(iphi<0 || iphi>phiBins.length) 
+            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
+        return this.parSigmas[sector-1][itheta][iphi];
     }
     
     public EmbeddedCanvasTabbed getElectronPlots() {
