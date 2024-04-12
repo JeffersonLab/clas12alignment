@@ -4,7 +4,7 @@
 # $2 = output skims directory
 # $3 = list of variations
 
-if ( $#argv < 0 || $#argv > 3) then
+if ( $#argv < 1 || $#argv > 3) then
 
   echo "Usage: createSkims.sh <reconstructed-files-directory> [<output-directory>] [<list of variations>]"
   exit 0
