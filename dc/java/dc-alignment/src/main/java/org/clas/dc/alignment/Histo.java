@@ -1332,7 +1332,7 @@ public class Histo {
         f1_vtx.setParameter(0, amp);
         f1_vtx.setParameter(1, mean);
         f1_vtx.setParameter(2, Constants.TARGETLENGTH);
-        f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.9, Constants.TARGETLENGTH*1.1);
+        f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.999, Constants.TARGETLENGTH*1.001);
         f1_vtx.setParameter(3, sigma);
         f1_vtx.setParameter(4, wd);        
         f1_vtx.setParameter(5, Constants.WINDOWDIST);
