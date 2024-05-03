@@ -48,6 +48,7 @@ public class Histo {
     private DataGroup[][][] time      = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][]   vertex    = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains sectors
 
+    private double[][][][] timeValues = null;
     private double[][][][] parValues = null;
     private double[][][][] parErrors = null;
     private double[][][][] parSigmas = null;
@@ -123,6 +124,7 @@ public class Histo {
         if(tres) {
             this.wires = new DataGroup[nSector];
             this.time  = new DataGroup[nSector][thetaBins.length][phiBins.length];
+            this.timeValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         }
         this.vertex    = new DataGroup[thetaBins.length][phiBins.length];
         this.parValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
@@ -591,6 +593,14 @@ public class Histo {
                         this.parSigmas[is][it][ip][il] = 1;
                     }
                     for(int l=1; l<=nLayer; l++) {
+                        if(tres) {
+                            H1F htime = this.time[is][it][ip].getH1F("hi-L" + l);
+                            if(Histo.fitResiduals(2, htime)) {
+                                this.timeValues[is][it][ip][l] = htime.getFunction().getParameter(1); 
+                            }                    
+//                            double xmax = htime.getDataX(htime.getMaximumBin());
+//                            this.timeValues[is][it][ip][l] = Histo.getMeanIDataSet(htime, xmax-100, xmax+100);
+                        }
                         H1F hres = residuals[is][it][ip].getH1F("hi-L"+l);
                         System.out.print(String.format("\tsector=%1d theta bin=%1d phi bin=%1d layer=%2d",s,it,ip,l));
                         if(Histo.fitResiduals(fit, hres)) {
@@ -682,6 +692,16 @@ public class Histo {
     
     public double[][] getBeamOffset() {
         return this.beamOffset;
+    }
+    
+    public double[] getTimeValues(int sector, int itheta, int iphi) {
+        if(sector<1 || sector>6) 
+            throw new IllegalArgumentException("Error: invalid sector="+sector);
+        if(itheta<0 || itheta>=thetaBins.length) 
+            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
+        if(iphi<0 || iphi>phiBins.length) 
+            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
+        return this.timeValues[sector-1][itheta][iphi];
     }
     
     public double[] getParValues(int sector, int itheta, int iphi) {

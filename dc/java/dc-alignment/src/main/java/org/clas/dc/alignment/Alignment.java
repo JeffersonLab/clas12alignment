@@ -372,6 +372,12 @@ public class Alignment {
         for(EmbeddedPad pad : canvas.getCanvas("nominal vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
+        canvas.addCanvas("time residuals vs. theta");
+        canvas.getCanvas("time residuals vs. theta").draw(this.getTimeGraph());
+        canvas.getCanvas().setFont(fontName);
+        for(EmbeddedPad pad : canvas.getCanvas("time residuals vs. theta").getCanvasPads())
+            pad.getAxisX().setRange(-2000, 2000);
+        
         LOGGER.log(LEVEL,"\nPlotting corrected geometry residuals");        
         canvas.addCanvas("CCDB corrected");
         canvas.getCanvas("CCDB corrected").draw(this.getResidualGraphs(compareAlignment.subtract(initAlignment)));
@@ -683,23 +689,60 @@ public class Alignment {
         return residuals;        
     }
     
-    private DataGroup getSectorHistograms(Table alignment, int icol) {
+    private DataGroup getTimeGraph() {
+        double[] zeros  = new double[thetaBins.length-1];
 
-        DataGroup residuals = new DataGroup(3,2);
+        DataGroup residuals = new DataGroup(6,1);
         for(int is=0; is<Constants.NSECTOR; is++ ) {
             int sector = is+1;
-            H1F hi_res = new H1F("hi-res_S" + sector, "Pulls", "Counts", 100, -1, 1);
+            for(int ip=1; ip<phiBins.length; ip++) {
+                for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
+                    double[] shiftRes = new double[thetaBins.length-1];
+                    double[] errorRes = new double[thetaBins.length-1];
+                    double[] angles   = new double[thetaBins.length-1];          
+                    for(int it=1; it<thetaBins.length; it++) {
+                        shiftRes[it-1] = histos.get("nominal").getTimeValues(sector, it, ip)[il];
+                        angles[it-1]   = it+0.9*(il-Constants.NLAYER/2)/Constants.NLAYER;
+                    }
+                    GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_layer " + il + "_phi" + ip, 
+                                                         shiftRes, angles, errorRes, zeros);
+                    gr_fit.setTitle("Sector " + sector);
+                    gr_fit.setTitleX("Residual (um)");
+                    gr_fit.setTitleY("#theta bin/layer");
+                    if(il==0 || il>=Constants.NLAYER+Constants.NTARGET-2) gr_fit.setMarkerColor(1);
+                    else      gr_fit.setMarkerColor(this.markerColor[(il-1)/6]);
+                    gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
+                    gr_fit.setMarkerSize(this.markerSize);
+                    residuals.addDataSet(gr_fit, is);                    
+                }               
+            }
+        }
+        return residuals;        
+    }
+
+    private DataGroup getSectorHistograms(Table alignment, int icol) {
+
+        DataGroup residuals = new DataGroup(6,2);
+        for(int is=0; is<Constants.NSECTOR; is++ ) {
+            int sector = is+1;
+            H1F hi_res = new H1F("hi-res_S" + sector, "Residual mean (um)", "Counts", 100, -300, 300);
+            H1F hi_sig = new H1F("hi-sig_S" + sector, "Residual sigma (um)", "Counts", 100, 0, 1000);
             hi_res.setTitle("Sector " + sector);
             hi_res.setLineColor(icol);
             hi_res.setOptStat("1101");
+            hi_sig.setTitle("Sector " + sector);
+            hi_sig.setLineColor(icol);
+            hi_sig.setOptStat("1101");
             residuals.addDataSet(hi_res, is);
+            residuals.addDataSet(hi_sig, is+6);
             for(int it=1; it<thetaBins.length; it++) {
                 for(int ip=1; ip<phiBins.length; ip++) {
                     for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
                         double shift = histos.get("nominal").getParValues(sector, it, ip)[il]
                                      - this.getFittedResidual(alignment, sector, it, ip)[il];
                         double sigma = histos.get("nominal").getParSigmas(sector, it, ip)[il];
-                        hi_res.fill(shift/sigma);
+                        hi_res.fill(shift);
+                        hi_sig.fill(sigma);
                     }
                 }        
             }
