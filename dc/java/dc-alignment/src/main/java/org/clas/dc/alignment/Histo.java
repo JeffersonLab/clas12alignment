@@ -595,7 +595,7 @@ public class Histo {
                     for(int l=1; l<=nLayer; l++) {
                         if(tres) {
                             H1F htime = this.time[is][it][ip].getH1F("hi-L" + l);
-                            if(Histo.fitResiduals(2, htime)) {
+                            if(Histo.fitResiduals(fit, htime)) {
                                 this.timeValues[is][it][ip][l] = htime.getFunction().getParameter(1); 
                             }                    
 //                            double xmax = htime.getDataX(htime.getMaximumBin());
