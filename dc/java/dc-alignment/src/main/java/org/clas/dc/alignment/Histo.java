@@ -124,12 +124,12 @@ public class Histo {
         if(tres) {
             this.wires = new DataGroup[nSector];
             this.time  = new DataGroup[nSector][thetaBins.length][phiBins.length];
-            this.timeValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         }
         this.vertex    = new DataGroup[thetaBins.length][phiBins.length];
         this.parValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.parErrors = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.parSigmas = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
+        this.timeValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         
         int nbinsRes  = Constants.RESBINS;
         double minRes = Constants.RESMIN;
