@@ -30,14 +30,14 @@ import org.jlab.utils.options.OptionParser;
 import org.jlab.logging.DefaultLogger;
 
 
-public class FMTVertex {
+public class FMTVertex6 {
     
     private String variation = null
     private String fitType = null;
     
     private Detector fmtDetector = null;
     
-    private int fmtNLayers = 3;
+    private int fmtNLayers = 6;
     private int fmtNStrips;
     private double fmtZmin;
     private double fmtPitch;
@@ -50,7 +50,7 @@ public class FMTVertex {
     private Map<String,DataGroup> dataGroups = new LinkedHashMap<>();
     
     
-    public FMTVertex(String variation, String fit, String optStats) {
+    public FMTVertex6(String variation, String fit, String optStats) {
         this.variation = variation;
         this.fitType = fit;
         this.loadGeometry(10, variation);
@@ -88,7 +88,7 @@ public class FMTVertex {
 
     private void createHistos() {
         double z1 = targetZ-targetL*2-10;
-        double z2 = Math.max(targetZ+35, targetZ+targetL+20);
+        double z2 = Math.max(targetZ+35, targetZ+targetL+5);
         // create histos
         DataGroup dgVtx = new DataGroup(3,2);
         H1F hi_vz_dc = new H1F("hi_vz_dc", "z (cm)", "Counts", 500, z1, z2);
@@ -156,8 +156,8 @@ public class FMTVertex {
         dgTrack.addDataSet(hi_ndf,  1);
         dataGroups.put("Track", dgTrack);
 
-        DataGroup dgTraj = new DataGroup(4,2);
-        for (int layer = 0; layer<=3; layer++) {
+        DataGroup dgTraj = new DataGroup(7,2);
+        for (int layer = 0; layer<=fmtNLayers; layer++) {
             H2F hi_traj = new H2F("hi_traj" + layer, 200, -20, 20, 200, -20, 20);
             hi_traj.setTitleX("x (cm)");
             hi_traj.setTitleY("y (cm)");
@@ -169,12 +169,12 @@ public class FMTVertex {
             hi_rtraj.setTitleY("y (cm)");
             dgTraj.addDataSet(hi_traj, layer);
             dgTraj.addDataSet(hi_ftraj,layer);
-            dgTraj.addDataSet(hi_rtraj,layer+4);
+            dgTraj.addDataSet(hi_rtraj,layer+7);
         }
         dataGroups.put("Traj", dgTraj);
 
-        DataGroup dgRes = new DataGroup(3,4);
-        for (int layer = 1; layer<=3; layer++) {
+        DataGroup dgRes = new DataGroup(fmtNLayers,4);
+        for (int layer = 1; layer<=fmtNLayers; layer++) {
             H1F hi_res_fmt = new H1F("hi_res_fmt_lay" + layer, "Res(cm) - layer " + layer, "Counts", 200, -0.3, 0.3);
             hi_res_fmt.setFillColor(4);
             H1F hi_pull_fmt = new H1F("hi_pull_fmt_lay" + layer, "Pull - layer " + layer, "Counts", 200, -10, 10);
@@ -184,14 +184,14 @@ public class FMTVertex {
             H1F hi_doca_dc  = new H1F("hi_doca_dc_lay" + layer, "Doca(cm) - layer " + layer, "Counts", 200, -3, 3);
             hi_doca_dc.setFillColor(3);
             dgRes.addDataSet(hi_res_fmt,  layer-1);
-            dgRes.addDataSet(hi_pull_fmt, layer+2);
-            dgRes.addDataSet(hi_res_dc,   layer+5);
-            dgRes.addDataSet(hi_doca_dc,  layer+8);
+            dgRes.addDataSet(hi_pull_fmt, layer+fmtNLayers-1);
+            dgRes.addDataSet(hi_res_dc,   layer+2*fmtNLayers-1);
+            dgRes.addDataSet(hi_doca_dc,  layer+3*fmtNLayers-1);
         }
         dataGroups.put("Residuals", dgRes);
 
-        DataGroup dgRes2D = new DataGroup(3,4);
-        for (int layer = 1; layer<=3; layer++) {
+        DataGroup dgRes2D = new DataGroup(fmtNLayers,4);
+        for (int layer = 1; layer<=fmtNLayers; layer++) {
             H2F hi_resX_fmt = new H2F("hi_res2dX_fmt_lay" + layer, 200, -0.3, 0.3, 100, -20, 20);
             hi_resX_fmt.setTitleX("Res(cm) - layer " + layer);
             hi_resX_fmt.setTitleY("x(cm)");
@@ -205,14 +205,14 @@ public class FMTVertex {
             hi_doca_dc.setTitleX("Doca(cm) - layer " + layer);
             hi_doca_dc.setTitleY("x(cm)");
             dgRes2D.addDataSet(hi_resX_fmt, layer-1);
-            dgRes2D.addDataSet(hi_resY_fmt, layer+2);
-            dgRes2D.addDataSet(hi_res_dc,   layer+5);
-            dgRes2D.addDataSet(hi_doca_dc,  layer+8);
+            dgRes2D.addDataSet(hi_resY_fmt, layer+fmtNLayers-1);
+            dgRes2D.addDataSet(hi_res_dc,   layer+2*fmtNLayers-1);
+            dgRes2D.addDataSet(hi_doca_dc,  layer+3*fmtNLayers-1);
         }
         dataGroups.put("Res2D", dgRes2D);
 
-        DataGroup dgCluster = new DataGroup(3,3);
-        for (int layer = 1; layer<=3; layer++) {
+        DataGroup dgCluster = new DataGroup(fmtNLayers,3);
+        for (int layer = 1; layer<=fmtNLayers; layer++) {
             H1F hi_size  = new H1F("hi_size_lay" + layer, "Size - layer " + layer, "Counts", 10, 0, 10);
             hi_size.setFillColor(4);
             H1F hi_size_track  = new H1F("hi_size_track_lay" + layer, "Size - layer " + layer, "Counts", 10, 0, 10);
@@ -227,15 +227,15 @@ public class FMTVertex {
             hi_energy_track.setFillColor(3);
             dgCluster.addDataSet(hi_size,         layer-1);
             dgCluster.addDataSet(hi_size_track,   layer-1);
-            dgCluster.addDataSet(hi_time,         layer+2);
-            dgCluster.addDataSet(hi_time_track,   layer+2);
-            dgCluster.addDataSet(hi_energy,       layer+5);
-            dgCluster.addDataSet(hi_energy_track, layer+5);
+            dgCluster.addDataSet(hi_time,         layer+fmtNLayers-1);
+            dgCluster.addDataSet(hi_time_track,   layer+fmtNLayers-1);
+            dgCluster.addDataSet(hi_energy,       layer+2*fmtNLayers-1);
+            dgCluster.addDataSet(hi_energy_track, layer+2*fmtNLayers-1);
         }
         dataGroups.put("Clusters", dgCluster);
 
-      DataGroup dgHit = new DataGroup(3,3);
-        for (int layer = 1; layer<=3; layer++) {
+      DataGroup dgHit = new DataGroup(fmtNLayers,3);
+        for (int layer = 1; layer<=fmtNLayers; layer++) {
             H2F hi_strip_res = new H2F("hi_strip_res_lay" + layer, 100, -0.3, 0.3, 1025, 0, 1025);
             hi_strip_res.setTitleX("Res(cm) - layer " + layer);
             hi_strip_res.setTitleY("Strip - layer " + layer);
@@ -248,15 +248,15 @@ public class FMTVertex {
             H1F hi_energy_track  = new H1F("hi_energy_track_lay" + layer, "Energy - layer " + layer, "Counts", 100, 0, 6000);
             hi_energy_track.setFillColor(3);
             dgHit.addDataSet(hi_strip_res,    layer-1);
-            dgHit.addDataSet(hi_time,         layer+2);
-            dgHit.addDataSet(hi_time_track,   layer+2);
-            dgHit.addDataSet(hi_energy,       layer+5);
-            dgHit.addDataSet(hi_energy_track, layer+5);
+            dgHit.addDataSet(hi_time,         layer+fmtNLayers-1);
+            dgHit.addDataSet(hi_time_track,   layer+fmtNLayers-1);
+            dgHit.addDataSet(hi_energy,       layer+2*fmtNLayers-1);
+            dgHit.addDataSet(hi_energy_track, layer+2*fmtNLayers-1);
         }
         dataGroups.put("Hits", dgHit);
             
-        DataGroup dgStrips = new DataGroup(3,3);
-        for (int layer = 1; layer<=3; layer++) {
+        DataGroup dgStrips = new DataGroup(fmtNLayers,3);
+        for (int layer = 1; layer<=fmtNLayers; layer++) {
             H1F hi_strip  = new H1F("hi_strip_lay" + layer, "Strip - layer " + layer, "Counts", 1025, 0, 1025);
             hi_strip.setFillColor(4);
             H1F hi_strip_track  = new H1F("hi_strip_track_lay" + layer, "Strip - layer " + layer, "Counts", 1025, 0, 1025);
@@ -264,8 +264,8 @@ public class FMTVertex {
             H1F hi_strip_eff  = new H1F("hi_strip_eff_lay" + layer, "Strip - layer " + layer, "Counts", 1025, 0, 1025);
             hi_strip_eff.setFillColor(3);
             dgStrips.addDataSet(hi_strip,       layer-1);
-            dgStrips.addDataSet(hi_strip_track, layer+2);
-            dgStrips.addDataSet(hi_strip_eff,   layer+5);
+            dgStrips.addDataSet(hi_strip_track, layer+fmtNLayers-1);
+            dgStrips.addDataSet(hi_strip_eff,   layer+2*fmtNLayers-1);
         }
         dataGroups.put("Strips", dgStrips);
     }
@@ -347,11 +347,11 @@ public class FMTVertex {
                 int nmeas    = fmtTracks.getInt("NDF", index);
 
                 boolean traj = false;
-                Point3D[] trajs = new Point3D[3]; 
+                Point3D[] trajs = new Point3D[fmtNLayers]; 
                 for(int j=0; j<recTraj.rows(); j++) {
                     if(recTraj.getByte("detector",j)==DetectorType.FMT.getDetectorId() && recTraj.getShort("index",j)==index) {
                         int layer = recTraj.getByte("layer",j);
-                        if(layer<=3) {
+                        if(layer<=fmtNLayers) {
                             trajs[layer-1] = new Point3D(recTraj.getFloat("x",j),recTraj.getFloat("y",j),recTraj.getFloat("z",j));
                             dataGroups.get("Traj").getH2F("hi_traj"+layer).fill(trajs[layer-1].x(),trajs[layer-1].y());
                             if(layer==1) {
@@ -363,7 +363,7 @@ public class FMTVertex {
                 if(nmeas>=2 && fmtTracks.rows()>=1) {
                     dataGroups.get("Track").getH1F("hi_chi2").fill(fchi2);
                     dataGroups.get("Track").getH1F("hi_ndf").fill(nmeas);
-                    for(int i=0; i<3; i++) {
+                    for(int i=0; i<fmtNLayers; i++) {
                         int layer = i+1;
                         if(trajs[layer-1]!=null) {
                             if(layer==1) dataGroups.get("Traj").getH2F("hi_ftraj"+0).fill(trajs[0].x(),trajs[0].y());
@@ -442,17 +442,17 @@ public class FMTVertex {
 
         
     private void analyze() {
-        for(int layer=1; layer<=3; layer++) {
+        for(int layer=1; layer<=fmtNLayers; layer++) {
             fitResiduals(dataGroups.get("Residuals").getH1F("hi_res_fmt_lay"+layer));
             fitResiduals(dataGroups.get("Residuals").getH1F("hi_pull_fmt_lay"+layer));
             fitResiduals(dataGroups.get("Residuals").getH1F("hi_res_dc_lay"+layer));
             fitTime(dataGroups.get("Hits").getH1F("hi_time_track_lay"+layer));
         }
         for(int sector=1; sector<=6; sector++) {            
-            fitVertex(dataGroups.get("VertexSector").getH1F("hi_vz_fmt_sec"+sector), 4, fitType);
-            fitVertex(dataGroups.get("VertexSector").getH1F("hi_vz_dc_sec"+sector), 3, fitType);
+//            fitVertex(dataGroups.get("VertexSector").getH1F("hi_vz_fmt_sec"+sector), 4, fitType);
+//            fitVertex(dataGroups.get("VertexSector").getH1F("hi_vz_dc_sec"+sector), 3, fitType);
         }
-        for(int layer=0; layer<=3; layer++) {
+        for(int layer=0; layer<=fmtNLayers; layer++) {
             H2F h1 = dataGroups.get("Traj").getH2F("hi_ftraj"+layer);
             H2F h2 = dataGroups.get("Traj").getH2F("hi_traj"+layer);
             H2F h3 = dataGroups.get("Traj").getH2F("hi_rtraj"+layer);
@@ -487,20 +487,24 @@ public class FMTVertex {
             fmtCanvas.getCanvas(key).setAxisTitleSize(24);
         }
         for(int i=0; i<6; i++) {
-            Dimension1D range = dataGroups.get("VertexZoomed").getH1F("hi_vz_fmt_sec"+(i+1)).getFunction().getRange();
-            fmtCanvas.getCanvas("VertexZoomed").getPad(i).getAxisX().setRange(range.getMin()-2, range.getMax()+2);
+//            Dimension1D range = dataGroups.get("VertexZoomed").getH1F("hi_vz_fmt_sec"+(i+1)).getFunction().getRange();
+//            fmtCanvas.getCanvas("VertexZoomed").getPad(i).getAxisX().setRange(range.getMin()-2, range.getMax()+2);
+            fmtCanvas.getCanvas("VertexZoomed").getPad(i).getAxisX().setRange(-20, 10);
         }   
         fmtCanvas.getCanvas("Track").getPad(0).getAxisY().setLog(true);        
-        for(int i=0; i<4; i++) {
+        for(int i=0; i<fmtNLayers+1; i++) {
             fmtCanvas.getCanvas("Traj").getPad(i).getAxisZ().setLog(true);
-            fmtCanvas.getCanvas("Traj").getPad(i+4).getAxisZ().setRange(0.8,1.0);
+            fmtCanvas.getCanvas("Traj").getPad(i+fmtNLayers+1).getAxisZ().setRange(0.8,1.0);
         }   
-        for(int i=0; i<3; i++) {
-            fmtCanvas.getCanvas("Clusters").getPad(i+3).getAxisY().setLog(true);
-            fmtCanvas.getCanvas("Clusters").getPad(i+6).getAxisY().setLog(true);
+        for(int i=0; i<fmtNLayers; i++) {
+            fmtCanvas.getCanvas("Clusters").getPad(i+fmtNLayers).getAxisY().setLog(true);
+            fmtCanvas.getCanvas("Clusters").getPad(i+2*fmtNLayers).getAxisY().setLog(true);
             fmtCanvas.getCanvas("Hits").getPad(i).getAxisZ().setLog(true);
-            fmtCanvas.getCanvas("Hits").getPad(i+3).getAxisY().setLog(true);
-            fmtCanvas.getCanvas("Hits").getPad(i+6).getAxisY().setLog(true);
+            fmtCanvas.getCanvas("Hits").getPad(i+fmtNLayers).getAxisY().setLog(true);
+            fmtCanvas.getCanvas("Hits").getPad(i+2*fmtNLayers).getAxisY().setLog(true);
+            fmtCanvas.getCanvas("Strips").getPad(i).getAxisY().setLog(true);
+            fmtCanvas.getCanvas("Strips").getPad(i+fmtNLayers).getAxisY().setLog(true);
+            fmtCanvas.getCanvas("Strips").getPad(i+2*fmtNLayers).getAxisY().setLog(true);
         }   
         return fmtCanvas;
     }
@@ -686,7 +690,7 @@ if(inputList.isEmpty()==true){
     System.exit(0);
 }
 
-FMTVertex analysis = new FMTVertex(variation, fit, optStats);
+FMTVertex6 analysis = new FMTVertex6(variation, fit, optStats);
 if(readHistos) {
     for(int i=0; i<inputList.size(); i++){
         analysis.readHistos(inputList.get(i));
@@ -722,7 +726,7 @@ else{
 if(openWindow) {
     JFrame frame = new JFrame("FMT");
     EmbeddedCanvasTabbed canvas = analysis.plotHistos();
-    frame.setSize(1400, 850);
+    frame.setSize(2500, 1500);
     frame.add(canvas);
     frame.setLocationRelativeTo(null);
     frame.setVisible(true);
