@@ -60,7 +60,7 @@ public class TrajPoint {
             int minTrjPoints, boolean applyCuts) {
         // Sanitize input.
         if (minTrjPoints < 1 || minTrjPoints > Constants.FMTLAYERS) {
-            System.err.printf("minTrjPoints should be at least 1 and at most 3!\n");
+            System.err.printf("minTrjPoints should be at least 1 and at most Constants.FMTLAYERS!\n");
             return null;
         }
 
