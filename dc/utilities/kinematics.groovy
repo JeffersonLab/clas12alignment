@@ -36,9 +36,9 @@ import org.jlab.jnp.utils.options.OptionStore;
 public class Kinematics {
     
     private double ebeam = 10.6;
-    private double targetPos = -3.5;
+    private double targetPos = -2.5;
     private double targetLength = 5;
-    private double scWindow = 27+targetPos;
+    private double scWindow = 28.4+targetPos;
     private String fontName = "Arial";
     private File lundfile = null;
 
@@ -317,7 +317,7 @@ public class Kinematics {
                         if(track.getShort("pindex", j)==loop) recEl.setProperty("sector", (double) track.getByte("sector", j));
                     }
                 }
-                else if(bank.getInt("charge", loop)!=0 && status==2 && Math.abs(bank.getFloat("vz", loop)+3)<30 && Math.abs(bank.getFloat("chi2pid",loop))<5) {
+                else if(bank.getInt("charge", loop)!=0 && status==2 && Math.abs(bank.getFloat("vz", loop)-targetPos)<scWindow+targetLength*1.5 && Math.abs(bank.getFloat("chi2pid",loop))<5) {
                     Particle part = new Particle(
                                         bank.getInt("pid", loop),
                                         bank.getFloat("px", loop),
@@ -477,15 +477,15 @@ public class Kinematics {
     public void analyzeHistos() {
         Logger.getLogger("org.freehep.math.minuit").setLevel(Level.WARNING);
 
-        fitW(histos.get("General").getH1F("hi_w"), 0.8, 1.1);
-        fitW(histos.get("Elastic").getH1F("hi_w")), 0.8, 1.1;
-        fitW(histos.get("2pi").getH1F("mxt1"), 0.8, 1.1);
-        fitW(histos.get("2pi").getH1F("mxt2"), -0.1, 0.2);
-        fitW(histos.get("2pi").getH1F("mxt3"), -0.1, 0.2);
-        fitW(histos.get("1pi").getH1F("mxt1"), 0.8, 1.1);
-        fitW(histos.get("1pi").getH1F("mxt2"), -0.1, 0.2);
+        fitW(histos.get("General").getH1F("hi_w"), 0.8, 1.1, 0.05);
+        fitW(histos.get("Elastic").getH1F("hi_w"), 0.8, 1.1, 0.05);
+        fitW(histos.get("2pi").getH1F("mxt1"), 0.8, 1.1, 0.05);
+        fitW(histos.get("2pi").getH1F("mxt2"), -0.1, 0.2, 0.05);
+        fitW(histos.get("2pi").getH1F("mxt3"), -0.1, 0.2, 0.05);
+        fitW(histos.get("1pi").getH1F("mxt1"), 0.8, 1.1, 0.05);
+        fitW(histos.get("1pi").getH1F("mxt2"), -0.1, 0.2, 0.05);
         for(int sector=1; sector <= 6; sector++) {
-            fitW(histos.get("W").getH1F("hi_w_" + sector), 0.8, 1.1);
+            fitW(histos.get("W").getH1F("hi_w_" + sector), 0.8, 1.1, 0.05);
             fitGauss(histos.get("Phi").getH1F("hi_dphi_" + sector));
             fitGauss(histos.get("Beam").getH1F("hi_beam_" + sector));
         }
@@ -493,6 +493,9 @@ public class Kinematics {
         fitGauss(histos.get("Proton").getH1F("hi_dtheta"));
         fitGauss(histos.get("Proton").getH1F("hi_dphi"));
         fitGauss(histos.get("Proton").getH1F("hi_dz"));
+        fitW(histos.get("Vertex").getH1F("h1_vz_el"), scWindow+targetPos-2,scWindow+targetPos+2, 1);
+        fitW(histos.get("Vertex").getH1F("h1_vz_pi+"), scWindow+targetPos-2,scWindow+targetPos+2, 1);
+        fitW(histos.get("Vertex").getH1F("h1_vz_pi-"), scWindow+targetPos-2,scWindow+targetPos+2, 1);
     }
 
     public EmbeddedCanvasTabbed drawHistos(String optStats) {
@@ -590,7 +593,7 @@ public class Kinematics {
         }
     }
     
-    private void fitW(H1F hiw, double min, double max) {
+    private void fitW(H1F hiw, double min, double max, double sigma) {
 
 	F1D f1w = new F1D("f1_w", "[amp]*gaus(x,[mean],[sigma])", min, max);
         // get histogram maximum in the rane 0.7-1.1
@@ -606,7 +609,6 @@ public class Kinematics {
         }           
         double mean = hiw.getDataX(imax); //hiw.getDataX(hiw.getMaximumBin());
         double amp  = hiMax;//hiw.getBinContent(hiw.getMaximumBin());
-        double sigma = 0.05;
         f1w.setParameter(0, amp);
         f1w.setParameter(1, mean);
         f1w.setParameter(2, sigma);
