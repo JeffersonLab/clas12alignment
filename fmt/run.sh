@@ -3,9 +3,13 @@
 # Setup (Point these to the appropiate location)
 TORUSMAP="Symm_torus_r2501_phi16_z251_24Apr2018.dat"
 SOLENOIDMAP="Symm_solenoid_r601_phi1_z1201_13June2018.dat"
-MVN="mvn"
-JAVAHOME="/usr"
-COATJAVA="/path/to/coatjava-10.0.5"
+#MVN="mvn"
+#JAVAHOME="/usr"
+#COATJAVA="/path/to/coatjava-10.0.5"
+MVN="/group/clas12/packages/maven/3.9.0/bin/mvn"
+JAVAHOME="/group/clas12/packages/jdk/21.0.1"
+JAVA_HOME="/group/clas12/packages/jdk/21.0.1"
+COATJAVA="/group/clas12/packages/coatjava/10.1.0"
 
 # Don't touch anything from this point forward!
 JAVALOC="$JAVAHOME/bin/java"
