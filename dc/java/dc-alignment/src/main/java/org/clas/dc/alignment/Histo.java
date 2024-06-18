@@ -189,12 +189,12 @@ public class Histo {
                 this.wires[is] = new DataGroup(nSector, nSLayer);
                 for(int il=0; il<nLayer; il++) {
                     int layer = il+1;
-                    H1F hi_left = new H1F("hi-lL" + layer + "_S" + sector, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                    H1F hi_left = new H1F("hi-lL" + layer, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
                     hi_left.setTitleX("Residuals (um)");
                     hi_left.setTitleY("Counts");
                     hi_left.setOptStat(optStats);
                     hi_left.setLineColor(3);
-                    H1F hi_right = new H1F("hi-rL" + layer + "_S" + sector, "SL " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                    H1F hi_right = new H1F("hi-rL" + layer, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
                     hi_right.setTitleX("Residuals (um)");
                     hi_right.setTitleY("Counts");
                     hi_right.setOptStat(optStats);
@@ -501,9 +501,9 @@ public class Histo {
                                     this.doca.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time, hit.doca);
                                     if(tres) {
                                         if(hit.lr>0)
-                                            this.leftright[sector-1].getH1F("hi-rL" + hit.layer + "_S" + hit.sector).fill(hit.time);
+                                            this.leftright[sector-1].getH1F("hi-rL" + hit.layer).fill(hit.time);
                                         else
-                                            this.leftright[sector-1].getH1F("hi-lL" + hit.layer + "_S" + hit.sector).fill(hit.time);
+                                            this.leftright[sector-1].getH1F("hi-lL" + hit.layer).fill(hit.time);
                                         this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.time, hit.wire);
                                     }
                                 }
@@ -621,7 +621,11 @@ public class Histo {
                             H1F htime = this.time[is][it][ip].getH1F("hi-L" + l);
                             if(Histo.fitResiduals(fit, htime)) {
                                 this.timeValues[is][it][ip][l] = htime.getFunction().getParameter(1); 
-                            }                    
+                            } 
+                            if(it==0 && ip==0) {
+                                Histo.fitResiduals(fit, this.leftright[is].getH1F("hi-lL" + l));
+                                Histo.fitResiduals(fit, this.leftright[is].getH1F("hi-rL" + l));
+                            }
 //                            double xmax = htime.getDataX(htime.getMaximumBin());
 //                            this.timeValues[is][it][ip][l] = Histo.getMeanIDataSet(htime, xmax-100, xmax+100);
                         }
@@ -1622,6 +1626,10 @@ public class Histo {
                 wires[is] = this.readDataGroup(subfolder, dir, wires[is]);
             }
             for(int is=0; is<nSector; is++) {
+                String subfolder = folder + "/time/sec" + (is+1) + "_lr";
+                leftright[is] = this.readDataGroup(subfolder, dir, leftright[is]);
+            }
+            for(int is=0; is<nSector; is++) {
                 for(int it=0; it<thetaBins.length; it++) {
                     for(int ip=0; ip<phiBins.length; ip++) {
                         String subfolder = folder + "/time/sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
@@ -1716,6 +1724,11 @@ public class Histo {
             for(int is=0; is<nSector; is++) {
                 String subfolder = "sec" + (is+1);
                 this.writeDataGroup(subfolder, dir,  wires[is]);
+                dir.cd("/" + root + "/" + folder + "/time");
+            }
+            for(int is=0; is<nSector; is++) {
+                String subfolder = "sec" + (is+1) + "_lr";
+                this.writeDataGroup(subfolder, dir,  leftright[is]);
                 dir.cd("/" + root + "/" + folder + "/time");
             }
             for(int is=0; is<nSector; is++) {
