@@ -43,13 +43,14 @@ public class Histo {
     private DataGroup       calib     = null; 
     private DataGroup       alpha     = null; 
     private DataGroup       doca      = null; 
-    private DataGroup[]     leftright = null; 
     private DataGroup[]     wires     = null; 
     private DataGroup[][][] residuals = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][][] time      = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
+    private DataGroup[][][] leftright = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][]   vertex    = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains sectors
 
     private double[][][][] timeValues = null;
+    private double[][][][] lrValues = null;
     private double[][][][] parValues = null;
     private double[][][][] parErrors = null;
     private double[][][][] parSigmas = null;
@@ -123,15 +124,16 @@ public class Histo {
                                                        + "for variation " + name);
         this.residuals = new DataGroup[nSector][thetaBins.length][phiBins.length];
         if(tres) {
-            this.leftright = new DataGroup[nSector];
             this.wires = new DataGroup[nSector];
             this.time  = new DataGroup[nSector][thetaBins.length][phiBins.length];
+            this.leftright = new DataGroup[nSector][thetaBins.length][phiBins.length];
         }
         this.vertex    = new DataGroup[thetaBins.length][phiBins.length];
         this.parValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.parErrors = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.parSigmas = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.timeValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
+        this.lrValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         
         int nbinsRes  = Constants.RESBINS;
         double minRes = Constants.RESMIN;
@@ -185,22 +187,9 @@ public class Histo {
         if(tres) {
             for(int is=0; is<nSector; is++) {
                 int sector = is+1;
-                this.leftright[is] = new DataGroup(nSector, nSLayer);
                 this.wires[is] = new DataGroup(nSector, nSLayer);
                 for(int il=0; il<nLayer; il++) {
                     int layer = il+1;
-                    H1F hi_left = new H1F("hi-lL" + layer, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
-                    hi_left.setTitleX("Residuals (um)");
-                    hi_left.setTitleY("Counts");
-                    hi_left.setOptStat(optStats);
-                    hi_left.setLineColor(3);
-                    H1F hi_right = new H1F("hi-rL" + layer, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
-                    hi_right.setTitleX("Residuals (um)");
-                    hi_right.setTitleY("Counts");
-                    hi_right.setOptStat(optStats);
-                    hi_right.setLineColor(4);
-                    this.leftright[is].addDataSet(hi_left, il);
-                    this.leftright[is].addDataSet(hi_right, il);
                     H2F hi_wire = new H2F("hi-L" + layer + "_S" + sector, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes, 112, 1, 113);
                     hi_wire.setTitleX("Residuals (um)");
                     hi_wire.setTitleY("Wire");
@@ -209,13 +198,26 @@ public class Histo {
                 for(int it=0; it<thetaBins.length; it++) {
                     for(int ip=0; ip<phiBins.length; ip++) {
                         this.time[is][it][ip] = new DataGroup(6,6);
+                        this.leftright[is][it][ip] = new DataGroup(6,6);
                         for(int il=0; il<nLayer; il++) {
                             int layer = il+1;
                             H1F hi_time = new H1F("hi-L" + layer,"Layer " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
                             hi_time.setTitleX("Residuals (um)");
                             hi_time.setTitleY("Counts");
                             hi_time.setOptStat(optStats);
-                            this.time[is][it][ip].addDataSet(hi_time, il);                            
+                            this.time[is][it][ip].addDataSet(hi_time, il);      
+                            H1F hi_left = new H1F("hi-lL" + layer, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                            hi_left.setTitleX("Residuals (um)");
+                            hi_left.setTitleY("Counts");
+                            hi_left.setOptStat(optStats);
+                            hi_left.setLineColor(3);
+                            H1F hi_right = new H1F("hi-rL" + layer, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                            hi_right.setTitleX("Residuals (um)");
+                            hi_right.setTitleY("Counts");
+                            hi_right.setOptStat(optStats);
+                            hi_right.setLineColor(4);
+                            this.leftright[is][it][ip].addDataSet(hi_left, il);
+                            this.leftright[is][it][ip].addDataSet(hi_right, il);
                         }
                     } 
                 }
@@ -500,14 +502,16 @@ public class Histo {
                                     this.alpha.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(Math.toDegrees(electron.theta())-Constants.THTHILT, hit.alpha);
                                     this.doca.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time, hit.doca);
                                     if(tres) {
-                                        if(hit.lr>0)
-                                            this.leftright[sector-1].getH1F("hi-rL" + hit.layer).fill(hit.time);
-                                        else
-                                            this.leftright[sector-1].getH1F("hi-lL" + hit.layer).fill(hit.time);
-                                        this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.time, hit.wire);
+                                       this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.time, hit.wire);
                                     }
                                 }
-                                if(tres) this.time[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.time);
+                                if(tres) {
+                                    this.time[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.time);
+                                    if(hit.lr>0)
+                                            this.leftright[sector-1][it][ip].getH1F("hi-rL" + hit.layer).fill(hit.time);
+                                        else
+                                            this.leftright[sector-1][it][ip].getH1F("hi-lL" + hit.layer).fill(hit.time);
+                                    }
                             }
                             this.vertex[it][ip].getH1F("hi-S" + sector).fill(vz);
                     
@@ -622,9 +626,10 @@ public class Histo {
                             if(Histo.fitResiduals(fit, htime)) {
                                 this.timeValues[is][it][ip][l] = htime.getFunction().getParameter(1); 
                             } 
-                            if(it==0 && ip==0) {
-                                Histo.fitResiduals(fit, this.leftright[is].getH1F("hi-lL" + l));
-                                Histo.fitResiduals(fit, this.leftright[is].getH1F("hi-rL" + l));
+                            H1F hleft  = this.leftright[is][it][ip].getH1F("hi-lL" + l);
+                            H1F hright = this.leftright[is][it][ip].getH1F("hi-rL" + l);
+                            if(Histo.fitResiduals(fit, hright) && Histo.fitResiduals(fit, hleft)) {
+                                this.lrValues[is][it][ip][l] = hleft.getFunction().getParameter(1)-hright.getFunction().getParameter(1); 
                             }
 //                            double xmax = htime.getDataX(htime.getMaximumBin());
 //                            this.timeValues[is][it][ip][l] = Histo.getMeanIDataSet(htime, xmax-100, xmax+100);
@@ -732,6 +737,16 @@ public class Histo {
         return this.timeValues[sector-1][itheta][iphi];
     }
     
+    public double[] getLRValues(int sector, int itheta, int iphi) {
+        if(sector<1 || sector>6) 
+            throw new IllegalArgumentException("Error: invalid sector="+sector);
+        if(itheta<0 || itheta>=thetaBins.length) 
+            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
+        if(iphi<0 || iphi>phiBins.length) 
+            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
+        return this.lrValues[sector-1][itheta][iphi];
+    }
+
     public double[] getParValues(int sector, int itheta, int iphi) {
         if(sector<1 || sector>6) 
             throw new IllegalArgumentException("Error: invalid sector="+sector);
@@ -786,12 +801,6 @@ public class Histo {
         if(tres) {
             for(int is=0; is<nSector; is++) {
                 int    sector = is+1;
-                String title  = "LRSec" + sector;
-                canvas.addCanvas(title);
-                canvas.getCanvas(title).draw(leftright[is]);
-            }
-            for(int is=0; is<nSector; is++) {
-                int    sector = is+1;
                 String title  = "WSec" + sector;
                 canvas.addCanvas(title);
                 canvas.getCanvas(title).draw(wires[is]);
@@ -809,6 +818,22 @@ public class Histo {
                         if(ip!=0) title = title + " Phi:" + phiBins[ip].getRange();
                         canvas.addCanvas(title);
                         canvas.getCanvas(title).draw(time[is][it][ip]);
+                    }
+                }
+            }
+            for(int is=0; is<nSector; is++) {
+                int    sector = is+1;
+                String title  = "LRSec" + sector;
+                canvas.addCanvas(title);
+                canvas.getCanvas(title).draw(this.leftright[is][0][0]);
+                for(int it=0; it<thetaBins.length; it++) {
+                    for(int ip=0; ip<phiBins.length; ip++) {
+                        if(it==0 && ip==0) continue;
+                        title = "LRSec" + sector;
+                        if(it!=0) title = title + " Theta:" + thetaBins[it].getRange();
+                        if(ip!=0) title = title + " Phi:" + phiBins[ip].getRange();
+                        canvas.addCanvas(title);
+                        canvas.getCanvas(title).draw(leftright[is][it][ip]);
                     }
                 }
             }
@@ -1626,14 +1651,18 @@ public class Histo {
                 wires[is] = this.readDataGroup(subfolder, dir, wires[is]);
             }
             for(int is=0; is<nSector; is++) {
-                String subfolder = folder + "/time/sec" + (is+1) + "_lr";
-                leftright[is] = this.readDataGroup(subfolder, dir, leftright[is]);
-            }
-            for(int is=0; is<nSector; is++) {
                 for(int it=0; it<thetaBins.length; it++) {
                     for(int ip=0; ip<phiBins.length; ip++) {
                         String subfolder = folder + "/time/sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
                         time[is][it][ip]=this.readDataGroup(subfolder, dir, time[is][it][ip]);
+                    }
+                }
+            }
+            for(int is=0; is<nSector; is++) {
+                for(int it=0; it<thetaBins.length; it++) {
+                    for(int ip=0; ip<phiBins.length; ip++) {
+                        String subfolder = folder + "/time/lr/sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
+                        leftright[is][it][ip]=this.readDataGroup(subfolder, dir, leftright[is][it][ip]);
                     }
                 }
             }
@@ -1727,16 +1756,22 @@ public class Histo {
                 dir.cd("/" + root + "/" + folder + "/time");
             }
             for(int is=0; is<nSector; is++) {
-                String subfolder = "sec" + (is+1) + "_lr";
-                this.writeDataGroup(subfolder, dir,  leftright[is]);
-                dir.cd("/" + root + "/" + folder + "/time");
-            }
-            for(int is=0; is<nSector; is++) {
                 for(int it=0; it<thetaBins.length; it++) {
                     for(int ip=0; ip<phiBins.length; ip++) {
                         String subfolder = "sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
                         this.writeDataGroup(subfolder, dir, time[is][it][ip]);
                         dir.cd("/" + root + "/" + folder + "/time");
+                    }
+                }
+            }
+            dir.mkdir("lr");
+            dir.cd("lr");
+            for(int is=0; is<nSector; is++) {
+                for(int it=0; it<thetaBins.length; it++) {
+                    for(int ip=0; ip<phiBins.length; ip++) {
+                        String subfolder = "sec" + (is+1) + "_theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
+                        this.writeDataGroup(subfolder, dir, leftright[is][it][ip]);
+                        dir.cd("/" + root + "/" + folder + "/time" + "/lr");
                     }
                 }
             }

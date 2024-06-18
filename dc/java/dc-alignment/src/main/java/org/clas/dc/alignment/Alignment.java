@@ -378,6 +378,12 @@ public class Alignment {
         for(EmbeddedPad pad : canvas.getCanvas("time residuals vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
+        canvas.addCanvas("LR residuals vs. theta");
+        canvas.getCanvas("LR residuals vs. theta").draw(this.getLRGraph());
+        canvas.getCanvas().setFont(fontName);
+        for(EmbeddedPad pad : canvas.getCanvas("LR residuals vs. theta").getCanvasPads())
+            pad.getAxisX().setRange(-2000, 2000);
+        
         LOGGER.log(LEVEL,"\nPlotting corrected geometry residuals");        
         canvas.addCanvas("CCDB corrected");
         canvas.getCanvas("CCDB corrected").draw(this.getResidualGraphs(compareAlignment.subtract(initAlignment)));
@@ -702,6 +708,37 @@ public class Alignment {
                     double[] angles   = new double[thetaBins.length-1];          
                     for(int it=1; it<thetaBins.length; it++) {
                         shiftRes[it-1] = histos.get("nominal").getTimeValues(sector, it, ip)[il];
+                        angles[it-1]   = it+0.9*(il-Constants.NLAYER/2)/Constants.NLAYER;
+                    }
+                    GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_layer " + il + "_phi" + ip, 
+                                                         shiftRes, angles, errorRes, zeros);
+                    gr_fit.setTitle("Sector " + sector);
+                    gr_fit.setTitleX("Residual (um)");
+                    gr_fit.setTitleY("#theta bin/layer");
+                    if(il==0 || il>=Constants.NLAYER+Constants.NTARGET-2) gr_fit.setMarkerColor(1);
+                    else      gr_fit.setMarkerColor(this.markerColor[(il-1)/6]);
+                    gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
+                    gr_fit.setMarkerSize(this.markerSize);
+                    residuals.addDataSet(gr_fit, is);                    
+                }               
+            }
+        }
+        return residuals;        
+    }
+
+    private DataGroup getLRGraph() {
+        double[] zeros  = new double[thetaBins.length-1];
+
+        DataGroup residuals = new DataGroup(6,1);
+        for(int is=0; is<Constants.NSECTOR; is++ ) {
+            int sector = is+1;
+            for(int ip=1; ip<phiBins.length; ip++) {
+                for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
+                    double[] shiftRes = new double[thetaBins.length-1];
+                    double[] errorRes = new double[thetaBins.length-1];
+                    double[] angles   = new double[thetaBins.length-1];          
+                    for(int it=1; it<thetaBins.length; it++) {
+                        shiftRes[it-1] = histos.get("nominal").getLRValues(sector, it, ip)[il];
                         angles[it-1]   = it+0.9*(il-Constants.NLAYER/2)/Constants.NLAYER;
                     }
                     GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_layer " + il + "_phi" + ip, 
