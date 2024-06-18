@@ -43,7 +43,7 @@ public class Histo {
     private DataGroup       calib     = null; 
     private DataGroup       alpha     = null; 
     private DataGroup       doca      = null; 
-    private DataGroup       leftright = null; 
+    private DataGroup[]     leftright = null; 
     private DataGroup[]     wires     = null; 
     private DataGroup[][][] residuals = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][][] time      = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
@@ -123,6 +123,7 @@ public class Histo {
                                                        + "for variation " + name);
         this.residuals = new DataGroup[nSector][thetaBins.length][phiBins.length];
         if(tres) {
+            this.leftright = new DataGroup[nSector];
             this.wires = new DataGroup[nSector];
             this.time  = new DataGroup[nSector][thetaBins.length][phiBins.length];
         }
@@ -148,7 +149,6 @@ public class Histo {
         this.calib = new DataGroup(nSector, nSLayer);
         this.alpha = new DataGroup(nSector, nSLayer);
         this.doca = new DataGroup(nSector, nSLayer);
-        this.leftright = new DataGroup(nSector, nSLayer);
         for(int is=0; is<nSector; is++) {
             int sector = is+1;
             for(int it=0; it<thetaBins.length; it++) {
@@ -180,26 +180,27 @@ public class Histo {
                 hi_doca.setTitleX("Residuals (um)");
                 hi_doca.setTitleY("Doca (um)");
                 this.doca.addDataSet(hi_doca, is+isl*nSector);   
-                H1F hi_left = new H1F("hi-lSL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes);
-                hi_left.setTitleX("Residuals (um)");
-                hi_left.setTitleY("Counts");
-                hi_left.setOptStat(optStats);
-                hi_left.setLineColor(3);
-                H1F hi_right = new H1F("hi-rSL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes);
-                hi_right.setTitleX("Residuals (um)");
-                hi_right.setTitleY("Counts");
-                hi_right.setOptStat(optStats);
-                hi_right.setLineColor(4);
-                this.leftright.addDataSet(hi_left, is+isl*nSector);
-                this.leftright.addDataSet(hi_right, is+isl*nSector);
             }
         }
         if(tres) {
             for(int is=0; is<nSector; is++) {
                 int sector = is+1;
+                this.leftright[is] = new DataGroup(nSector, nSLayer);
                 this.wires[is] = new DataGroup(nSector, nSLayer);
                 for(int il=0; il<nLayer; il++) {
                     int layer = il+1;
+                    H1F hi_left = new H1F("hi-lL" + layer + "_S" + sector, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                    hi_left.setTitleX("Residuals (um)");
+                    hi_left.setTitleY("Counts");
+                    hi_left.setOptStat(optStats);
+                    hi_left.setLineColor(3);
+                    H1F hi_right = new H1F("hi-rL" + layer + "_S" + sector, "SL " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                    hi_right.setTitleX("Residuals (um)");
+                    hi_right.setTitleY("Counts");
+                    hi_right.setOptStat(optStats);
+                    hi_right.setLineColor(4);
+                    this.leftright[is].addDataSet(hi_left, il);
+                    this.leftright[is].addDataSet(hi_right, il);
                     H2F hi_wire = new H2F("hi-L" + layer + "_S" + sector, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes, 112, 1, 113);
                     hi_wire.setTitleX("Residuals (um)");
                     hi_wire.setTitleY("Wire");
@@ -496,13 +497,15 @@ public class Histo {
                                 this.residuals[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.residual);
                                 if(it==0 && ip==0) {
                                     this.calib.getH1F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
-                                    if(hit.lr>0)
-                                        this.leftright.getH1F("hi-rSL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
-                                    else
-                                        this.leftright.getH1F("hi-lSL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
                                     this.alpha.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(Math.toDegrees(electron.theta())-Constants.THTHILT, hit.alpha);
                                     this.doca.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time, hit.doca);
-                                    if(tres) this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.time, hit.wire);
+                                    if(tres) {
+                                        if(hit.lr>0)
+                                            this.leftright[sector-1].getH1F("hi-rL" + hit.layer + "_S" + hit.sector).fill(hit.time);
+                                        else
+                                            this.leftright[sector-1].getH1F("hi-lL" + hit.layer + "_S" + hit.sector).fill(hit.time);
+                                        this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.time, hit.wire);
+                                    }
                                 }
                                 if(tres) this.time[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.time);
                             }
@@ -770,14 +773,19 @@ public class Histo {
     }
     
     public EmbeddedCanvasTabbed plotHistos() {
-        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("Calibration", "Alpha", "Doca", "LR");
+        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("Calibration", "Alpha", "Doca");
         canvas.getCanvas("Calibration").draw(calib);
         canvas.getCanvas("Alpha").draw(alpha);
         for(EmbeddedPad pad : canvas.getCanvas("Alpha").getCanvasPads())
             pad.getAxisZ().setLog(true);
         canvas.getCanvas("Doca").draw(doca);
-        canvas.getCanvas("LR").draw(leftright);
         if(tres) {
+            for(int is=0; is<nSector; is++) {
+                int    sector = is+1;
+                String title  = "LRSec" + sector;
+                canvas.addCanvas(title);
+                canvas.getCanvas(title).draw(leftright[is]);
+            }
             for(int is=0; is<nSector; is++) {
                 int    sector = is+1;
                 String title  = "WSec" + sector;
