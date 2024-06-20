@@ -445,6 +445,10 @@ public class Alignment {
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms(null, 1));
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms(compareAlignment.subtract(previousAlignment), 3));
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms(fittedAlignment, 2));
+                canvas.addCanvas("before/after by region");
+                canvas.getCanvas("before/after by region").draw(this.getRegionHistograms(null, 1));
+                canvas.getCanvas("before/after by region").draw(this.getRegionHistograms(compareAlignment.subtract(previousAlignment), 3));
+                canvas.getCanvas("before/after by region").draw(this.getRegionHistograms(fittedAlignment, 2));
                 canvas.getCanvas().setFont(fontName);
                 canvas.addCanvas("misalignments");
                 canvas.getCanvas("misalignments").draw(comAlignPars);
@@ -782,6 +786,33 @@ public class Alignment {
                         hi_sig.fill(sigma);
                     }
                 }        
+            }
+        }
+        return residuals;        
+    }
+
+    private DataGroup getRegionHistograms(Table alignment, int icol) {
+
+        DataGroup residuals = new DataGroup(Constants.NSECTOR,Constants.NREGION);
+        for(int is=0; is<Constants.NSECTOR; is++ ) {
+            int sector = is+1;
+            for(int ir=0; ir<Constants.NREGION; ir++) {
+                int region = ir+1;
+                H1F hi_res = new H1F("hi-res_S" + sector + "_R" + region, "Residual mean (um)", "Counts", 100, -300, 300);
+                hi_res.setTitle("Sector " + sector);
+                hi_res.setLineColor(icol);
+                hi_res.setOptStat("1101");
+                residuals.addDataSet(hi_res, ir*Constants.NSECTOR + is);
+                for(int it=1; it<thetaBins.length; it++) {
+                    for(int ip=1; ip<phiBins.length; ip++) {
+                        for (int il = 0; il < Constants.NLAYER/Constants.NREGION; il++) {
+                            int ilayer = il+ir*Constants.NLAYER/Constants.NREGION;
+                            double shift = histos.get("nominal").getParValues(sector, it, ip)[ilayer]
+                                         - this.getFittedResidual(alignment, sector, it, ip)[ilayer];
+                            hi_res.fill(shift);
+                        }
+                    }        
+                }
             }
         }
         return residuals;        

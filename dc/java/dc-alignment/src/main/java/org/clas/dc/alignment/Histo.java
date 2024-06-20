@@ -1708,6 +1708,9 @@ public class Histo {
                     }
                     newGroup.addDataSet(dsread,i);                        
                 }
+                else {
+                    newGroup.addDataSet(ds, i);
+                }
             }
         }
         return newGroup;
