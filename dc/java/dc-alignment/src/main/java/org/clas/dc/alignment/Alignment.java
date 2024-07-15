@@ -367,50 +367,59 @@ public class Alignment {
             pad.getAxisX().setRange(-2000, 2000);
         
         canvas.addCanvas("nominal vs. theta");
-        canvas.getCanvas("nominal vs. theta").draw(this.getAngularGraph(null));
+        canvas.getCanvas("nominal vs. theta").draw(this.getAngularGraph("fit",null));
         canvas.getCanvas().setFont(fontName);
         for(EmbeddedPad pad : canvas.getCanvas("nominal vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
         canvas.addCanvas("time residuals vs. theta");
-        canvas.getCanvas("time residuals vs. theta").draw(this.getTimeGraph());
+        canvas.getCanvas("time residuals vs. theta").draw(this.getAngularGraph("time",null));
         canvas.getCanvas().setFont(fontName);
         for(EmbeddedPad pad : canvas.getCanvas("time residuals vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
         canvas.addCanvas("LR residuals vs. theta");
-        canvas.getCanvas("LR residuals vs. theta").draw(this.getLRGraph());
+        canvas.getCanvas("LR residuals vs. theta").draw(this.getAngularGraph("LR",null));
         canvas.getCanvas().setFont(fontName);
         for(EmbeddedPad pad : canvas.getCanvas("LR residuals vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
-        LOGGER.log(LEVEL,"\nPlotting corrected geometry residuals");        
-        canvas.addCanvas("CCDB corrected");
-        canvas.getCanvas("CCDB corrected").draw(this.getResidualGraphs(compareAlignment.subtract(initAlignment)));
+        canvas.addCanvas("residual mean and sigma");
+        canvas.getCanvas("residual mean and sigma").draw(this.getSectorHistograms("fit",null, 1));
+        canvas.getCanvas("residual mean and sigma").draw(this.getSectorHistograms("time",null, 4));
         canvas.getCanvas().setFont(fontName);
-        for(EmbeddedPad pad : canvas.getCanvas("CCDB corrected").getCanvasPads())
-            pad.getAxisX().setRange(-2000, 2000);
-        
-        canvas.addCanvas("CCDB corrected vs. theta");
-        canvas.getCanvas("CCDB corrected vs. theta").draw(this.getAngularGraph(compareAlignment.subtract(initAlignment)));
+        canvas.addCanvas("residuals by region");
+        canvas.getCanvas("residuals by region").draw(this.getRegionHistograms("fit",null, 1));
+        canvas.getCanvas("residuals by region").draw(this.getRegionHistograms("time",null, 4));
         canvas.getCanvas().setFont(fontName);
-        for(EmbeddedPad pad : canvas.getCanvas("CCDB corrected vs. theta").getCanvasPads())
-            pad.getAxisX().setRange(-2000, 2000);
-        
-        // shifts
-        LOGGER.log(LEVEL,"\nPlotting shifted geometry residuals");
-        canvas.addCanvas("shift magnitude");
-        canvas.getCanvas("shift magnitude").draw(this.getShiftsHisto(1));
-        for(String key : histos.keySet()) {
-            if(!key.equals("nominal")) {
-                canvas.addCanvas(key);
-                canvas.getCanvas(key).draw(this.getShiftsGraph(key));
-                canvas.getCanvas().setFont(fontName);
-                for(EmbeddedPad pad : canvas.getCanvas(key).getCanvasPads())
-                    pad.getAxisX().setRange(-1000, 1000);
-            }
-        }
+                
         if(compareAlignment!=null) {
+            LOGGER.log(LEVEL,"\nPlotting corrected geometry residuals");        
+            canvas.addCanvas("CCDB corrected");
+            canvas.getCanvas("CCDB corrected").draw(this.getResidualGraphs(compareAlignment.subtract(initAlignment)));
+            canvas.getCanvas().setFont(fontName);
+            for(EmbeddedPad pad : canvas.getCanvas("CCDB corrected").getCanvasPads())
+                pad.getAxisX().setRange(-2000, 2000);
+
+            canvas.addCanvas("CCDB corrected vs. theta");
+            canvas.getCanvas("CCDB corrected vs. theta").draw(this.getAngularGraph("fit",compareAlignment.subtract(initAlignment)));
+            canvas.getCanvas().setFont(fontName);
+            for(EmbeddedPad pad : canvas.getCanvas("CCDB corrected vs. theta").getCanvasPads())
+                pad.getAxisX().setRange(-2000, 2000);
+
+            // shifts
+            LOGGER.log(LEVEL,"\nPlotting shifted geometry residuals");
+            canvas.addCanvas("shift magnitude");
+            canvas.getCanvas("shift magnitude").draw(this.getShiftsHisto(1));
+            for(String key : histos.keySet()) {
+                if(!key.equals("nominal")) {
+                    canvas.addCanvas(key);
+                    canvas.getCanvas(key).draw(this.getShiftsGraph(key));
+                    canvas.getCanvas().setFont(fontName);
+                    for(EmbeddedPad pad : canvas.getCanvas(key).getCanvasPads())
+                        pad.getAxisX().setRange(-1000, 1000);
+                }
+            }
             LOGGER.log(LEVEL,"\nFitting residuals");
             LOGGER.log(LEVEL,"\nInitial alignment parameters (variation: " + this.previousVariation + ") in the DC tilted sector frame\n" + this.previousAlignment.toString());
             LOGGER.log(LEVEL,"\nInitial alignment parameters (variation: " + this.previousVariation + ") in CCDB format\n" + this.previousAlignment.toCCDBTable());
@@ -434,7 +443,7 @@ public class Alignment {
                     pad.getAxisX().setRange(-2000, 2000);
 
                 canvas.addCanvas("corrected (with new parameters) vs. theta");
-                canvas.getCanvas("corrected (with new parameters) vs. theta").draw(this.getAngularGraph(fittedAlignment));
+                canvas.getCanvas("corrected (with new parameters) vs. theta").draw(this.getAngularGraph("fit",fittedAlignment));
                 canvas.getCanvas().setFont(fontName);
                 for(EmbeddedPad pad : canvas.getCanvas("corrected (with new parameters) vs. theta").getCanvasPads())
                     pad.getAxisX().setRange(-2000, 2000); 
@@ -442,13 +451,14 @@ public class Alignment {
                 DataGroup preAlignPars = this.previousAlignment.getDataGroup(3);
                 DataGroup newAlignPars = finalAlignment.getDataGroup(2);
                 canvas.addCanvas("before/after");
-                canvas.getCanvas("before/after").draw(this.getSectorHistograms(null, 1));
-                canvas.getCanvas("before/after").draw(this.getSectorHistograms(compareAlignment.subtract(previousAlignment), 3));
-                canvas.getCanvas("before/after").draw(this.getSectorHistograms(fittedAlignment, 2));
+                canvas.getCanvas("before/after").draw(this.getSectorHistograms("fit",null, 1));
+                canvas.getCanvas("before/after").draw(this.getSectorHistograms("fit",compareAlignment.subtract(previousAlignment), 3));
+                canvas.getCanvas("before/after").draw(this.getSectorHistograms("fit",fittedAlignment, 2));
+                canvas.getCanvas().setFont(fontName);
                 canvas.addCanvas("before/after by region");
-                canvas.getCanvas("before/after by region").draw(this.getRegionHistograms(null, 1));
-                canvas.getCanvas("before/after by region").draw(this.getRegionHistograms(compareAlignment.subtract(previousAlignment), 3));
-                canvas.getCanvas("before/after by region").draw(this.getRegionHistograms(fittedAlignment, 2));
+                canvas.getCanvas("before/after by region").draw(this.getRegionHistograms("fit",null, 1));
+                canvas.getCanvas("before/after by region").draw(this.getRegionHistograms("fit",compareAlignment.subtract(previousAlignment), 3));
+                canvas.getCanvas("before/after by region").draw(this.getRegionHistograms("fit",fittedAlignment, 2));
                 canvas.getCanvas().setFont(fontName);
                 canvas.addCanvas("misalignments");
                 canvas.getCanvas("misalignments").draw(comAlignPars);
@@ -664,7 +674,7 @@ public class Alignment {
     }
 
     
-    private DataGroup getAngularGraph(Table alignment) {
+    private DataGroup getAngularGraph(String parameter, Table alignment) {
         double[] zeros  = new double[thetaBins.length-1];
 
         DataGroup residuals = new DataGroup(6,1);
@@ -676,10 +686,12 @@ public class Alignment {
                     double[] errorRes = new double[thetaBins.length-1];
                     double[] angles   = new double[thetaBins.length-1];          
                     for(int it=1; it<thetaBins.length; it++) {
-                        shiftRes[it-1] = histos.get("nominal").getParValues(sector, it, ip)[il]
-                                       - this.getFittedResidual(alignment, sector, it, ip)[il];
-                        errorRes[it-1] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(sector, it, ip)[il], 2)
-                                               + 0*Math.pow(this.getFittedResidualError(alignment, sector, it, ip)[il], 2));
+                        shiftRes[it-1] = histos.get("nominal").getParValues(parameter, sector, it, ip)[il];
+                        if(!(parameter.equals("time") || parameter.equals("LR"))) {
+                            shiftRes[it-1] -= this.getFittedResidual(alignment, sector, it, ip)[il];
+                            errorRes[it-1] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(parameter,sector, it, ip)[il], 2)
+                                                   + 0*Math.pow(this.getFittedResidualError(alignment, sector, it, ip)[il], 2));
+                        }
 //                        angles[it-1]   = thetaBins[it].getMean()+thetaBins[it].getWidth()*(il-Constants.NLAYER/2)/Constants.NLAYER/1.2;
                         angles[it-1]   = it+0.9*(il-Constants.NLAYER/2)/Constants.NLAYER;
                     }
@@ -698,70 +710,8 @@ public class Alignment {
         }
         return residuals;        
     }
-    
-    private DataGroup getTimeGraph() {
-        double[] zeros  = new double[thetaBins.length-1];
 
-        DataGroup residuals = new DataGroup(6,1);
-        for(int is=0; is<Constants.NSECTOR; is++ ) {
-            int sector = is+1;
-            for(int ip=1; ip<phiBins.length; ip++) {
-                for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
-                    double[] shiftRes = new double[thetaBins.length-1];
-                    double[] errorRes = new double[thetaBins.length-1];
-                    double[] angles   = new double[thetaBins.length-1];          
-                    for(int it=1; it<thetaBins.length; it++) {
-                        shiftRes[it-1] = histos.get("nominal").getTimeValues(sector, it, ip)[il];
-                        angles[it-1]   = it+0.9*(il-Constants.NLAYER/2)/Constants.NLAYER;
-                    }
-                    GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_layer " + il + "_phi" + ip, 
-                                                         shiftRes, angles, errorRes, zeros);
-                    gr_fit.setTitle("Sector " + sector);
-                    gr_fit.setTitleX("Residual (um)");
-                    gr_fit.setTitleY("#theta bin/layer");
-                    if(il==0 || il>=Constants.NLAYER+Constants.NTARGET-2) gr_fit.setMarkerColor(1);
-                    else      gr_fit.setMarkerColor(this.markerColor[(il-1)/6]);
-                    gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
-                    gr_fit.setMarkerSize(this.markerSize);
-                    residuals.addDataSet(gr_fit, is);                    
-                }               
-            }
-        }
-        return residuals;        
-    }
-
-    private DataGroup getLRGraph() {
-        double[] zeros  = new double[thetaBins.length-1];
-
-        DataGroup residuals = new DataGroup(6,1);
-        for(int is=0; is<Constants.NSECTOR; is++ ) {
-            int sector = is+1;
-            for(int ip=1; ip<phiBins.length; ip++) {
-                for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
-                    double[] shiftRes = new double[thetaBins.length-1];
-                    double[] errorRes = new double[thetaBins.length-1];
-                    double[] angles   = new double[thetaBins.length-1];          
-                    for(int it=1; it<thetaBins.length; it++) {
-                        shiftRes[it-1] = histos.get("nominal").getLRValues(sector, it, ip)[il];
-                        angles[it-1]   = it+0.9*(il-Constants.NLAYER/2)/Constants.NLAYER;
-                    }
-                    GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_layer " + il + "_phi" + ip, 
-                                                         shiftRes, angles, errorRes, zeros);
-                    gr_fit.setTitle("Sector " + sector);
-                    gr_fit.setTitleX("Residual (um)");
-                    gr_fit.setTitleY("#theta bin/layer");
-                    if(il==0 || il>=Constants.NLAYER+Constants.NTARGET-2) gr_fit.setMarkerColor(1);
-                    else      gr_fit.setMarkerColor(this.markerColor[(il-1)/6]);
-                    gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
-                    gr_fit.setMarkerSize(this.markerSize);
-                    residuals.addDataSet(gr_fit, is);                    
-                }               
-            }
-        }
-        return residuals;        
-    }
-
-    private DataGroup getSectorHistograms(Table alignment, int icol) {
+    private DataGroup getSectorHistograms(String parameter, Table alignment, int icol) {
 
         DataGroup residuals = new DataGroup(6,2);
         for(int is=0; is<Constants.NSECTOR; is++ ) {
@@ -779,9 +729,11 @@ public class Alignment {
             for(int it=1; it<thetaBins.length; it++) {
                 for(int ip=1; ip<phiBins.length; ip++) {
                     for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
-                        double shift = histos.get("nominal").getParValues(sector, it, ip)[il]
-                                     - this.getFittedResidual(alignment, sector, it, ip)[il];
-                        double sigma = histos.get("nominal").getParSigmas(sector, it, ip)[il];
+                        double shift = histos.get("nominal").getParValues(parameter, sector, it, ip)[il];
+                        if(!(parameter.equals("time") || parameter.equals("LR"))) {
+                            shift -= this.getFittedResidual(alignment, sector, it, ip)[il];
+                        }
+                        double sigma = histos.get("nominal").getParSigmas(parameter, sector, it, ip)[il];
                         hi_res.fill(shift);
                         hi_sig.fill(sigma);
                     }
@@ -791,7 +743,7 @@ public class Alignment {
         return residuals;        
     }
 
-    private DataGroup getRegionHistograms(Table alignment, int icol) {
+    private DataGroup getRegionHistograms(String parameter, Table alignment, int icol) {
 
         DataGroup residuals = new DataGroup(Constants.NSECTOR,Constants.NREGION);
         for(int is=0; is<Constants.NSECTOR; is++ ) {
@@ -807,8 +759,10 @@ public class Alignment {
                     for(int ip=1; ip<phiBins.length; ip++) {
                         for (int il = 0; il < Constants.NLAYER/Constants.NREGION; il++) {
                             int ilayer = il+ir*Constants.NLAYER/Constants.NREGION;
-                            double shift = histos.get("nominal").getParValues(sector, it, ip)[ilayer]
-                                         - this.getFittedResidual(alignment, sector, it, ip)[ilayer];
+                            double shift = histos.get("nominal").getParValues(parameter, sector, it, ip)[ilayer];
+                            if(!(parameter.equals("time") || parameter.equals("LR"))) {
+                                shift -= this.getFittedResidual(alignment, sector, it, ip)[ilayer];
+                            }
                             hi_res.fill(shift);
                         }
                     }        
@@ -1217,7 +1171,7 @@ public class Alignment {
         parser.parse(args);
         
         boolean openWindow = false;
-        
+        String frameTitle = "DC Alignment";
         
         if(parser.getCommand().equals("-process")) {
             int    maxEvents   = parser.getOptionParser("-process").getOption("-nevent").intValue();
@@ -1249,6 +1203,7 @@ public class Alignment {
             boolean  verbose      = parser.getOptionParser("-process").getOption("-verbose").intValue()!=0;
             boolean  testFit      = parser.getOptionParser("-process").getOption("-test").intValue()!=0;
             openWindow            = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
+            frameTitle = frameTitle + " - " + nominal;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
             if(verbose)     align.setLoggerLevel(Level.FINE);
             
@@ -1299,6 +1254,7 @@ public class Alignment {
             if(verbose)     align.setLoggerLevel(Level.FINE);
 
             String histoName   = parser.getOptionParser("-analyze").getOption("-input").stringValue();
+            frameTitle = frameTitle + " - " + histoName;
 
             align.setShiftsMode(shifts);
             align.setFitOptions(sector, iter, tscFrame, r1Global);
@@ -1325,6 +1281,7 @@ public class Alignment {
             if(verbose)     align.setLoggerLevel(Level.FINE);
 
             String histoName   = parser.getOptionParser("-fit").getOption("-input").stringValue();
+            frameTitle = frameTitle + " - " + histoName;
 
             align.setShiftsMode(shifts);
             align.setFitOptions(sector, iter, tscFrame, r1Global);
@@ -1334,7 +1291,7 @@ public class Alignment {
         }
 
         if(openWindow) {
-            JFrame frame = new JFrame("DC Alignment");
+            JFrame frame = new JFrame(frameTitle);
             frame.setSize(1200, 800);
             frame.add(align.getCanvases());
             frame.setLocationRelativeTo(null);

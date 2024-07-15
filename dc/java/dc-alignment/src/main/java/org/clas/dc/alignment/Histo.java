@@ -49,7 +49,9 @@ public class Histo {
     private DataGroup[][][] leftright = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][]   vertex    = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains sectors
 
+    private double[][][][] zeroes = null;
     private double[][][][] timeValues = null;
+    private double[][][][] timeSigmas = null;
     private double[][][][] lrValues = null;
     private double[][][][] parValues = null;
     private double[][][][] parErrors = null;
@@ -129,10 +131,12 @@ public class Histo {
             this.leftright = new DataGroup[nSector][thetaBins.length][phiBins.length];
         }
         this.vertex    = new DataGroup[thetaBins.length][phiBins.length];
+        this.zeroes = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.parValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.parErrors = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.parSigmas = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.timeValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
+        this.timeSigmas = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.lrValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         
         int nbinsRes  = Constants.RESBINS;
@@ -625,6 +629,7 @@ public class Histo {
                             H1F htime = this.time[is][it][ip].getH1F("hi-L" + l);
                             if(Histo.fitResiduals(fit, htime)) {
                                 this.timeValues[is][it][ip][l] = htime.getFunction().getParameter(1); 
+                                this.timeSigmas[is][it][ip][l] = htime.getFunction().getParameter(2); 
                             } 
                             H1F hleft  = this.leftright[is][it][ip].getH1F("hi-lL" + l);
                             H1F hright = this.leftright[is][it][ip].getH1F("hi-rL" + l);
@@ -727,54 +732,61 @@ public class Histo {
         return this.beamOffset;
     }
     
-    public double[] getTimeValues(int sector, int itheta, int iphi) {
-        if(sector<1 || sector>6) 
-            throw new IllegalArgumentException("Error: invalid sector="+sector);
-        if(itheta<0 || itheta>=thetaBins.length) 
-            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
-        if(iphi<0 || iphi>phiBins.length) 
-            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
-        return this.timeValues[sector-1][itheta][iphi];
-    }
-    
-    public double[] getLRValues(int sector, int itheta, int iphi) {
-        if(sector<1 || sector>6) 
-            throw new IllegalArgumentException("Error: invalid sector="+sector);
-        if(itheta<0 || itheta>=thetaBins.length) 
-            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
-        if(iphi<0 || iphi>phiBins.length) 
-            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
-        return this.lrValues[sector-1][itheta][iphi];
-    }
-
     public double[] getParValues(int sector, int itheta, int iphi) {
-        if(sector<1 || sector>6) 
-            throw new IllegalArgumentException("Error: invalid sector="+sector);
-        if(itheta<0 || itheta>=thetaBins.length) 
-            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
-        if(iphi<0 || iphi>phiBins.length) 
-            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
-        return this.parValues[sector-1][itheta][iphi];
+        return this.getParValues("", sector, itheta, iphi);
     }
     
     public double[] getParErrors(int sector, int itheta, int iphi) {
-        if(sector<1 || sector>6) 
-            throw new IllegalArgumentException("Error: invalid sector="+sector);
-        if(itheta<0 || itheta>=thetaBins.length) 
-            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
-        if(iphi<0 || iphi>phiBins.length) 
-            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
-        return this.parErrors[sector-1][itheta][iphi];
+        return this.getParErrors("", sector, itheta, iphi);
     }
     
     public double[] getParSigmas(int sector, int itheta, int iphi) {
+        return this.getParSigmas("", sector, itheta, iphi);
+    }
+    
+    public double[] getParValues(String parameter, int sector, int itheta, int iphi) {
         if(sector<1 || sector>6) 
             throw new IllegalArgumentException("Error: invalid sector="+sector);
         if(itheta<0 || itheta>=thetaBins.length) 
             throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
         if(iphi<0 || iphi>phiBins.length) 
             throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
-        return this.parSigmas[sector-1][itheta][iphi];
+        if(parameter.equals("time"))
+            return this.timeValues[sector-1][itheta][iphi];
+        else if(parameter.equals("LR"))
+            return this.lrValues[sector-1][itheta][iphi];
+        else
+            return this.parValues[sector-1][itheta][iphi];
+    }
+    
+    public double[] getParErrors(String parameter, int sector, int itheta, int iphi) {
+        if(sector<1 || sector>6) 
+            throw new IllegalArgumentException("Error: invalid sector="+sector);
+        if(itheta<0 || itheta>=thetaBins.length) 
+            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
+        if(iphi<0 || iphi>phiBins.length) 
+            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
+        if(parameter.equals("time"))
+            return this.zeroes[sector-1][itheta][iphi];
+        else if(parameter.equals("LR"))
+            return this.zeroes[sector-1][itheta][iphi];
+        else
+            return this.parErrors[sector-1][itheta][iphi];
+    }
+    
+    public double[] getParSigmas(String parameter, int sector, int itheta, int iphi) {
+        if(sector<1 || sector>6) 
+            throw new IllegalArgumentException("Error: invalid sector="+sector);
+        if(itheta<0 || itheta>=thetaBins.length) 
+            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
+        if(iphi<0 || iphi>phiBins.length) 
+            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
+        if(parameter.equals("time"))
+            return this.timeSigmas[sector-1][itheta][iphi];
+        else if(parameter.equals("LR"))
+            return this.zeroes[sector-1][itheta][iphi];
+        else
+            return this.parSigmas[sector-1][itheta][iphi];
     }
     
     public EmbeddedCanvasTabbed getElectronPlots() {
