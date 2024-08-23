@@ -42,6 +42,7 @@ public class Constants {
     public static int    VDFBINS = 200;
     public static double VDFMIN = -5.0;
     public static double VDFMAX =  5.0;
+    public static double CHI2MAX = 2.5;
 
     
     // global fit
@@ -74,6 +75,7 @@ public class Constants {
     
     
     // measurements weight   
+    public static double[][][][] MEASWEIGHTS = null;
     public static double[] MEASWEIGHT = { 1,  1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 
                                               1,      1,      1,       1,       1,       1, 

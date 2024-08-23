@@ -28,8 +28,10 @@ import org.jlab.groot.data.Directory;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.TDirectory;
+import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.graphics.EmbeddedPad;
+import org.jlab.groot.graphics.IDataSetPlotter;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.jnp.utils.options.OptionStore;
 import org.jlab.logging.DefaultLogger;
@@ -169,6 +171,19 @@ public class Alignment {
         }
     }
     
+    private void initMeasurementWeights(double w) {
+        Constants.MEASWEIGHTS = new double[Constants.NSECTOR][thetaBins.length][phiBins.length][Constants.NLAYER+Constants.NTARGET];
+        for(int is=0; is<Constants.NSECTOR; is++) {
+            for(int il=0; il<Constants.NLAYER+Constants.NTARGET; il++) {
+                for(int it=1; it<thetaBins.length; it ++) {
+                    for(int ip=1; ip<phiBins.length; ip++) {
+                        Constants.MEASWEIGHTS[is][it][ip][il] = w;
+                    }
+                }
+            }
+        }
+    }
+    
     private void initVertexPar(int vertex, String pars) {
         if(!pars.isEmpty()) {
             double[] parValues = new double[pars.split(":").length];
@@ -219,6 +234,7 @@ public class Alignment {
     public void analyzeHistos(int resFit, int vertexFit, String vertexPar, boolean test) {
         this.printConfig(resFit, "resFit", "");
         this.printConfig(vertexFit, "vertexFit", "");
+        this.initMeasurementWeights(1.0);
         this.initVertexPar(vertexFit, vertexPar);
         for(String key : histos.keySet()) {
             if(test && !key.equals("nominal")) continue;
@@ -226,6 +242,27 @@ public class Alignment {
             histos.get(key).analyzeHisto(resFit, vertexFit);
             for(int i=0; i<Constants.NPARS; i++)
                 if(key.equals(Constants.PARNAME[i])) Constants.PARACTIVE[i] = true;
+        }
+        this.printExclusionStats();
+    }
+    
+    private void printExclusionStats() {
+        LOGGER.log(Level.WARNING, "\nEcluded measurements because of failed fits:");
+        for (int is = 0; is < Constants.NSECTOR; is++) {
+            String si = "";
+            int nexclude = 0;
+            for (int it = 1; it < thetaBins.length; it++) {
+                for (int ip = 1; ip < phiBins.length; ip++) {
+                    for (int il = 0; il < Constants.NLAYER + Constants.NTARGET; il++) {
+                        if (Constants.MEASWEIGHTS[is][it][ip][il] == 0) {
+                            nexclude++;
+                            si += String.format("\n\t\ttheta bin=%d phi bin=%d layer=%d", it, ip, il);
+                        }
+                    }
+                }
+            }
+            si = "\tSector " + (is+1) + String.format(": %d/%d", nexclude, (thetaBins.length-1)*(phiBins.length-1)*(Constants.NLAYER+Constants.NTARGET)) + si;
+            LOGGER.log(Level.WARNING, si);
         }
     }
     
@@ -387,10 +424,12 @@ public class Alignment {
         canvas.addCanvas("residual mean and sigma");
         canvas.getCanvas("residual mean and sigma").draw(this.getSectorHistograms("fit",null, 1));
         canvas.getCanvas("residual mean and sigma").draw(this.getSectorHistograms("time",null, 4));
+        this.canvasAutoScale(canvas.getCanvas("residual mean and sigma"));
         canvas.getCanvas().setFont(fontName);
         canvas.addCanvas("residuals by region");
         canvas.getCanvas("residuals by region").draw(this.getRegionHistograms("fit",null, 1));
         canvas.getCanvas("residuals by region").draw(this.getRegionHistograms("time",null, 4));
+        this.canvasAutoScale(canvas.getCanvas("residuals by region"));
         canvas.getCanvas().setFont(fontName);
                 
         if(compareAlignment!=null) {
@@ -411,6 +450,7 @@ public class Alignment {
             LOGGER.log(LEVEL,"\nPlotting shifted geometry residuals");
             canvas.addCanvas("shift magnitude");
             canvas.getCanvas("shift magnitude").draw(this.getShiftsHisto(1));
+            this.canvasAutoScale(canvas.getCanvas("shift magnitude"));
             for(String key : histos.keySet()) {
                 if(!key.equals("nominal")) {
                     canvas.addCanvas(key);
@@ -454,11 +494,13 @@ public class Alignment {
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms("fit",null, 1));
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms("fit",compareAlignment.subtract(previousAlignment), 3));
                 canvas.getCanvas("before/after").draw(this.getSectorHistograms("fit",fittedAlignment, 2));
+                this.canvasAutoScale(canvas.getCanvas("before/after"));
                 canvas.getCanvas().setFont(fontName);
                 canvas.addCanvas("before/after by region");
                 canvas.getCanvas("before/after by region").draw(this.getRegionHistograms("fit",null, 1));
                 canvas.getCanvas("before/after by region").draw(this.getRegionHistograms("fit",compareAlignment.subtract(previousAlignment), 3));
                 canvas.getCanvas("before/after by region").draw(this.getRegionHistograms("fit",fittedAlignment, 2));
+                this.canvasAutoScale(canvas.getCanvas("before/after by region"));
                 canvas.getCanvas().setFont(fontName);
                 canvas.addCanvas("misalignments");
                 canvas.getCanvas("misalignments").draw(comAlignPars);
@@ -502,6 +544,17 @@ public class Alignment {
         return canvas;
     }
     
+    private void canvasAutoScale(EmbeddedCanvas canvas) {
+        for(EmbeddedPad pad : canvas.getCanvasPads()){
+            double yMax = -1;
+            for(IDataSetPlotter ds : pad.getDatasetPlotters()) {
+                if(ds.getDataSet() instanceof H1F) {
+                    yMax = Math.max(yMax, ds.getDataSet().getMax());
+                }
+            }
+            if(yMax>0) pad.getAxisY().setRange(0, yMax*1.2);
+        }
+    }
     
     private Parameter[] fit(int sector) {
         String options = "";
@@ -569,9 +622,6 @@ public class Alignment {
     }
     
     private DataGroup getResidualGraphs(Table alignment) {
-        double[] layers = new double[Constants.NLAYER+Constants.NTARGET];
-        double[] zeros  = new double[Constants.NLAYER+Constants.NTARGET];
-        for(int il=0; il<Constants.NLAYER+Constants.NTARGET; il++) layers[il]=il;
 
         DataGroup residuals = new DataGroup(2,3);
         for(int it=1; it<thetaBins.length; it ++) {
@@ -580,14 +630,15 @@ public class Alignment {
                     int sector = is+1;
                     double[] shiftRes = new double[Constants.NLAYER+Constants.NTARGET];
                     double[] errorRes = new double[Constants.NLAYER+Constants.NTARGET];
+                    GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_theta " + it + "_phi" + ip); 
                     for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
                         shiftRes[il] = histos.get("nominal").getParValues(sector, it, ip)[il]
                                      - this.getFittedResidual(alignment, sector, it, ip)[il];
                         errorRes[il] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(sector, it, ip)[il], 2)
                                               +0*Math.pow(this.getFittedResidualError(alignment, sector, it, ip)[il], 2));
+                        if(Constants.MEASWEIGHTS[is][it][ip][il]>0)
+                            gr_fit.addPoint(shiftRes[il], il, errorRes[il], 0);
                     }
-                    GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_theta " + it + "_phi" + ip, 
-                                                         shiftRes, layers, errorRes, zeros);
                     gr_fit.setTitle("Sector " + sector);
                     gr_fit.setTitleX("Residual (um)");
                     gr_fit.setTitleY("Layer");
@@ -604,7 +655,6 @@ public class Alignment {
     private DataGroup getShiftsGraph(String key) {
         double[] layers = new double[Constants.NLAYER+Constants.NTARGET];
         double[] zeros  = new double[Constants.NLAYER+Constants.NTARGET];
-        for(int il=0; il<Constants.NLAYER+Constants.NTARGET; il++) layers[il]=il;
         
         DataGroup shifts = new DataGroup(thetaBins.length,phiBins.length);
         for(int it=0; it<thetaBins.length; it ++) {
@@ -612,23 +662,35 @@ public class Alignment {
                 for(int is=0; is<Constants.NSECTOR; is++ ) {
                     int sector = is+1;
                     // residuals 
-                    GraphErrors gr_res = new GraphErrors("gr_res_S" + sector  + "_theta " + it + "_phi" + ip, 
-                                                         this.getShifts(key, sector, it, ip), layers, 
-                                                         this.getShiftsError(key, sector, it, ip), zeros);
+                    GraphErrors gr_res = new GraphErrors("gr_res_S" + sector  + "_theta " + it + "_phi" + ip);
+                    for(int il=0; il<Constants.NLAYER+Constants.NTARGET; il++) {
+                        if(Constants.MEASWEIGHTS[is][it][ip][il]>0)
+                            gr_res.addPoint(this.getShifts(key, sector, it, ip)[il], il, this.getShiftsError(key, sector, it, ip)[il], 0);
+                    }
                     gr_res.setTitle("Theta:"+ thetaBins[it].getRange() + " Phi:" + phiBins[ip].getRange());
                     gr_res.setTitleX("Residual (um)");
                     gr_res.setTitleY("Layer");
                     gr_res.setMarkerColor(this.markerColor[is]);
                     gr_res.setMarkerSize(this.markerSize);
-                    shifts.addDataSet(gr_res, ip*thetaBins.length+it);
+                    if(gr_res.getDataSize(0)>0)
+                        shifts.addDataSet(gr_res, ip*thetaBins.length+it);
                 }
-                GraphErrors gr_res = new GraphErrors("gr_res" + "_theta " + it + "_phi" + ip, this.getShifts(key, it, ip), layers, zeros, zeros);
+                GraphErrors gr_res = new GraphErrors("gr_res" + "_theta " + it + "_phi" + ip);
+                for(int il=0; il<Constants.NLAYER+Constants.NTARGET; il++) {
+                    double weight = 1;    
+                    for(int is=0; is<Constants.NSECTOR; is++ ) {
+                        if(Constants.MEASWEIGHTS[is][it][ip][il]==0) weight=0;
+                    }
+                    if(weight>0)
+                        gr_res.addPoint(this.getShifts(key, it, ip)[il], il, this.getShiftsError(key, it, ip)[il], 0);
+                }
                 gr_res.setTitle("Theta:"+ thetaBins[it].getRange() + " Phi:" + phiBins[ip].getRange());
                 gr_res.setTitleX("Residual (um)");
                 gr_res.setTitleY("Layer");
                 gr_res.setMarkerColor(1);
                 gr_res.setMarkerSize(this.markerSize);
-                shifts.addDataSet(gr_res, ip*thetaBins.length+it);
+                if(gr_res.getDataSize(0)>0)
+                    shifts.addDataSet(gr_res, ip*thetaBins.length+it);
             }
         }
         return shifts;
@@ -675,28 +737,25 @@ public class Alignment {
 
     
     private DataGroup getAngularGraph(String parameter, Table alignment) {
-        double[] zeros  = new double[thetaBins.length-1];
 
         DataGroup residuals = new DataGroup(6,1);
         for(int is=0; is<Constants.NSECTOR; is++ ) {
             int sector = is+1;
             for(int ip=1; ip<phiBins.length; ip++) {
                 for (int il = 0; il < Constants.NLAYER+Constants.NTARGET; il++) {
-                    double[] shiftRes = new double[thetaBins.length-1];
-                    double[] errorRes = new double[thetaBins.length-1];
-                    double[] angles   = new double[thetaBins.length-1];          
+                    GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_layer " + il + "_phi" + ip);
                     for(int it=1; it<thetaBins.length; it++) {
-                        shiftRes[it-1] = histos.get("nominal").getParValues(parameter, sector, it, ip)[il];
+                        double angles   = it+0.9*(il-Constants.NLAYER/2)/Constants.NLAYER;
+                        double shiftRes = histos.get("nominal").getParValues(parameter, sector, it, ip)[il];
+                        double errorRes = 0.0;
                         if(!(parameter.equals("time") || parameter.equals("LR"))) {
-                            shiftRes[it-1] -= this.getFittedResidual(alignment, sector, it, ip)[il];
-                            errorRes[it-1] = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(parameter,sector, it, ip)[il], 2)
+                            shiftRes -= this.getFittedResidual(alignment, sector, it, ip)[il];
+                            errorRes = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(parameter,sector, it, ip)[il], 2)
                                                    + 0*Math.pow(this.getFittedResidualError(alignment, sector, it, ip)[il], 2));
                         }
-//                        angles[it-1]   = thetaBins[it].getMean()+thetaBins[it].getWidth()*(il-Constants.NLAYER/2)/Constants.NLAYER/1.2;
-                        angles[it-1]   = it+0.9*(il-Constants.NLAYER/2)/Constants.NLAYER;
+                        if(Constants.MEASWEIGHTS[is][it][ip][il]>0 || parameter.equals("time") || parameter.equals("LR"))
+                            gr_fit.addPoint(shiftRes, angles, errorRes, 0.0);
                     }
-                    GraphErrors gr_fit = new GraphErrors("gr_fit_S" + sector + "_layer " + il + "_phi" + ip, 
-                                                         shiftRes, angles, errorRes, zeros);
                     gr_fit.setTitle("Sector " + sector);
                     gr_fit.setTitleX("Residual (um)");
                     gr_fit.setTitleY("#theta bin/layer");
@@ -1110,7 +1169,8 @@ public class Alignment {
 
         // valid options for histogram-base analysis
         parser.addCommand("-analyze", "analyze histogram files");
-        parser.getOptionParser("-analyze").addRequired("-input"  ,                 "input histogram file");
+        parser.getOptionParser("-analyze").setRequiresInputList(true);
+        parser.getOptionParser("-analyze").addOption("-o"        ,"",              "output histogram file name prefix");
         parser.getOptionParser("-analyze").addOption("-display"  ,"1",             "display histograms (0/1)");
         parser.getOptionParser("-analyze").addOption("-stats"    ,"",              "set histogram stat option");
         parser.getOptionParser("-analyze").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
@@ -1235,6 +1295,11 @@ public class Alignment {
         }
         
         if(parser.getCommand().equals("-analyze")) {
+            String namePrefix  = parser.getOptionParser("-analyze").getOption("-o").stringValue();  
+            String histoName   = "histo.hipo";
+            if(!namePrefix.isEmpty()) {
+                histoName  = namePrefix + "_" + histoName;
+            }
             String  optStats    = parser.getOptionParser("-analyze").getOption("-stats").stringValue();
             int     residuals   = parser.getOptionParser("-analyze").getOption("-residuals").intValue();
             int     vertexFit   = parser.getOptionParser("-analyze").getOption("-vertfit").intValue();
@@ -1253,14 +1318,15 @@ public class Alignment {
             if(!openWindow) System.setProperty("java.awt.headless", "true");
             if(verbose)     align.setLoggerLevel(Level.FINE);
 
-            String histoName   = parser.getOptionParser("-analyze").getOption("-input").stringValue();
-            frameTitle = frameTitle + " - " + histoName;
+            String inputHisto   = parser.getOptionParser("-analyze").getInputList().get(0);
+            frameTitle = frameTitle + " - " + inputHisto;
 
             align.setShiftsMode(shifts);
             align.setFitOptions(sector, iter, tscFrame, r1Global);
             align.initConstants(11, initVar, previousVar, compareVar);
-            align.readHistos(histoName, optStats);
+            align.readHistos(inputHisto, optStats);
             align.analyzeHistos(residuals, vertexFit, vertexPar, testFit);
+            align.saveHistos(histoName);
         }
         
         if(parser.getCommand().equals("-fit")) {
@@ -1280,7 +1346,7 @@ public class Alignment {
             if(!openWindow) System.setProperty("java.awt.headless", "true");
             if(verbose)     align.setLoggerLevel(Level.FINE);
 
-            String histoName   = parser.getOptionParser("-fit").getOption("-input").stringValue();
+            String histoName   = parser.getOptionParser("-fit").getInputList().get(0);
             frameTitle = frameTitle + " - " + histoName;
 
             align.setShiftsMode(shifts);
