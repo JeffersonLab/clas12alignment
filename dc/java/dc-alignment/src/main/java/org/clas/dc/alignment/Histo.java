@@ -516,7 +516,7 @@ public class Histo {
                                         else
                                             this.leftright[sector-1][it][ip].getH1F("hi-lL" + hit.layer).fill(hit.time);
                                     }
-                            }
+                                }
                             this.vertex[it][ip].getH1F("hi-S" + sector).fill(vz);
                     
                         }
