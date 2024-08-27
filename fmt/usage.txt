@@ -1,0 +1,63 @@
+       [-n/--nevents n] [-v/--var v] [-i/--inter r s] [-s/--swim s t h]
+       [-V/--variation v] [-p/--plot p] [-c/--cutsinfo c]
+       [-x/--dx x1 x2 x3] [-y/--dy y1 y2 y3] [-z/--dz z1 z2 z3]
+       [-X/--rx x1 x2 x3] [-Y/--ry y1 y2 y3] [-Z/--rz z1 z2 z3]
+
+    infile
+        input hipo file
+    -n, --nevents n
+        number of events to run. If unspecified, runs all events in the in-
+        put hipo file
+    -v, --var v
+        variable to be aligned, can be `dXY`, `dZ`, `rXY`, or `rZ`
+    -i, --inter r s
+        * r: range between nominal position and position to be tested
+        * s: step size for each tested value between <nominal - range> and
+        <nominal + range>
+    -s, --swim s t h
+        setup for the Swim class, defining scales and shift
+        * s: solenoid magnet scale (default: -0.75)
+        * t: torus magnet scale (default -1.0)
+        * h: solenoid magnet shift (default: 3.0)
+    -V, --variation v
+        string specifying the CCDB variation to be used; default value is
+        `rgf_spring2020`
+    -p, --plot p
+        integer defining if produced plots should be plotted or not; set to
+        1 to show them, 0 to not; in both cases, produced plots are stored
+        in the `histograms.hipo` file.
+    -c, --cutsinfo c
+        define how much data about the cuts applied should be printed to
+        stdout; default is 1
+        * 0: don't print any cuts data
+        * 1: print a minimal set of information
+        * 2: print a detailed report on the effect of the cuts applied
+    -x, --dx x1 x2 x3
+        x shift for each FMT layer
+    -y, --dy y1 y2 y3
+        y shift for each FMT layer
+    -z, --dz z1 z2 z3
+        z shift for each FMT layer.
+    -X, --rx x1 x2 x3
+        x rotation for each FMT layer.
+    -Y, --ry y1 y2 y3
+        y rotation for each FMT layer.
+    -Z, --rz z1 z2 z3
+        z rotation for each FMT layer.
+
+Fit FMT hits to DC tracks, assigning different shifts and rotations to each
+FMT layer each time. Alternatively, when no optional argument is specified,
+plot the residuals of each layer.
+
+For example, if called with:
+    ./run.sh infile -v dZ -i 0.2 0.1 --dz 0.3 0.5 0.7 -dx 0.3 0.4 0.5
+the tested values for each FMT layer's z shift will be
+    layer 1: (0.1 0.2 0.3 0.4 0.5)
+    layer 2: (0.3 0.4 0.5 0.6 0.7)
+    layer 3: (0.5 0.6 0.7 0.8 0.9)
+and each layer will be shifted in x by 0.3, 0.4, and 0.5, respectively. If
+a position (--d*) or rotation (--r*) is not specified, it is assumed to be
+0 for all FMT layers.
+
+NOTE. All distance measurements are in cm, while in the CCDB they're sto-
+red in mm.

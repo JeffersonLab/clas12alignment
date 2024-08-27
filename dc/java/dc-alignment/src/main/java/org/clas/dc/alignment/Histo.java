@@ -517,8 +517,7 @@ public class Histo {
                                             this.leftright[sector-1][it][ip].getH1F("hi-lL" + hit.layer).fill(hit.time);
                                     }
                             }
-                            this.vertex[it][ip].getH1F("hi-S" + sector).fill(vz);
-                    
+                            this.vertex[it][ip].getH1F("hi-S" + sector).fill(vz);                    
                         }
                     }
                 }
@@ -1428,6 +1427,7 @@ public class Histo {
     }
 
      /**
+<<<<<<< HEAD
      * 3-peaks vertex fitting function
      * Peaks correspond to: target windows and scattering chamber exit window
      * Initialized according to:
@@ -1491,6 +1491,8 @@ public class Histo {
     }
 
     /**
+=======
+>>>>>>> master
      * 4-peaks vertex fitting function
      * Peaks correspond to: target windows and scattering chamber exit window
      * Initialized according to:

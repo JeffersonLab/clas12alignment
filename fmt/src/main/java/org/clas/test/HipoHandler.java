@@ -154,7 +154,7 @@ public class HipoHandler {
                                            boolean showPlots) {
         // Setup.
         EmbeddedCanvas canvas = new EmbeddedCanvas();
-        DataGroup dg = new DataGroup(3, 1);
+        DataGroup dg = new DataGroup(Constants.FMTLAYERS, 1);
         GraphErrors[] graphs = new GraphErrors[Constants.FMTLAYERS];
         int pos = var.equals("dZ") ? 2 : 5;
 

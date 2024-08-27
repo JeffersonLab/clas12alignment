@@ -37,8 +37,10 @@ public class TrkSwim {
      * @param zTarget        z plane where to swim.
      * @return Array with data after swimming to z.
      */
-    public double[] swimToPlane(double x, double y, double z, double px, double py, double pz,
-            int q, double zTarget) {
+    public double[] swimToPlane(
+        double x, double y, double z, double px, double py, double pz, int q,
+        double zTarget
+    ) {
         swim.SetSwimParameters(x, y, z, px, py, pz, q);
         return swim.SwimToPlaneBoundary(zTarget, this.dir, 1);
     }

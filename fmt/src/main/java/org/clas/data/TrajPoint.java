@@ -59,8 +59,8 @@ public class TrajPoint {
             FiducialCuts fcuts, double[] fmtZ, double[] fmtAngle, double[][] shArr,
             int minTrjPoints, boolean applyCuts) {
         // Sanitize input.
-        if (minTrjPoints < 1 || minTrjPoints > 3) {
-            System.err.printf("minTrjPoints should be at least 1 and at most 3!\n");
+        if (minTrjPoints < 1 || minTrjPoints > Constants.FMTLAYERS) {
+            System.err.printf("minTrjPoints should be at least 1 and at most Constants.FMTLAYERS!\n");
             return null;
         }
 

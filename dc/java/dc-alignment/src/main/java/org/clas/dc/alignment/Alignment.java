@@ -755,7 +755,7 @@ public class Alignment {
                         }
                         if(Constants.MEASWEIGHTS[is][it][ip][il]>0 || parameter.equals("time") || parameter.equals("LR"))
                             gr_fit.addPoint(shiftRes, angles, errorRes, 0.0);
-                    }
+                        }
                     gr_fit.setTitle("Sector " + sector);
                     gr_fit.setTitleX("Residual (um)");
                     gr_fit.setTitleY("#theta bin/layer");

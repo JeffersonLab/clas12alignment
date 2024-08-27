@@ -199,7 +199,7 @@ public class ResolutionAnalysis {
             ei++;
 
             ArrayList<TrajPoint[]> trajPoints = TrajPoint.getTrajPoints(
-                    event, this.swim, this.fCuts, this.fmtZ, this.fmtAngle, this.shArr, 3, true);
+                    event, this.swim, this.fCuts, this.fmtZ, this.fmtAngle, this.shArr, Constants.FMTLAYERS, true);
             ArrayList<Cluster>[] clusters = Cluster.getClusters(event, this.fCuts, true);
 
             if (trajPoints == null || clusters == null) continue;
