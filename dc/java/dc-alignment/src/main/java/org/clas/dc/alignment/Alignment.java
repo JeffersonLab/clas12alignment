@@ -1201,7 +1201,7 @@ public class Alignment {
         
         // valid options for final minuit-fit
         parser.addCommand("-fit", "perform misalignment fit");
-        parser.getOptionParser("-fit").addRequired("-input"  ,                 "input histogram file");
+        parser.getOptionParser("-fit").setRequiresInputList(true);
         parser.getOptionParser("-fit").addOption("-display"  ,"1",             "display histograms (0/1)");
         parser.getOptionParser("-fit").addOption("-stats"    ,"",              "set histogram stat option");
         parser.getOptionParser("-fit").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
