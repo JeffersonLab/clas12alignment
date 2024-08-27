@@ -104,7 +104,8 @@ public class Constants {
     public static double SCALE        = 1000;
     
     // moller cone entrance
-    public static double MOLLERZ     = 85.87;//45.389;
+    public static double MOLLERZ     = 45.389;
+//    public static double MOLLERZ     = 85.87;//45.389;
     public static double MOLLERR     = 3.2;
     
     public static void initTargetPars(double[] pars) {
