@@ -432,7 +432,7 @@ public class Alignment {
         this.canvasAutoScale(canvas.getCanvas("residuals by region"));
         canvas.getCanvas().setFont(fontName);
                 
-        if(compareAlignment!=null) {
+        if(compareAlignment!=null && this.histos.size()>1) {
             LOGGER.log(LEVEL,"\nPlotting corrected geometry residuals");        
             canvas.addCanvas("CCDB corrected");
             canvas.getCanvas("CCDB corrected").draw(this.getResidualGraphs(compareAlignment.subtract(initAlignment)));
@@ -763,7 +763,7 @@ public class Alignment {
                     else      gr_fit.setMarkerColor(this.markerColor[(il-1)/6]);
                     gr_fit.setMarkerStyle(this.markerStyle[ip-1]);
                     gr_fit.setMarkerSize(this.markerSize);
-                    residuals.addDataSet(gr_fit, is);                    
+                    if(gr_fit.getDataSize(0)>0) residuals.addDataSet(gr_fit, is);                    
                 }               
             }
         }

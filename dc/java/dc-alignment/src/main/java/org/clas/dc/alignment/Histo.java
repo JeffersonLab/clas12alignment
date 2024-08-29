@@ -946,11 +946,15 @@ public class Histo {
                 }
                 break;
         }
-        if(histo.getFunction().getChiSquare()/histo.getFunction().getNDF()>Constants.CHI2MAX) 
-            histo.getFunction().setFitValid(false);
-        histo.getFunction().setStatBoxFormat("%.2f");
-        histo.getFunction().setStatBoxErrorFormat("%.2f");
-        return histo.getFunction().isFitValid();
+        if(histo.getFunction()!=null) {
+            if(histo.getFunction().getChiSquare()/histo.getFunction().getNDF()>Constants.CHI2MAX)
+                histo.getFunction().setFitValid(false);
+            histo.getFunction().setStatBoxFormat("%.2f");
+            histo.getFunction().setStatBoxErrorFormat("%.2f");
+            return histo.getFunction().isFitValid();
+        }
+        else
+            return false;
     }
     
     
