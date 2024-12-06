@@ -49,9 +49,9 @@ public class Constants {
     public static int NPARS = 18;
     
     // size of unit shift (cm for ri_xyz, deg for ri_cxyz
-//    public static double[] UNITSHIFT = {   0.1,    0.8,    0.2,     0.2,     0.2,     0.4,
-//                                           0.05,   0.4,    0.1,     0.2,     0.1,     0.2,
-//                                           0.1,    0.8,    0.2,     0.2,     0.1,     0.4};
+//    public static double[] UNITSHIFT = {   0.05,   0.4,    0.1,     0.1,     0.1,     0.1,
+//                                           0.025,  0.2,    0.05,    0.05,    0.05,    0.05,
+//                                           0.05,   0.4,    0.1,     0.05,    0.05,     0.05};
     public static double[] UNITSHIFT = {   0.1,    0.8,    0.2,     0.2,     0.2,     0.2,
                                            0.1,    0.8,    0.2,     0.2,     0.2,     0.2,
                                            0.1,    0.8,    0.2,     0.2,     0.2,     0.2};

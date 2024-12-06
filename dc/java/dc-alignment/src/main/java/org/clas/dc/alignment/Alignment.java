@@ -1140,6 +1140,9 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-time"     , "0",            "make time residual histograms (1=true, 0=false)");
         parser.getOptionParser("-process").addOption("-residuals", "2",            "fit residuals with double gaussian (2), single gaussian (1), or use mean (0)");
         parser.getOptionParser("-process").addOption("-vertfit"  , "5",            "fit vertex plots with:\n" +
+                                                                                   "\t\t- RG-E layout (10), dual target, \n" +
+                                                                                   "\t\t- RG-A Spring18 layout (9)\n" +
+                                                                                   "\t\t- RG-K layout (8), new cryotarget, \n" +
                                                                                    "\t\t- RG-D layout (7), new cryotarget, \n" +
                                                                                    "\t\t- RG-C layout (6),\n" +
                                                                                    "\t\t- 4 gaussians (5),\n" +
@@ -1176,6 +1179,9 @@ public class Alignment {
         parser.getOptionParser("-analyze").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-analyze").addOption("-residuals", "2",            "fit residuals (2), use mean (1), or use existing fit available (0)");
         parser.getOptionParser("-analyze").addOption("-vertfit"   , "5",           "fit vertex plots with:\n" +
+                                                                                   "\t\t- RG-E layout (10), dual target, \n" +
+                                                                                   "\t\t- RG-A Spring18 layout (9)\n" +
+                                                                                   "\t\t- RG-K layout (8), new cryotarget, \n" +
                                                                                    "\t\t- RG-D layout (7), new cryotarget,\n" +
                                                                                    "\t\t- RG-C layout (6),\n" +
                                                                                    "\t\t- 4 gaussians (5),\n" +
@@ -1207,6 +1213,9 @@ public class Alignment {
         parser.getOptionParser("-fit").addOption("-shifts"   , "0",            "use event-by-event subtraction for unit shifts (1=on, 0=off)");
         parser.getOptionParser("-fit").addOption("-sector"   , "1",            "sector-dependent derivatives (1) or average (0)");
         parser.getOptionParser("-fit").addOption("-vertfit"  , "5",            "fit vertex plots with:\n" +
+                                                                               "\t\t- RG-E layout (10), dual target, \n" +
+                                                                               "\t\t- RG-A Spring18 layout (9)\n" +
+                                                                               "\t\t- RG-K layout (8), new cryotarget, \n" +
                                                                                "\t\t- RG-D layout (7), new cryotarget, \n" +
                                                                                "\t\t- RG-C layout (6),\n" +
                                                                                "\t\t- 4 gaussians (5),\n" +
