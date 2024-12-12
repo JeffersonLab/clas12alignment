@@ -1434,7 +1434,6 @@ public class Histo {
     }
 
      /**
-<<<<<<< HEAD
      * 3-peaks vertex fitting function
      * Peaks correspond to: target windows and scattering chamber exit window
      * Initialized according to:
@@ -1498,8 +1497,6 @@ public class Histo {
     }
 
     /**
-=======
->>>>>>> master
      * 4-peaks vertex fitting function
      * Peaks correspond to: target windows and scattering chamber exit window
      * Initialized according to:
