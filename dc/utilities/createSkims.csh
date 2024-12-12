@@ -24,7 +24,7 @@ else
     set vars = "r0 r1_x r1_y r1_z r1_cy r1_cz r2_x r2_y r2_z r2_cy r2_cz r3_x r3_y r3_z r3_cy r3_cz"
 endif
 
-set schema = `ls $indir/r0`
+set schema = `ls $indir/r0/*/recon/README.json | awk -F"$indir/r0/" '{print $2}' | awk -F"/" '{print $1}'`
 
 echo
 echo reading input files from $indir with subdirectory $schema

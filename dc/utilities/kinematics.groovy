@@ -46,11 +46,24 @@ public class Kinematics {
     private Map<String, DataGroup> histos = new LinkedHashMap<>();
     
     
-    public Kinematics(double energy) {
+    public Kinematics(double energy, String vertex) {
         this.initGraphics();
+        this.initVertexPar(vertex);
         this.setEbeam(energy);
     }
 
+    private void initVertexPar(String pars) {
+        if(!pars.isEmpty()) {
+            double[] parValues = new double[pars.split(":").length];
+            for(int i=0; i<parValues.length; i++) {
+                parValues[i] = Double.parseDouble(pars.split(":")[i]);
+            }
+            if(parValues.length>0) targetPos = parValues[0];
+            if(parValues.length>1) targetLength = parValues[1];
+            if(parValues.length>2) scWindow = parValues[2]+targetPos;
+        }
+    }
+    
     public double getEbeam() {
         return ebeam;
     }
@@ -724,12 +737,22 @@ public class Kinematics {
         parser.getOptionParser("-process").addOption("-beam"     ,"10.6",       "beam energy in GeV");
         parser.getOptionParser("-process").addOption("-display"  ,"1",          "display histograms (0/1)");
         parser.getOptionParser("-process").addOption("-stats"    ,"",           "histogram stat option");
+        parser.getOptionParser("-process").addOption("-vertpar"  , "",          "comma-separated vertex function parameters, default values are for Spring19 cryotarget with:\n" +
+                                                                                "\t\t- -3.5: target cell exit window position,\n" +
+                                                                                "\t\t-  5.0: target length,\n" +
+                                                                                "\t\t- 27.3: distance between the scattering chamber exit window and the target center,\n" +
+                                                                                "\t\t leave empty to use defaults; units are cm");
         
         // valid options for histogram-base analysis
         parser.addCommand("-plot", "plot histogram files");
         parser.getOptionParser("-plot").addOption("-beam"     ,"10.6",          "beam energy in GeV");
         parser.getOptionParser("-plot").addOption("-display"  ,"1",             "display histograms (0/1)");
         parser.getOptionParser("-plot").addOption("-stats"    ,"",              "set histogram stat option");
+        parser.getOptionParser("-plot").addOption("-vertpar"  , "",             "comma-separated vertex function parameters, default values are for Spring19 cryotarget with:\n" +
+                                                                                "\t\t- -3.5: target cell exit window position,\n" +
+                                                                                "\t\t-  5.0: target length,\n" +
+                                                                                "\t\t- 27.3: distance between the scattering chamber exit window and the target center,\n" +
+                                                                                "\t\t leave empty to use defaults; units are cm");
         
         parser.parse(args);
         
@@ -742,6 +765,7 @@ public class Kinematics {
         if(parser.getCommand().equals("-process")) {
             int    maxEvents   = parser.getOptionParser("-process").getOption("-nevent").intValue();
             double beamEnergy  = parser.getOptionParser("-process").getOption("-beam").doubleValue();  
+            String vertexPar   = parser.getOptionParser("-process").getOption("-vertpar").stringValue();   
             String namePrefix  = parser.getOptionParser("-process").getOption("-o").stringValue();  
             String histoName   = "histo.hipo";
             if(!namePrefix.isEmpty()) {
@@ -758,7 +782,7 @@ public class Kinematics {
                 System.exit(0);
             }
             
-            analysis = new Kinematics(beamEnergy);
+            analysis = new Kinematics(beamEnergy, vertexPar);
             
             ProgressPrintout progress = new ProgressPrintout();
 
@@ -790,6 +814,7 @@ public class Kinematics {
         
         if(parser.getCommand().equals("-plot")) {
             double beamEnergy  = parser.getOptionParser("-plot").getOption("-beam").doubleValue();  
+            String vertexPar   = parser.getOptionParser("-plot").getOption("-vertpar").stringValue();   
             optStats   = parser.getOptionParser("-plot").getOption("-stats").stringValue();
             openWindow = parser.getOptionParser("-plot").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
@@ -801,7 +826,7 @@ public class Kinematics {
                 System.exit(0);
             }
 
-            analysis = new Kinematics(beamEnergy);
+            analysis = new Kinematics(beamEnergy, vertexPar);
             analysis.readHistos(inputList.get(0));
             analysis.analyzeHistos();
         }

@@ -516,9 +516,8 @@ public class Histo {
                                         else
                                             this.leftright[sector-1][it][ip].getH1F("hi-lL" + hit.layer).fill(hit.time);
                                     }
-                                }
-                            this.vertex[it][ip].getH1F("hi-S" + sector).fill(vz);
-                    
+                            }
+                            this.vertex[it][ip].getH1F("hi-S" + sector).fill(vz);                    
                         }
                     }
                 }
@@ -650,6 +649,9 @@ public class Histo {
 //                                if(l>24) this.parErrors[is][it][ip][l] *= 2;
                             }
                         }
+                        else {
+                            Constants.MEASWEIGHTS[is][it][ip][l]=0;
+                        }
                         System.out.print("\r");
                     }
                     H1F hvtx = vertex[it][ip].getH1F("hi-S"+s);
@@ -669,17 +671,28 @@ public class Histo {
                                 if(hvtx.getFunction().parameter(i).name().equals("sc"))  isc = i;
                                 if(hvtx.getFunction().parameter(i).name().equals("scw")) iscw = i;
                             }
-                            if(isc>=0 && iscw>=0 && hvtx.getFunction().getParameter(isc)>10) {
+                            if(isc>=0 && iscw>=0 && hvtx.getFunction().getParameter(isc)>0) {
                                 this.parValues[is][it][ip][nLayer+nTarget-1] = (hvtx.getFunction().getParameter(iscw)-Constants.SCEXIT)*Constants.SCALE;
                                 this.parErrors[is][it][ip][nLayer+nTarget-1] =  Math.max(hvtx.getFunction().parameter(iscw).error()*Constants.SCALE, Constants.SCALE*dx);
                                 this.parSigmas[is][it][ip][nLayer+nTarget-1] = hvtx.getFunction().getParameter(2)*Constants.SCALE;
                             }
-                            if(itl>=0 && hvtx.getFunction().getParameter(0)>10) {
+                            else {
+                                Constants.MEASWEIGHTS[is][it][ip][nLayer+nTarget-1]=0;                                
+                            }
+                            if(itl>=0 && hvtx.getFunction().getParameter(0)>0) {
                                 this.parValues[is][it][ip][nLayer+nTarget-2] = (hvtx.getFunction().getParameter(itl)-Constants.TARGETLENGTH)*Constants.SCALE;
                                 this.parErrors[is][it][ip][nLayer+nTarget-2] =  Math.max(hvtx.getFunction().parameter(itl).error()*Constants.SCALE, Constants.SCALE*dx);
                                 this.parSigmas[is][it][ip][nLayer+nTarget-2] = hvtx.getFunction().getParameter(2)*Constants.SCALE;
                             }
+                            else {
+                                Constants.MEASWEIGHTS[is][it][ip][nLayer+nTarget-2]=0;                                
+                            }
                         }
+                    }
+                    else {
+                        Constants.MEASWEIGHTS[is][it][ip][0]=0;
+                        Constants.MEASWEIGHTS[is][it][ip][nLayer+nTarget-2]=0;
+                        Constants.MEASWEIGHTS[is][it][ip][nLayer+nTarget-1]=0;
                     }
                 }
             }
@@ -714,12 +727,14 @@ public class Histo {
                           !residuals[is][it][ip].getH1F("hi-L"+l).getFunction().isFitValid()) {
                             nfailed++;
                             LOGGER.log(Level.WARNING, String.format("\tResidual fit for sector=%1d theta bin=%1d phi bin=%1d layer=%2d FAILED",is+1,it,ip,l));
+                            residuals[is][it][ip].getH1F("hi-L"+l).getFunction().setChiSquare(-Math.abs(residuals[is][it][ip].getH1F("hi-L"+l).getFunction().getChiSquare()));
                         }
                     }
                     if(vertex[it][ip].getH1F("hi-S"+(is+1)).getFunction()!=null &&
                       !vertex[it][ip].getH1F("hi-S"+(is+1)).getFunction().isFitValid()) {
                         nfailed++;
                         LOGGER.log(Level.WARNING, String.format("\tVertex fit for sector=%1d theta bin=%1d phi bin=%1d FAILED",is+1,it,ip));
+                        vertex[it][ip].getH1F("hi-S"+(is+1)).getFunction().setChiSquare(-Math.abs(vertex[it][ip].getH1F("hi-S"+(is+1)).getFunction().getChiSquare()));
                     }
                 }
             }
@@ -756,7 +771,7 @@ public class Histo {
         else if(parameter.equals("LR"))
             return this.lrValues[sector-1][itheta][iphi];
         else
-            return this.parValues[sector-1][itheta][iphi];
+            return this.getWeightedParValues(sector, itheta, iphi);
     }
     
     public double[] getParErrors(String parameter, int sector, int itheta, int iphi) {
@@ -771,7 +786,7 @@ public class Histo {
         else if(parameter.equals("LR"))
             return this.zeroes[sector-1][itheta][iphi];
         else
-            return this.parErrors[sector-1][itheta][iphi];
+            return this.getWeightedParErrors(sector, itheta, iphi);
     }
     
     public double[] getParSigmas(String parameter, int sector, int itheta, int iphi) {
@@ -787,6 +802,22 @@ public class Histo {
             return this.zeroes[sector-1][itheta][iphi];
         else
             return this.parSigmas[sector-1][itheta][iphi];
+    }
+    
+    private double[] getWeightedParValues(int sector, int itheta, int iphi) {
+        double[] wpars = new double[parValues[sector-1][itheta][iphi].length];
+        for(int il=0; il<wpars.length; il++) {
+            wpars[il] = parValues[sector-1][itheta][iphi][il]*Constants.MEASWEIGHTS[sector-1][itheta][iphi][il];
+        }
+        return wpars;
+    }
+    
+    private double[] getWeightedParErrors(int sector, int itheta, int iphi) {
+        double[] wpars = new double[parErrors[sector-1][itheta][iphi].length];
+        for(int il=0; il<wpars.length; il++) {
+            wpars[il] = parErrors[sector-1][itheta][iphi][il]*Constants.MEASWEIGHTS[sector-1][itheta][iphi][il];
+        }
+        return wpars;
     }
     
     public EmbeddedCanvasTabbed getElectronPlots() {
@@ -903,14 +934,27 @@ public class Histo {
             case 8:    
                 Histo.fitRGAS18Vertex(histo);
                 break;
+            case 9:    
+                Histo.fitRGKVertex(histo);
+                break;
             default:
-                if(histo.getFunction()!=null)
-                    histo.getFunction().setFitValid(true);
+                if(histo.getFunction()!=null) {
+                    if(histo.getFunction().getChiSquare()>0)
+                        histo.getFunction().setFitValid(true);
+                    else
+                        histo.getFunction().setFitValid(false);
+                }
                 break;
         }
-        histo.getFunction().setStatBoxFormat("%.2f");
-        histo.getFunction().setStatBoxErrorFormat("%.2f");
-        return histo.getFunction().isFitValid();
+        if(histo.getFunction()!=null) {
+            if(histo.getFunction().getChiSquare()/histo.getFunction().getNDF()>Constants.CHI2MAX)
+                histo.getFunction().setFitValid(false);
+            histo.getFunction().setStatBoxFormat("%.2f");
+            histo.getFunction().setStatBoxErrorFormat("%.2f");
+            return histo.getFunction().isFitValid();
+        }
+        else
+            return false;
     }
     
     
@@ -992,7 +1036,10 @@ public class Histo {
             }
         }
         else if(histo.getFunction()!=null) {
-            histo.getFunction().setFitValid(true);
+            if(histo.getFunction().getChiSquare()>0)
+                histo.getFunction().setFitValid(true);
+            else
+                histo.getFunction().setFitValid(false);
         }
         histo.getFunction().setStatBoxFormat("%.1f");
         histo.getFunction().setStatBoxErrorFormat("%.1f");
@@ -1384,6 +1431,72 @@ public class Histo {
     }
 
      /**
+<<<<<<< HEAD
+     * 3-peaks vertex fitting function
+     * Peaks correspond to: target windows and scattering chamber exit window
+     * Initialized according to:
+     * - chosen target length (TARGETLENGTH), 
+     * - target exit window position (TARGETPOS)
+     * - distance between target exit window and insulation foil (WINDOWDIST)
+     * - distance between the scattering chamber exit window and the target center (SCEXIT)
+     * Includes two wide Gaussians to account for target residual gas 
+     * and the air outside the scattering chamber
+     * @param histo
+     */
+    public static void fitRGKVertex(H1F histo) {
+        int nbin = histo.getData().length;
+        double dx = histo.getDataX(1)-histo.getDataX(0);
+        //find downstream window
+        int ibin0 = Histo.getMaximumBinBetween(histo, histo.getDataX(0), (Constants.TARGETPOS+Constants.SCEXIT)/2);
+        //check if the found maximum is the first or second peak, ibin is tentative upstream window
+        int ibin1 = Math.max(0, ibin0 - (int)(Constants.TARGETLENGTH/dx));
+        int ibin2 = Math.min(nbin-1, ibin0 + (int)(Constants.TARGETLENGTH/dx));
+        if(histo.getBinContent(ibin1)<histo.getBinContent(ibin2)) {
+            ibin1 = ibin0;
+            ibin0 = ibin2;
+        }
+        int ibinsc = Histo.getMaximumBinBetween(histo, (Constants.SCEXIT+Constants.TARGETCENTER)*0.8, (Constants.SCEXIT+Constants.TARGETCENTER)*1.2);
+
+        double mean  = histo.getDataX(ibin0);
+        double amp   = histo.getBinContent(ibin0);
+        double sigma = 0.5;
+        double sc    = histo.getBinContent(ibinsc);
+        double air   = histo.getBinContent(ibinsc + ((int) (sigma*6/dx)));
+        double scw   = Constants.SCEXIT;
+        if(sc>10) scw = histo.getDataX(ibinsc)-mean+Constants.TARGETLENGTH/2;
+        double bg = histo.getBinContent((ibin1+ibin0)/2);
+        String function = "[ampU]*gaus(x,[exw]-[tl],[sigma])+"
+                        + "[ampD]*gaus(x,[exw],[sigma])+"
+                        + "[bg]*gaus(x,[exw]-[tl]/2,[tl]*0.6)+"
+                        + "[sc]*gaus(x,[exw]+[scw]-[tl]/2,[sigma])+"
+                        + "[air]*gaus(x,[exw]+[scw]-[tl]/2+[adelta],[asigma])";
+        F1D f1_vtx   = new F1D("f"+histo.getName(), function, -10, 10);
+        f1_vtx.setLineColor(2);
+        f1_vtx.setLineWidth(2);
+        f1_vtx.setOptStat("1111111111111");
+        f1_vtx.setParameter(0, amp);
+        f1_vtx.setParameter(1, mean);
+        f1_vtx.setParameter(2, Constants.TARGETLENGTH);
+        f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.9, Constants.TARGETLENGTH*1.1);
+        f1_vtx.setParameter(3, sigma);
+        f1_vtx.setParameter(4, amp);        
+        f1_vtx.setParameter(5, bg);
+        f1_vtx.setParameter(6, sc);
+        f1_vtx.setParameter(7, scw);
+        f1_vtx.setParLimits(7, (Constants.SCEXIT)*0.7, (Constants.SCEXIT)*1.3);
+        f1_vtx.setParameter(8, air);
+        f1_vtx.setParameter(9, sigma*3);
+        f1_vtx.setParLimits(9, 0, sigma*8);
+        f1_vtx.setParameter(10, sigma*8);
+        f1_vtx.setRange(mean-Constants.TARGETLENGTH*2.0,Constants.SCEXIT+Constants.TARGETLENGTH*0.6);
+//        histo.setFunction(f1_vtx);
+        DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
+//        if(f1_vtx.getParameter(6)<f1_vtx.getParameter(0)/4) f1_vtx.setParameter(6, 0);
+    }
+
+    /**
+=======
+>>>>>>> master
      * 4-peaks vertex fitting function
      * Peaks correspond to: target windows and scattering chamber exit window
      * Initialized according to:

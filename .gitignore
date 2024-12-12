@@ -3,6 +3,13 @@ target/
 *.class
 *.jar
 
+# DC-specific files.
+dc/java/dc-alignment/*.hipo
+dc/java/dc-alignment/dc-alignment.log*
+dc/java/dc-alignment/*.sqlite
+dc/java/dc-alignment/*.txt
+dc/utilities/*.hipo
+
 # FMT-specific files.
 fmt/*.hipo
 fmt/error_report.txt
