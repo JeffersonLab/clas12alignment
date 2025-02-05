@@ -24,6 +24,7 @@ to the whole detector.
     * Java Development Kit 11 or newer.
     * Maven.
     * A coatjava installation and the environment variable CLAS12DIR pointing to it.
+      
   All the above is available on the JLab (i)farm nodes setting the standard 
   CLAS12 environment.
 
@@ -36,7 +37,7 @@ to the whole detector.
 
 ## Setup
 Compile the code with the command
-```mvn instal```
+```mvn install```
 
 You are now ready to run the code running the script ```bin/fmt-alignment```.
 
