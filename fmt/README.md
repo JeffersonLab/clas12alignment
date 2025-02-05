@@ -23,6 +23,10 @@ to the whole detector.
     * A Linux or Mac computer.
     * Java Development Kit 11 or newer.
     * Maven.
+    * A coatjava installation and the environment variable CLAS12DIR pointing to it.
+  All the above is available on the JLab (i)farm nodes setting the standard 
+  CLAS12 environment.
+
 * Data:
     * Beam data with electron tracks in the forward detector and the following
     banks: `RUN::config`, `REC::Event`, `REC::Particle`, `REC::Track`,
