@@ -68,7 +68,7 @@ public class Main {
                 new ResolutionAnalysis(file, nEvents, cutsInfo, shArr, fCuts, ccdbVar, sPlts);
         if (resAnls.shiftAnalysis(var, testShArr, swmSetup)) System.exit(1);
 
-        System.exit(0);
+        if(!sPlts) System.exit(0);
     }
 
     /** Perform a basic groot setup to get fancy plots. */
