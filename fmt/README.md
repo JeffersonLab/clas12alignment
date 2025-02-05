@@ -22,7 +22,7 @@ to the whole detector.
 * Software:
     * A Linux or Mac computer.
     * Java Development Kit 11 or newer.
-    * A coatjava installation.
+    * Maven.
 * Data:
     * Beam data with electron tracks in the forward detector and the following
     banks: `RUN::config`, `REC::Event`, `REC::Particle`, `REC::Track`,
@@ -31,14 +31,10 @@ to the whole detector.
     https://clasweb.jlab.org/clas12offline/sqlite/ccdb/).
 
 ## Setup
-A minimal setup is required to run the program. In the `run.sh` file, three
-variables need to be set
-* `TORUSMAP` and `SOLENOIDMAP` should point to the desired solenoid map
-appropriate for the run, and
-* `COATJAVA` should point to the desired coatjava installation.
+Compile the code with the command
+```mvn instal```
 
-With this setup done, the script prints the programs' usage if it's ran without
-any parameters.
+You are now ready to run the code running the script ```bin/fmt-alignment```.
 
 **Note**. By default, the program assumes the number of FMT layers to be 3. If
 this changes, change the `FMTLAYERS` variable in `src/.../test/Constants.java`

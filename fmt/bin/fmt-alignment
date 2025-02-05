@@ -1,0 +1,16 @@
+#!/bin/sh
+
+SCRIPT_DIR=`dirname $0`
+jar=`ls $SCRIPT_DIR/../target/fmt_analysis-*-jar-with-dependencies.jar`
+
+# If args are given, run. Otherwise, print usage and exit gracefully.
+if [ $# -gt 1 ]; then
+    
+    java -Dsun.java2d.pmoffscreen=false \
+         -Xmx8096m -Xms1024m -cp $jar org.clas.test.Main $*
+
+else
+    printf "Usage: $0 infile\n"
+    cat usage.txt
+    printf "\n"
+fi
