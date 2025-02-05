@@ -12,7 +12,6 @@ import org.jlab.groot.data.TDirectory;
 import org.clas.data.Cluster;
 import org.clas.data.TrajPoint;
 import org.clas.test.Constants;
-import org.clas.test.IOHandler; // NOTE. It would be cleaner to keep this class exlusive to Main.
 import org.clas.test.HipoHandler;
 
 /** Key class of the program, in charge of all alignment tests. */

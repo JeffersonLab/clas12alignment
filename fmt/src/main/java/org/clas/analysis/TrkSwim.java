@@ -1,9 +1,12 @@
 package org.clas.analysis;
 
+import cnuphys.magfield.MagneticFieldInitializationException;
+import cnuphys.magfield.MagneticFields;
+import java.io.FileNotFoundException;
+import org.clas.test.Constants;
 import org.jlab.geom.prim.Vector3D;
-import org.jlab.clas.swimtools.MagFieldsEngine;
 import org.jlab.clas.swimtools.Swim;
-import org.jlab.clas.swimtools.Swimmer;
+import org.jlab.utils.CLASResources;
 
 /** Class in charge of all the swimming through the magnetic field. */
 public class TrkSwim {
@@ -16,12 +19,23 @@ public class TrkSwim {
      *                   * [0] : solenoid magnet scale.
      *                   * [1] : torus magnet scale.
      *                   * [2] : solenoid magnet shift.
+     * @param yaw
+     * @param pitch
      */
     public TrkSwim(double[] swmSetup, double yaw, double pitch) {
-        MagFieldsEngine mf = new MagFieldsEngine();
-        mf.initializeMagneticFields();
-        Swimmer.setMagneticFieldsScales(swmSetup[0], swmSetup[1], swmSetup[2]);
+        
 
+        String mapDir = CLASResources.getResourcePath("etc")+"/data/magfield";
+        try {
+            MagneticFields.getInstance().initializeMagneticFields(mapDir, Constants.TORUSMAP, Constants.SOLENOIDMAP);
+        }
+        catch (MagneticFieldInitializationException | FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        MagneticFields.getInstance().getSolenoid().setScaleFactor(swmSetup[0]);
+        MagneticFields.getInstance().getTorus().setScaleFactor(swmSetup[1]);
+        MagneticFields.getInstance().getSolenoid().setShiftZ(swmSetup[2]);
+        
         // Obtain the plane angle from the yaw and the pitch.
         double x = -Math.sin(Math.toRadians(yaw));
         double y = Math.sin(Math.toRadians(pitch));
