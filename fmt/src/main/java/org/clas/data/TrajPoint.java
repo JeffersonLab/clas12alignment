@@ -104,7 +104,7 @@ public class TrajPoint {
 
             // Get FMT layer's z coordinate and strips angle.
             double zRef   = fmtZ[lyr]     + shArr[lyr][2]; // Apply z shift.
-            double phiRef = fmtAngle[lyr] - shArr[lyr][5]; // Apply phi shift.
+            double phiRef = fmtAngle[lyr] + shArr[lyr][5]; // Apply phi shift.
 
             // Get particle's kinematics.
             double x  = (double) ptcBank.getFloat("vx", pi);
