@@ -421,6 +421,12 @@ public class Alignment {
         for(EmbeddedPad pad : canvas.getCanvas("LR residuals vs. theta").getCanvasPads())
             pad.getAxisX().setRange(-2000, 2000);
         
+        canvas.addCanvas("vertex");
+        canvas.getCanvas("vertex").draw(this.getVertexGraph("fit",null));
+        canvas.getCanvas().setFont(fontName);
+        for(EmbeddedPad pad : canvas.getCanvas("vertex").getCanvasPads())
+            pad.getAxisX().setRange(-4, 4);
+        
         canvas.addCanvas("residual mean and sigma");
         canvas.getCanvas("residual mean and sigma").draw(this.getSectorHistograms("fit",null, 1));
         canvas.getCanvas("residual mean and sigma").draw(this.getSectorHistograms("time",null, 4));
@@ -765,6 +771,40 @@ public class Alignment {
                     gr_fit.setMarkerSize(this.markerSize);
                     if(gr_fit.getDataSize(0)>0) residuals.addDataSet(gr_fit, is);                    
                 }               
+            }
+        }
+        return residuals;        
+    }
+
+    private DataGroup getVertexGraph(String parameter, Table alignment) {
+
+        DataGroup residuals = new DataGroup(3,1);
+        for (int i = 0; i < Constants.NTARGET; i++) {
+            int il = i==0 ? i : Constants.NLAYER+i;
+            for(int it=1; it<thetaBins.length; it++) {
+                GraphErrors gr_fit = new GraphErrors("gr_fit_layer " + il + "_theta" + it);
+                for(int is=0; is<Constants.NSECTOR; is++ ) {
+                    int sector = is+1;
+                    for(int ip=1; ip<phiBins.length; ip++) {
+                        double phi = is*60 + phiBins[ip].getMean();
+                        if(phi<0) phi += 360;
+                        double shiftRes = histos.get("nominal").getParValues(parameter, sector, it, ip)[il];
+                        double errorRes = 0.0;
+                        if(!(parameter.equals("time") || parameter.equals("LR"))) {
+                            shiftRes -= this.getFittedResidual(alignment, sector, it, ip)[il];
+                            errorRes = Math.sqrt(Math.pow(histos.get("nominal").getParErrors(parameter,sector, it, ip)[il], 2)
+                                                   + 0*Math.pow(this.getFittedResidualError(alignment, sector, it, ip)[il], 2));
+                        }
+                        if(Constants.MEASWEIGHTS[is][it][ip][il]>0 || parameter.equals("time") || parameter.equals("LR"))
+                            gr_fit.addPoint(shiftRes/Constants.SCALE, phi, errorRes/Constants.SCALE, 0.0);
+                    }
+                }               
+                gr_fit.setTitle("Layer " + (il+1));
+                gr_fit.setTitleX("#Deltaz (cm)");
+                gr_fit.setTitleY("#phi (deg)");
+                gr_fit.setMarkerColor(this.markerColor[it-1]);
+                gr_fit.setMarkerSize(this.markerSize);
+                if(gr_fit.getDataSize(0)>0) residuals.addDataSet(gr_fit, i);                    
             }
         }
         return residuals;        
