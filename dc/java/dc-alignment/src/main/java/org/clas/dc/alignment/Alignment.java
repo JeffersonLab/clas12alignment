@@ -800,8 +800,8 @@ public class Alignment {
                     }
                 }               
                 gr_fit.setTitle("Layer " + (il+1));
-                gr_fit.setTitleX("#Deltaz (cm)");
-                gr_fit.setTitleY("#phi (deg)");
+                gr_fit.setTitleX("#phi (deg)");
+                gr_fit.setTitleY("#Deltaz (cm)");
                 gr_fit.setMarkerColor(this.markerColor[it-1]);
                 gr_fit.setMarkerSize(this.markerSize);
                 if(gr_fit.getDataSize(0)>0) {
