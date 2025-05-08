@@ -425,7 +425,7 @@ public class Alignment {
         canvas.getCanvas("vertex").draw(this.getVertexGraph("fit",null));
         canvas.getCanvas().setFont(fontName);
         for(EmbeddedPad pad : canvas.getCanvas("vertex").getCanvasPads())
-            pad.getAxisX().setRange(-4, 4);
+            pad.getAxisY().setRange(-2, 2);
         
         canvas.addCanvas("residual mean and sigma");
         canvas.getCanvas("residual mean and sigma").draw(this.getSectorHistograms("fit",null, 1));
@@ -778,7 +778,7 @@ public class Alignment {
 
     private DataGroup getVertexGraph(String parameter, Table alignment) {
 
-        DataGroup residuals = new DataGroup(3,1);
+        Map<Integer,List<GraphErrors>> graphs = new LinkedHashMap<>();
         for (int i = 0; i < Constants.NTARGET; i++) {
             int il = i==0 ? i : Constants.NLAYER+i;
             for(int it=1; it<thetaBins.length; it++) {
@@ -796,7 +796,7 @@ public class Alignment {
                                                    + 0*Math.pow(this.getFittedResidualError(alignment, sector, it, ip)[il], 2));
                         }
                         if(Constants.MEASWEIGHTS[is][it][ip][il]>0 || parameter.equals("time") || parameter.equals("LR"))
-                            gr_fit.addPoint(shiftRes/Constants.SCALE, phi, errorRes/Constants.SCALE, 0.0);
+                            gr_fit.addPoint(phi, shiftRes/Constants.SCALE, 0.0, errorRes/Constants.SCALE);
                     }
                 }               
                 gr_fit.setTitle("Layer " + (il+1));
@@ -804,10 +804,19 @@ public class Alignment {
                 gr_fit.setTitleY("#phi (deg)");
                 gr_fit.setMarkerColor(this.markerColor[it-1]);
                 gr_fit.setMarkerSize(this.markerSize);
-                if(gr_fit.getDataSize(0)>0) residuals.addDataSet(gr_fit, i);                    
+                if(gr_fit.getDataSize(0)>0) {
+                    if(!graphs.containsKey(i))
+                        graphs.put(i, new ArrayList<>());
+                    graphs.get(i).add(gr_fit);
+                }                    
             }
         }
-        return residuals;        
+        DataGroup dg = new DataGroup(1,graphs.size());
+        for(int key : graphs.keySet()) {
+            for(GraphErrors gr : graphs.get(key))
+                dg.addDataSet(gr, key);
+        }
+        return dg;        
     }
 
     private DataGroup getSectorHistograms(String parameter, Table alignment, int icol) {
