@@ -126,7 +126,7 @@ public class TrajPoint {
             pz = V[5];
 
             // Get the track's theta angle.
-            costh = Math.acos(pz/Math.sqrt(px*px+py*py+pz*pz));
+            costh = pz/Math.sqrt(px*px+py*py+pz*pz);
 
             // Apply track fiducial cuts.
             if (applyCuts && fcuts.checkTrajCuts(x, y, z, zRef, costh)) continue;
