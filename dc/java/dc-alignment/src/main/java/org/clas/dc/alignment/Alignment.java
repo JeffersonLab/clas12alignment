@@ -82,7 +82,7 @@ public class Alignment {
     
     private void initConstants(int run, String initVariation, String previousVariation, String compareVariation) {
         ConstantProvider provider  = GeometryFactory.getConstants(DetectorType.DC, 11, "default");
-        dcDetector = new DCGeant4Factory(provider, DCGeant4Factory.MINISTAGGERON, false);
+        dcDetector = new DCGeant4Factory(provider, DCGeant4Factory.MinistaggerStatus.ON, DCGeant4Factory.FeedthroughsStatus.SHIFT, false, null);
         for(int isl=0; isl<Constants.NSUPERLAYER; isl++) {
             Constants.WPDIST[isl] = dcDetector.getWireMidpoint(isl, 0,0).distance(dcDetector.getWireMidpoint(isl, 0, 1))/2; 
         }
