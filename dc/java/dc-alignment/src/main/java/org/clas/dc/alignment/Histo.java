@@ -353,6 +353,12 @@ public class Histo {
         public double thetaDC() {
             return this.traj.theta();
         }
+
+        public double phiDC() {
+            Vector3D dir = new Vector3D(this.traj);
+            dir.rotateZ(-Math.PI/3*(sector-1));
+            return dir.phi();
+        }
     }
     
     private int getElectronIndex(Event event) {
@@ -473,7 +479,7 @@ public class Histo {
             
             electron.vector().rotateZ(Math.toRadians(-60*(electron.sector()-1)));
             double theta = Math.toDegrees(electron.thetaDC());
-            double phi   = Math.toDegrees(electron.phi());
+            double phi   = Math.toDegrees(electron.phiDC());
             double vz    = electron.vz();
             int sector   = electron.sector();
             
@@ -1638,19 +1644,22 @@ public class Histo {
         int nbin = histo.getData().length;
         double dx = histo.getDataX(1)-histo.getDataX(0);
         //find downstream window
-        int ibin0 = Histo.getMaximumBinBetween(histo, histo.getDataX(0), (Constants.TARGETPOS-Constants.TARGETLENGTH/2));
+        int ibin1 = Histo.getMaximumBinBetween(histo, histo.getDataX(0), Constants.TARGETCENTER);
+        int ibin2 = Histo.getMaximumBinBetween(histo, Constants.TARGETCENTER, histo.getDataX(nbin-1));
         //check if the found maximum is the first or second peak, ibin is tentative upstream window
-        int ibin1 = Math.max(0, ibin0 - (int)(Constants.TARGETLENGTH/dx));
-        int ibin2 = Math.min(nbin-1, ibin0 + (int)(Constants.TARGETLENGTH/dx));
-        if(histo.getBinContent(ibin1)<histo.getBinContent(ibin2)) {
-            ibin1 = ibin0;
-            ibin0 = ibin2;
-        }
+//        int ibin1 = Math.max(0, ibin0 - (int)(Constants.TARGETLENGTH/dx));
+ //       int ibin2 = Math.min(nbin-1, ibin0 + (int)(Constants.TARGETLENGTH/dx));
+ //       if(histo.getBinContent(ibin1)<histo.getBinContent(ibin2)) {
+ //           ibin1 = ibin0;
+ //          ibin0 = ibin2;
+ //       }
 
-        double mean  = histo.getDataX(ibin0);
-        double amp   = histo.getBinContent(ibin0);
+        double meanU  = histo.getDataX(ibin1);
+        double meanD  = histo.getDataX(ibin2);
+        double ampU   = histo.getBinContent(ibin1);
+        double ampD   = histo.getBinContent(ibin2);
         double sigma = 0.5;
-        double bg = histo.getBinContent((ibin1+ibin0)/2);
+        double bg = ampD*0.1;//histo.getBinContent((ibin1+ibin2)/2);
         String function = "[ampU]*gaus(x,[exw]-[tl],[sigmaU])+"
                         + "[ampD]*gaus(x,[exw],[sigmaD])+"
                         + "[bg]*landau(x,[bgmean],[bgsigma])+"
@@ -1659,19 +1668,19 @@ public class Histo {
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
         f1_vtx.setOptStat("1111111111111111");
-        f1_vtx.setParameter(0, amp);
-        f1_vtx.setParameter(1, mean);
-        f1_vtx.setParameter(2, Constants.TARGETLENGTH);
+        f1_vtx.setParameter(0, ampU);
+        f1_vtx.setParameter(1, meanD);
+        f1_vtx.setParameter(2, meanD-meanU);//Constants.TARGETLENGTH);
         f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.9, Constants.TARGETLENGTH*1.1);
-        f1_vtx.setParameter(3, sigma);
-        f1_vtx.setParameter(4, amp);                
+        f1_vtx.setParameter(3, sigma*2);
+        f1_vtx.setParameter(4, ampD);
         f1_vtx.setParameter(5, sigma);
         f1_vtx.setParameter(6, bg);
-        f1_vtx.setParameter(7, mean-Constants.TARGETLENGTH*0.5);
-        f1_vtx.setParLimits(7, mean-Constants.TARGETLENGTH*0.9,mean-Constants.TARGETLENGTH*0.1);
-        f1_vtx.setParameter(8, Constants.TARGETLENGTH*0.25);
-        f1_vtx.setRange(Math.max(mean-Constants.TARGETLENGTH-8*sigma,histo.getDataX(0)),
-                        Math.min(mean+9*sigma,histo.getDataX(nbin-1)));
+        f1_vtx.setParameter(7, meanD);//-Constants.TARGETLENGTH*0.5);
+        f1_vtx.setParLimits(7, meanD-2*sigma,meanD+2*sigma);
+        f1_vtx.setParameter(8, 6*sigma);
+        f1_vtx.setRange(Math.max(meanU-4*sigma,histo.getDataX(0)),
+                        Math.min(meanD+8*sigma,histo.getDataX(nbin-1)));
 //        histo.setFunction(f1_vtx);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
 //        if(f1_vtx.getParameter(6)<f1_vtx.getParameter(0)/4) f1_vtx.setParameter(6, 0);
