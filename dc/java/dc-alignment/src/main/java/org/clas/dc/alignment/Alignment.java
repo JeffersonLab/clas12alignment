@@ -865,7 +865,7 @@ public class Alignment {
                 residuals.addDataSet(hi_res, ir*Constants.NSECTOR + is);
                 for(int it=1; it<thetaBins.length; it++) {
                     for(int ip=1; ip<phiBins.length; ip++) {
-                        for (int il = 0; il < Constants.NLAYER/Constants.NREGION; il++) {
+                        for (int il = 1; il < Constants.NLAYER/Constants.NREGION; il++) {
                             int ilayer = il+ir*Constants.NLAYER/Constants.NREGION;
                             double shift = histos.get("nominal").getParValues(parameter, sector, it, ip)[ilayer];
                             if(!(parameter.equals("time") || parameter.equals("LR"))) {
