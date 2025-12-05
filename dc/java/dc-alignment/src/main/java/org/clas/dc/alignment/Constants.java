@@ -89,12 +89,15 @@ public class Constants {
     // - distance between cell exit window and indulation foil, 
     // - distance beetween the scattering chamber exit window and the target center
     public static final double[] DEFAULT       = {-0.5, 5.0, 6.8, 27.3};
+    public static final double[] RGASPRING2018 = { 0.0, 5.0, 2.8, 28.6};
     public static final double[] RGAFALL2018   = {-0.5, 5.0, 2.8, 28.4};
     public static final double[] RGBSPRING2019 = {-0.5, 5.0, 6.8, 28.4};
     public static final double[] RGFSUMMER2020 = {-32, 5.0, 6.8, 27.3};
     public static final double[] RGMFALL2021   = {-0.5, 5.0, 6.8, 27.3};
     public static final double[] RGCSUMMER2022 = {-1.4,5.25, 8.3, 14.3};
-    public static final double[] RGDFALL2023   = {-2.5, 5.0, 3.0, 27.1};
+    public static final double[] RGDFALL2023   = {-3.0, 5.0, 3.0, 27.1};
+    public static final double[] RGKSPRING2024 = {-0.5, 5.0, 0.0, 26.5}; // warm
+    public static final double[] RGESPRING2024 = {-5.5, 2.2, 2.0, 25.9};
 
     // target parameters used for vertex fit initialization
     public static double TARGETPOS    = DEFAULT[0];
