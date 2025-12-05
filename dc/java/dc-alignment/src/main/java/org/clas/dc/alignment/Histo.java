@@ -194,9 +194,9 @@ public class Histo {
                 this.wires[is] = new DataGroup(nSector, nSLayer);
                 for(int il=0; il<nLayer; il++) {
                     int layer = il+1;
-                    H2F hi_wire = new H2F("hi-L" + layer + "_S" + sector, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes, 112, 1, 113);
-                    hi_wire.setTitleX("Residuals (um)");
-                    hi_wire.setTitleY("Wire");
+                    H2F hi_wire = new H2F("hi-L" + layer + "_S" + sector, "L " + layer + " Sector " + sector, 112, 1, 113, nbinsRes, minRes, maxRes);
+                    hi_wire.setTitleX("Wire");
+                    hi_wire.setTitleY("Residuals (um)");
                     this.wires[is].addDataSet(hi_wire, il);   
                 }
                 for(int it=0; it<thetaBins.length; it++) {
@@ -512,7 +512,7 @@ public class Histo {
                                     this.alpha.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(Math.toDegrees(electron.theta())-Constants.THTHILT, hit.alpha);
                                     this.doca.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time, hit.doca);
                                     if(tres) {
-                                       this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.time, hit.wire);
+                                       this.wires[sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.wire, hit.time);
                                     }
                                 }
                                 if(tres) {
@@ -853,6 +853,8 @@ public class Histo {
                 String title  = "WSec" + sector;
                 canvas.addCanvas(title);
                 canvas.getCanvas(title).draw(wires[is]);
+                for(EmbeddedPad pad : canvas.getCanvas(title).getCanvasPads())
+                    pad.getAxisZ().setLog(true);
             }
             for(int is=0; is<nSector; is++) {
                 int    sector = is+1;
