@@ -57,7 +57,7 @@
         </repository>
         <repository>
             <id>jhep-maven</id>
-            <url>https://clasweb.jlab.org/jhep/maven</url>
+            <url>https://clasweb.jlab.org/.jhep/maven</url>
         </repository>    
     </repositories>
 </project>
