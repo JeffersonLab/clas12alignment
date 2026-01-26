@@ -77,6 +77,8 @@ public class Histo {
         this.name      = name;
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
+        this.minVtx    = vertexrange[0];
+        this.maxVtx    = vertexrange[1];
         this.nominalFiles = files;
         this.createHistos(optstats);
     }
