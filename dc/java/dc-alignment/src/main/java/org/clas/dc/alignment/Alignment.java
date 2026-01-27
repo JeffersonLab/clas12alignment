@@ -207,6 +207,8 @@ public class Alignment {
                 Constants.initTargetPars(Constants.RGKSPRING2024);
             else if(Math.abs(vertex)==10)
                 Constants.initTargetPars(Constants.RGESPRING2024);
+            else if(Math.abs(vertex)==11)
+                Constants.initTargetPars(Constants.RGLSPRING2025);
         }
         if(vertex<0) vertex=0;
     }
@@ -256,18 +258,25 @@ public class Alignment {
         LOGGER.log(Level.WARNING, "\nEcluded measurements because of failed fits:");
         for (int is = 0; is < Constants.NSECTOR; is++) {
             String si = "";
+            String ki = "";
             int nexclude = 0;
             for (int it = 1; it < thetaBins.length; it++) {
                 for (int ip = 1; ip < phiBins.length; ip++) {
                     for (int il = 0; il < Constants.NLAYER + Constants.NTARGET; il++) {
                         if (Constants.MEASWEIGHTS[is][it][ip][il] == 0) {
                             nexclude++;
-                            si += String.format("\n\t\ttheta bin=%d phi bin=%d layer=%d", it, ip, il);
+                            si += String.format("\n\t\ttheta bin=%d phi bin=%d layer=%d\t", it, ip, il);
+                            for(String key : histos.keySet()) {
+                                si += "    " + (histos.get(key).getParStatus(is+1, it, ip)[il] ? 1 : 0 );
+                            }
                         }
                     }
                 }
             }
-            si = "\tSector " + (is+1) + String.format(": %d/%d", nexclude, (thetaBins.length-1)*(phiBins.length-1)*(Constants.NLAYER+Constants.NTARGET)) + si;
+            for(String key : histos.keySet()) {
+                ki += String.format("%6s", key);
+            }
+            si = "\tSector " + (is+1) + String.format(": %d/%d", nexclude, (thetaBins.length-1)*(phiBins.length-1)*(Constants.NLAYER+Constants.NTARGET)) + "\t\t\t" + ki + si;
             LOGGER.log(Level.WARNING, si);
         }
     }
@@ -805,7 +814,7 @@ public class Alignment {
                             gr_fit.addPoint(phi, shiftRes/Constants.SCALE, 0.0, errorRes/Constants.SCALE);
                     }
                 }               
-                gr_fit.setTitle("Layer " + (il+1));
+                gr_fit.setTitle("Layer " + il);
                 gr_fit.setTitleX("#phi (deg)");
                 gr_fit.setTitleY("#Deltaz (cm)");
                 gr_fit.setMarkerColor(this.markerColor[it-1]);
@@ -1363,9 +1372,9 @@ public class Alignment {
         
         if(parser.getCommand().equals("-analyze")) {
             String namePrefix  = parser.getOptionParser("-analyze").getOption("-o").stringValue();  
-            String histoName   = "histo.hipo";
+            String histoName   = null;
             if(!namePrefix.isEmpty()) {
-                histoName  = namePrefix + "_" + histoName;
+                histoName  = namePrefix + "_histo.hipo";
             }
             String  optStats    = parser.getOptionParser("-analyze").getOption("-stats").stringValue();
             int     residuals   = parser.getOptionParser("-analyze").getOption("-residuals").intValue();
@@ -1393,7 +1402,7 @@ public class Alignment {
             align.initConstants(11, initVar, previousVar, compareVar);
             align.readHistos(inputHisto, optStats);
             align.analyzeHistos(residuals, vertexFit, vertexPar, testFit);
-            align.saveHistos(histoName);
+            if(histoName != null) align.saveHistos(histoName);
         }
         
         if(parser.getCommand().equals("-fit")) {
