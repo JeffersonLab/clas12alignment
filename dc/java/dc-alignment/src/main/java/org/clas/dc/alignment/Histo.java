@@ -49,14 +49,15 @@ public class Histo {
     private DataGroup[][][] leftright = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains layers
     private DataGroup[][]   vertex    = null; // indices are theta bin, phi bin and sector, datagroup is 6x6 and contains sectors
 
-    private double[][][][] zeroes = null;
-    private double[][][][] timeValues = null;
-    private double[][][][] timeSigmas = null;
-    private double[][][][] lrValues = null;
-    private double[][][][] parValues = null;
-    private double[][][][] parErrors = null;
-    private double[][][][] parSigmas = null;
-    private double[][]     beamOffset= {{0, 0}, {0, 0}};
+    private double[][][][]  zeroes = null;
+    private double[][][][]  timeValues = null;
+    private double[][][][]  timeSigmas = null;
+    private double[][][][]  lrValues = null;
+    private double[][][][]  parValues = null;
+    private double[][][][]  parErrors = null;
+    private double[][][][]  parSigmas = null;
+    private boolean[][][][] parStatus = null;
+    private double[][]      beamOffset= {{0, 0}, {0, 0}};
     
     private Bin[] thetaBins = null;
     private Bin[] phiBins  = null;
@@ -137,6 +138,7 @@ public class Histo {
         this.parValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.parErrors = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.parSigmas = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
+        this.parStatus = new boolean[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.timeValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.timeSigmas = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
         this.lrValues = new double[nSector][thetaBins.length][phiBins.length][nLayer+nTarget];
@@ -630,6 +632,7 @@ public class Histo {
                         this.parValues[is][it][ip][il] = 0; 
                         this.parErrors[is][it][ip][il] = 0;
                         this.parSigmas[is][it][ip][il] = 1;
+                        this.parStatus[is][it][ip][il] = false;
                     }
                     for(int l=1; l<=nLayer; l++) {
                         if(tres) {
@@ -652,6 +655,7 @@ public class Histo {
                             this.parValues[is][it][ip][l] = hres.getFunction().getParameter(1); 
                             this.parErrors[is][it][ip][l] = hres.getFunction().parameter(1).error();        
                             this.parSigmas[is][it][ip][l] = hres.getFunction().getParameter(2); 
+                            this.parStatus[is][it][ip][l] = true; 
                             if(!shift) {
                                 this.parErrors[is][it][ip][l] = Math.max(this.parErrors[is][it][ip][l],(Constants.RESMAX-Constants.RESMIN)/Constants.RESBINS/2);
 //                                if(l>24) this.parErrors[is][it][ip][l] *= 2;
@@ -668,6 +672,7 @@ public class Histo {
                         this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*Constants.SCALE;
                         this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*Constants.SCALE;
                         this.parSigmas[is][it][ip][0] = hvtx.getFunction().getParameter(2)*Constants.SCALE;
+                        this.parStatus[is][it][ip][0] = true; 
                         if(!shift) {
                             this.parValues[is][it][ip][0] -= Constants.TARGETPOS*Constants.SCALE;
                             this.parErrors[is][it][ip][0] = Math.max(this.parErrors[is][it][ip][0], Constants.SCALE*dx/2);
@@ -683,6 +688,7 @@ public class Histo {
                                 this.parValues[is][it][ip][nLayer+nTarget-1] = (hvtx.getFunction().getParameter(iscw)-Constants.SCEXIT)*Constants.SCALE;
                                 this.parErrors[is][it][ip][nLayer+nTarget-1] =  Math.max(hvtx.getFunction().parameter(iscw).error()*Constants.SCALE, Constants.SCALE*dx);
                                 this.parSigmas[is][it][ip][nLayer+nTarget-1] = hvtx.getFunction().getParameter(2)*Constants.SCALE;
+                                this.parStatus[is][it][ip][nLayer+nTarget-1] = true; 
                             }
                             else {
                                 Constants.MEASWEIGHTS[is][it][ip][nLayer+nTarget-1]=0;                                
@@ -691,6 +697,7 @@ public class Histo {
                                 this.parValues[is][it][ip][nLayer+nTarget-2] = (hvtx.getFunction().getParameter(itl)-Constants.TARGETLENGTH)*Constants.SCALE;
                                 this.parErrors[is][it][ip][nLayer+nTarget-2] =  Math.max(hvtx.getFunction().parameter(itl).error()*Constants.SCALE, Constants.SCALE*dx);
                                 this.parSigmas[is][it][ip][nLayer+nTarget-2] = hvtx.getFunction().getParameter(2)*Constants.SCALE;
+                                this.parStatus[is][it][ip][nLayer+nTarget-2] = true; 
                             }
                             else {
                                 Constants.MEASWEIGHTS[is][it][ip][nLayer+nTarget-2]=0;                                
@@ -753,6 +760,16 @@ public class Histo {
     
     public double[][] getBeamOffset() {
         return this.beamOffset;
+    }
+    
+    public boolean[] getParStatus(int sector, int itheta, int iphi) {
+        if(sector<1 || sector>6) 
+            throw new IllegalArgumentException("Error: invalid sector="+sector);
+        if(itheta<0 || itheta>=thetaBins.length) 
+            throw new IllegalArgumentException("Error: invalid theta bin="+itheta);
+        if(iphi<0 || iphi>phiBins.length) 
+            throw new IllegalArgumentException("Error: invalid phi bin="+iphi);
+        return this.parStatus[sector-1][itheta][iphi];
     }
     
     public double[] getParValues(int sector, int itheta, int iphi) {
@@ -1447,7 +1464,6 @@ public class Histo {
     }
 
      /**
-<<<<<<< HEAD
      * 3-peaks vertex fitting function
      * Peaks correspond to: target windows and scattering chamber exit window
      * Initialized according to:
@@ -1637,26 +1653,20 @@ public class Histo {
 
     /**
      * 2-peaks vertex fitting function
-     * Peaks correspond to: target windows and scattering chamber exit window
+     * Peaks correspond to: target windows and beam pipe exit window
      * Initialized according to:
      * - chosen target length (TARGETLENGTH), 
      * - target exit window position (TARGETPOS)     
-     * Includes a wide Gaussian to account for target gas 
+     * - distance between the beam pipe exit window an target entrance window (WINDOWDIST)     
+     * Includes a wide Gaussian and a polynomial to account for target gas 
      * @param histo
      */
     public static void fitRGLVertex(H1F histo) {
         int nbin = histo.getData().length;
         double dx = histo.getDataX(1)-histo.getDataX(0);
-        //find downstream window
+        //find windows
         int ibin1 = Histo.getMaximumBinBetween(histo, histo.getDataX(0), Constants.TARGETCENTER);
         int ibin2 = Histo.getMaximumBinBetween(histo, Constants.TARGETCENTER, histo.getDataX(nbin-1));
-        //check if the found maximum is the first or second peak, ibin is tentative upstream window
-//        int ibin1 = Math.max(0, ibin0 - (int)(Constants.TARGETLENGTH/dx));
- //       int ibin2 = Math.min(nbin-1, ibin0 + (int)(Constants.TARGETLENGTH/dx));
- //       if(histo.getBinContent(ibin1)<histo.getBinContent(ibin2)) {
- //           ibin1 = ibin0;
- //          ibin0 = ibin2;
- //       }
 
         double meanU  = histo.getDataX(ibin1);
         double meanD  = histo.getDataX(ibin2);
@@ -1665,25 +1675,28 @@ public class Histo {
         double sigma = 0.5;
         double bg = ampD*0.1;//histo.getBinContent((ibin1+ibin2)/2);
         String function = "[ampU]*gaus(x,[exw]-[tl],[sigmaU])+"
+                        + "[ampU]*gaus(x,[exw]-[tl]-[wd],[sigmaU])+"
                         + "[ampD]*gaus(x,[exw],[sigmaD])+"
                         + "[bg]*landau(x,[bgmean],[bgsigma])+"
                         + "[p0]+[p1]*x+[p2]*x*x";
         F1D f1_vtx   = new F1D("f"+histo.getName(), function, -10, 10);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
-        f1_vtx.setOptStat("1111111111111111");
+        f1_vtx.setOptStat("11111111111111111");
         f1_vtx.setParameter(0, ampU);
         f1_vtx.setParameter(1, meanD);
         f1_vtx.setParameter(2, meanD-meanU);//Constants.TARGETLENGTH);
         f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.9, Constants.TARGETLENGTH*1.1);
         f1_vtx.setParameter(3, sigma*2);
-        f1_vtx.setParameter(4, ampD);
-        f1_vtx.setParameter(5, sigma);
-        f1_vtx.setParameter(6, bg);
-        f1_vtx.setParameter(7, meanD);//-Constants.TARGETLENGTH*0.5);
-        f1_vtx.setParLimits(7, meanD-2*sigma,meanD+2*sigma);
-        f1_vtx.setParameter(8, 6*sigma);
-        f1_vtx.setRange(Math.max(meanU-4*sigma,histo.getDataX(0)),
+        f1_vtx.setParameter(4, Constants.WINDOWDIST);
+        f1_vtx.setParLimits(4, Constants.WINDOWDIST*0.99, Constants.WINDOWDIST*1.01);
+        f1_vtx.setParameter(5, ampD);
+        f1_vtx.setParameter(6, sigma);
+        f1_vtx.setParameter(7, bg);
+        f1_vtx.setParameter(8, meanD);//-Constants.TARGETLENGTH*0.5);
+        f1_vtx.setParLimits(8, meanD-2*sigma,meanD+2*sigma);
+        f1_vtx.setParameter(9, 6*sigma);
+        f1_vtx.setRange(Math.max(meanU-8*sigma,histo.getDataX(0)),
                         Math.min(meanD+8*sigma,histo.getDataX(nbin-1)));
 //        histo.setFunction(f1_vtx);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
