@@ -239,13 +239,13 @@ public class Alignment {
         this.histos.put(name, histo);
     }
     
-    public void analyzeHistos(int resFit, int vertexFit, String vertexPar, boolean test) {
+    public void analyzeHistos(int resFit, int vertexFit, String vertexPar, String test) {
         this.printConfig(resFit, "resFit", "");
         this.printConfig(vertexFit, "vertexFit", "");
         this.initMeasurementWeights(1.0);
         this.initVertexPar(vertexFit, vertexPar);
         for(String key : histos.keySet()) {
-            if(test && !key.equals("nominal")) continue;
+            if(histos.containsKey(test) && !key.equals(test)) continue;
             LOGGER.log(LEVEL,"\nAnalyzing histos for variation " + key);
             histos.get(key).analyzeHisto(resFit, vertexFit);
             for(int i=0; i<Constants.NPARS; i++)
@@ -255,29 +255,34 @@ public class Alignment {
     }
     
     private void printExclusionStats() {
-        LOGGER.log(Level.WARNING, "\nEcluded measurements because of failed fits:");
+        LOGGER.log(Level.WARNING, "\nExcluded measurements because of failed fits:");
+        int[] nFailedByKey = new int[histos.size()];
+        int nfits = Constants.NSECTOR*(thetaBins.length-1)*(phiBins.length-1)*(1+Constants.NLAYER);
         for (int is = 0; is < Constants.NSECTOR; is++) {
             String si = "";
             String ki = "";
             int nexclude = 0;
             for (int it = 1; it < thetaBins.length; it++) {
                 for (int ip = 1; ip < phiBins.length; ip++) {
-                    for (int il = 0; il < Constants.NLAYER + Constants.NTARGET; il++) {
+                    for (int il = 0; il <= Constants.NLAYER; il++) {
                         if (Constants.MEASWEIGHTS[is][it][ip][il] == 0) {
                             nexclude++;
                             si += String.format("\n\t\ttheta bin=%d phi bin=%d layer=%d\t", it, ip, il);
-                            for(String key : histos.keySet()) {
-                                si += "    " + (histos.get(key).getParStatus(is+1, it, ip)[il] ? 1 : 0 );
+                            for(int ikey=0; ikey<histos.size(); ikey++) {
+                                String key = (String) histos.keySet().toArray()[ikey]; 
+                                if(!histos.get(key).getParStatus(is+1, it, ip)[il]) nFailedByKey[ikey]++;
+//                                si += "    " + (histos.get(key).getParStatus(is+1, it, ip)[il] ? 1 : 0 );
                             }
                         }
                     }
                 }
             }
-            for(String key : histos.keySet()) {
-                ki += String.format("%6s", key);
-            }
-            si = "\tSector " + (is+1) + String.format(": %d/%d", nexclude, (thetaBins.length-1)*(phiBins.length-1)*(Constants.NLAYER+Constants.NTARGET)) + "\t\t\t" + ki + si;
+            si = "\tSector " + (is+1) + String.format(": %d/%d", nexclude, nfits/Constants.NSECTOR) + "\t\t\t" + si;
             LOGGER.log(Level.WARNING, si);
+        }
+        for(int ikey=0; ikey<histos.size(); ikey++) {
+            String key = (String) histos.keySet().toArray()[ikey]; 
+            LOGGER.log(Level.WARNING, String.format("\n\t%10s: %d/(%d+%d)",key,nFailedByKey[ikey],nfits*Constants.NLAYER/(1+Constants.NLAYER),nfits/(1+Constants.NLAYER)));
         }
     }
     
@@ -1233,7 +1238,7 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-frame"    , "0",            "translations defined in the CLAS12 tilted sector frame (0) or sector frame (1)");
         parser.getOptionParser("-process").addOption("-global"   , "0",            "r1 translations defined as relative (0) or global (1) translations");
         parser.getOptionParser("-process").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
-        parser.getOptionParser("-process").addOption("-test"     , "0",            "analyze nominal geometry only for fit testing (1/0 = on/off)");
+        parser.getOptionParser("-process").addOption("-test"     , "nominal",      "geometry variation to be analyze only for fit testing");
 
         // valid options for histogram-base analysis
         parser.addCommand("-analyze", "analyze histogram files");
@@ -1269,7 +1274,7 @@ public class Alignment {
         parser.getOptionParser("-analyze").addOption("-frame"    , "0",            "translations defined in the CLAS12 tilted sector frame (0) or sector frame (1)");
         parser.getOptionParser("-analyze").addOption("-global"   , "0",            "r1 translations defined as relative (0) or global (1) translations");
         parser.getOptionParser("-analyze").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
-        parser.getOptionParser("-analyze").addOption("-test"     , "0",            "analyze nominal geometry only for fit testing (1/0 = on/off)");
+        parser.getOptionParser("-analyze").addOption("-test"     , "",             "geometry variation to be analyze only for fit testing, e.g. nominal, r1_x, ...");
         
         // valid options for final minuit-fit
         parser.addCommand("-fit", "perform misalignment fit");
@@ -1337,7 +1342,7 @@ public class Alignment {
             boolean  tscFrame     = parser.getOptionParser("-process").getOption("-frame").intValue()==0;
             boolean  r1Global     = parser.getOptionParser("-process").getOption("-global").intValue()!=0;
             boolean  verbose      = parser.getOptionParser("-process").getOption("-verbose").intValue()!=0;
-            boolean  testFit      = parser.getOptionParser("-process").getOption("-test").intValue()!=0;
+            String   testFit      = parser.getOptionParser("-process").getOption("-test").stringValue();
             openWindow            = parser.getOptionParser("-process").getOption("-display").intValue()!=0;
             frameTitle = frameTitle + " - " + nominal;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
@@ -1389,7 +1394,7 @@ public class Alignment {
             boolean  tscFrame   = parser.getOptionParser("-analyze").getOption("-frame").intValue()==0;
             boolean  r1Global   = parser.getOptionParser("-analyze").getOption("-global").intValue()!=0;
             boolean verbose     = parser.getOptionParser("-analyze").getOption("-verbose").intValue()!=0;
-            boolean testFit     = parser.getOptionParser("-analyze").getOption("-test").intValue()!=0;
+            String  testFit     = parser.getOptionParser("-analyze").getOption("-test").stringValue();
             openWindow          = parser.getOptionParser("-analyze").getOption("-display").intValue()!=0;
             if(!openWindow) System.setProperty("java.awt.headless", "true");
             if(verbose)     align.setLoggerLevel(Level.FINE);
@@ -1429,7 +1434,7 @@ public class Alignment {
             align.setFitOptions(sector, iter, tscFrame, r1Global);
             align.initConstants(11, initVar, previousVar, compareVar);
             align.readHistos(histoName, optStats);
-            align.analyzeHistos(0, -vertexFit, vertexPar, false);
+            align.analyzeHistos(0, -vertexFit, vertexPar, "");
         }
 
         if(openWindow) {
