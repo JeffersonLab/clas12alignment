@@ -61,9 +61,9 @@ public class Constants {
                                         "r3_x", "r3_y", "r3_z", "r3_cx", "r3_cy", "r3_cz"};
 
     // parameter step size: set to 0 to fix the parameter
-    public static double[]   PARSTEP = {  0.2,  0.2,   0.2,     0,    0.2,       0.2,
-                                          0.2,  0.2,   0.2,     0,    0.2,       0.2,
-                                          0.2,  0.2,   0.2,     0,    0.2,       0.2};
+    public static double[]   PARSTEP = {  0.2,  0.0,   0.0,     0,    0.0,       0.0,
+                                          0.2,  0.0,   0.2,     0,    0.0,       0.0,
+                                          0.2,  0.0,   0.2,     0,    0.0,       0.0};
    
     // parameter max value
     public static double[]   PARMAX  = {  1.5,     1.5,   1.5,        0.5,  0.5,     0.5,
@@ -118,23 +118,25 @@ public class Constants {
         if(pars.length>0 && pars.length<=DEFAULT.length) {
             TARGETPOS = pars[0];
             TARGETCENTER = pars[0];
+            System.out.println("[CONFIG] target parameters set to:");
+            System.out.println("         - TARGETPOS    = " + TARGETPOS);
             if(pars.length>1) {
                 TARGETLENGTH = pars[1];
                 TARGETCENTER = pars[0]-pars[1]/2;
+                System.out.println("         - TARGETLENGTH = " + TARGETLENGTH);
             }
-            if(pars.length>2)
+            if(pars.length>2) {
                 WINDOWDIST   = pars[2];
-            if(pars.length>3)
+                System.out.println("         - WINDOWDIST   = " + WINDOWDIST);
+            }
+            if(pars.length>3) {
                 SCEXIT       = pars[3];
+                System.out.println("         - SCEXIT       = " + SCEXIT);
+            }
         }
         else {
             System.out.println("[WARNING] wrong number of target parameters. Number is " + pars.length + " instead of [1:4]");
         }
-        System.out.println("[CONFIG] target parameters set to:");
-        System.out.println("         - TARGETPOS    = " + TARGETPOS);
-        System.out.println("         - TARGETLENGTH = " + TARGETLENGTH);
-        System.out.println("         - WINDOWDIST   = " + WINDOWDIST);
-        System.out.println("         - SCEXIT       = " + SCEXIT);
     }
 
 }

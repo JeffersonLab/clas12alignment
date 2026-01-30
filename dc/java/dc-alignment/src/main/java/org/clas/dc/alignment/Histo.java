@@ -668,6 +668,7 @@ public class Histo {
                     }
                     H1F hvtx = vertex[it][ip].getH1F("hi-S"+s);
                     double dx = hvtx.getDataX(1)-hvtx.getDataX(0);
+                    System.out.print(String.format("\tsector=%1d theta bin=%1d phi bin=%1d layer=%2d",s,it,ip,0));
                     if(Histo.fitVertex(vertexFit, hvtx)) {
                         this.parValues[is][it][ip][0] = hvtx.getFunction().getParameter(1)*Constants.SCALE;
                         this.parErrors[is][it][ip][0] = hvtx.getFunction().parameter(1).error()*Constants.SCALE;
@@ -709,6 +710,7 @@ public class Histo {
                         Constants.MEASWEIGHTS[is][it][ip][nLayer+nTarget-2]=0;
                         Constants.MEASWEIGHTS[is][it][ip][nLayer+nTarget-1]=0;
                     }
+                    System.out.print("\r");
                 }
             }
         }         
@@ -1662,28 +1664,33 @@ public class Histo {
      * @param histo
      */
     public static void fitRGLVertex(H1F histo) {
+        
+        double threshold = 100;
+        if(histo.getMax()<threshold)
+            rebin(histo, (int) (threshold/histo.getMax()) + 1);
         int nbin = histo.getData().length;
-        double dx = histo.getDataX(1)-histo.getDataX(0);
+
         //find windows
-        int ibin1 = Histo.getMaximumBinBetween(histo, histo.getDataX(0), Constants.TARGETCENTER);
-        int ibin2 = Histo.getMaximumBinBetween(histo, Constants.TARGETCENTER, histo.getDataX(nbin-1));
+        int ibin1 = Histo.getMaximumBinBetween(histo, histo.getDataX(0), Constants.TARGETCENTER-Constants.TARGETLENGTH/2);
+        int ibin2 = Histo.getMaximumBinBetween(histo, Constants.TARGETCENTER+Constants.TARGETLENGTH/2, histo.getDataX(nbin-1));
 
         double meanU  = histo.getDataX(ibin1);
         double meanD  = histo.getDataX(ibin2);
         double ampU   = histo.getBinContent(ibin1);
         double ampD   = histo.getBinContent(ibin2);
         double sigma = 0.5;
-        double bg = ampD*0.1;//histo.getBinContent((ibin1+ibin2)/2);
-        String function = "[ampU]*gaus(x,[exw]-[tl],[sigmaU])+"
-                        + "[ampU]*gaus(x,[exw]-[tl]-[wd],[sigmaU])+"
+        double bg = histo.getBinContent((ibin1+ibin2)/2);
+        String function = "[ampU]*gaus(x,[exw]-[tll],[sigmaU])+"
+                        + "[ampU]*gaus(x,[exw]-[tll]-[wd],[sigmaU])+"
                         + "[ampD]*gaus(x,[exw],[sigmaD])+"
                         + "[bg]*landau(x,[bgmean],[bgsigma])+"
+//                        + "[p0]*landau(x,[p1],[p2])";
                         + "[p0]+[p1]*x+[p2]*x*x";
         F1D f1_vtx   = new F1D("f"+histo.getName(), function, -10, 10);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
         f1_vtx.setOptStat("11111111111111111");
-        f1_vtx.setParameter(0, ampU);
+        f1_vtx.setParameter(0, ampU/2);
         f1_vtx.setParameter(1, meanD);
         f1_vtx.setParameter(2, meanD-meanU);//Constants.TARGETLENGTH);
         f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.9, Constants.TARGETLENGTH*1.1);
@@ -1692,15 +1699,27 @@ public class Histo {
         f1_vtx.setParLimits(4, Constants.WINDOWDIST*0.99, Constants.WINDOWDIST*1.01);
         f1_vtx.setParameter(5, ampD);
         f1_vtx.setParameter(6, sigma);
-        f1_vtx.setParameter(7, bg);
+        f1_vtx.setParameter(7, bg/2);
+        f1_vtx.setParLimits(7, 0, bg*2);
         f1_vtx.setParameter(8, meanD);//-Constants.TARGETLENGTH*0.5);
-        f1_vtx.setParLimits(8, meanD-2*sigma,meanD+2*sigma);
-        f1_vtx.setParameter(9, 6*sigma);
+        f1_vtx.setParLimits(8, meanD-2*sigma,meanD+6*sigma);
+        f1_vtx.setParameter(9, sigma*2);
+        f1_vtx.setParLimits(9, 0, sigma*8);
+        f1_vtx.setParameter(10, bg);
+        f1_vtx.setParLimits(10, 0, bg*2);
+//        f1_vtx.setParameter(11, meanU);
+//        f1_vtx.setParameter(12, Constants.TARGETLENGTH/3);
         f1_vtx.setRange(Math.max(meanU-8*sigma,histo.getDataX(0)),
                         Math.min(meanD+8*sigma,histo.getDataX(nbin-1)));
-//        histo.setFunction(f1_vtx);
+        histo.setFunction(f1_vtx);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
-//        if(f1_vtx.getParameter(6)<f1_vtx.getParameter(0)/4) f1_vtx.setParameter(6, 0);
+        if(!f1_vtx.isFitValid()) {
+            meanU = f1_vtx.getParameter(1)-f1_vtx.getParameter(2);
+            meanD = f1_vtx.getParameter(8);
+            f1_vtx.setRange(Math.max(meanU-8*sigma,histo.getDataX(0)),
+                            Math.min(meanD+8*sigma,histo.getDataX(nbin-1)));
+            DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma            
+        }
     }
 
     //This was a previous version of fitting the z vertex peaks
@@ -1905,7 +1924,28 @@ public class Histo {
             }
             return Math.sqrt(sum / (double) nEntries);
     }
+  
+    public static boolean rebin(H1F histo, int factor) {
+
+        int nbin = histo.getData().length;
+        if(nbin<factor)
+            return false;
         
+        float[] data = histo.getData();
+        double dx = histo.getDataX(1)-histo.getDataX(0);
+        double xmin = histo.getDataX(0)-dx/2;
+        nbin = nbin/factor;
+        histo.set(nbin, xmin, xmin+dx*factor*nbin);
+        for(int i=0; i<nbin; i++) {
+            float rdata = 0;
+            for(int j=0; j<factor; j++)
+                rdata += data[i*factor+j];
+            histo.setBinContent(i, rdata);
+        }
+        return true;
+    }
+            
+    
     public void readDataGroup(String folder, TDirectory dir) {
         electron = this.readDataGroup(folder + "/electron/electron", dir, electron);
         binning  = this.readDataGroup(folder + "/electron/binning", dir, binning);
