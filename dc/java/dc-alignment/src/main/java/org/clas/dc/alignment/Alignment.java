@@ -822,7 +822,8 @@ public class Alignment {
                 gr_fit.setTitle("Layer " + il);
                 gr_fit.setTitleX("#phi (deg)");
                 gr_fit.setTitleY("#Deltaz (cm)");
-                gr_fit.setMarkerColor(this.markerColor[it-1]);
+                gr_fit.setMarkerColor(this.markerColor[(it-1)%this.markerColor.length]);
+                gr_fit.setMarkerStyle(this.markerStyle[2 + (int) ((it-1)/this.markerColor.length)]);
                 gr_fit.setMarkerSize(this.markerSize);
                 if(gr_fit.getDataSize(0)>0) {
                     if(!graphs.containsKey(i))

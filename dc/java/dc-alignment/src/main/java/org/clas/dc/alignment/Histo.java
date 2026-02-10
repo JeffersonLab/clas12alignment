@@ -1679,41 +1679,41 @@ public class Histo {
         double ampU   = histo.getBinContent(ibin1);
         double ampD   = histo.getBinContent(ibin2);
         double sigma = 0.5;
-        double bg = histo.getBinContent((ibin1+ibin2)/2);
-        String function = "[ampU]*gaus(x,[exw]-[tll],[sigmaU])+"
-                        + "[ampU]*gaus(x,[exw]-[tll]-[wd],[sigmaU])+"
-                        + "[ampD]*gaus(x,[exw],[sigmaD])+"
-                        + "[bg]*landau(x,[bgmean],[bgsigma])+"
-//                        + "[p0]*landau(x,[p1],[p2])";
+        double bg = ibin1>0 ? histo.getBinContent((ibin1+ibin2)/2) : histo.getBinContent(0);
+        String function = "[ampD]*gaus(x,[exw],[sigmaD])+"
+                        + "[ampD]*0.1*landau(x,[exw],[sigmaD])+"
                         + "[p0]+[p1]*x+[p2]*x*x";
         F1D f1_vtx   = new F1D("f"+histo.getName(), function, -10, 10);
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
-        f1_vtx.setOptStat("11111111111111111");
-        f1_vtx.setParameter(0, ampU/2);
+        f1_vtx.setOptStat("1111111111");
+        f1_vtx.setParameter(0, ampD);
         f1_vtx.setParameter(1, meanD);
-        f1_vtx.setParameter(2, meanD-meanU);//Constants.TARGETLENGTH);
-        f1_vtx.setParLimits(2, Constants.TARGETLENGTH*0.9, Constants.TARGETLENGTH*1.1);
-        f1_vtx.setParameter(3, sigma*2);
-        f1_vtx.setParameter(4, Constants.WINDOWDIST);
-        f1_vtx.setParLimits(4, Constants.WINDOWDIST*0.99, Constants.WINDOWDIST*1.01);
-        f1_vtx.setParameter(5, ampD);
-        f1_vtx.setParameter(6, sigma);
-        f1_vtx.setParameter(7, bg/2);
-        f1_vtx.setParLimits(7, 0, bg*2);
-        f1_vtx.setParameter(8, meanD);//-Constants.TARGETLENGTH*0.5);
-        f1_vtx.setParLimits(8, meanD-2*sigma,meanD+6*sigma);
-        f1_vtx.setParameter(9, sigma*2);
-        f1_vtx.setParLimits(9, 0, sigma*8);
-        f1_vtx.setParameter(10, bg);
-        f1_vtx.setParLimits(10, 0, bg*2);
-//        f1_vtx.setParameter(11, meanU);
-//        f1_vtx.setParameter(12, Constants.TARGETLENGTH/3);
+        f1_vtx.setParameter(2, sigma);
+//        f1_vtx.setParameter(3, ampD/20);
+//        f1_vtx.setParLimits(3, ampD/40,ampD/10);
+//        f1_vtx.setParameter(4, meanD);
+//        f1_vtx.setParLimits(4, meanD-2*sigma,meanD+6*sigma);
+//        f1_vtx.setParameter(5, sigma*2);
+//        f1_vtx.setParLimits(5, sigma, sigma*4);
+        if(ibin1>0) {
+            int np = f1_vtx.getParameterEstimate().length;
+            f1_vtx = new F1D("f"+histo.getName(), function 
+                                                + "+[ampU]*gaus(x,[exw]-[tl],[sigmaU])"
+                                                + "+[ampU]*gaus(x,[exw]-[tl]-[wd],[sigmaU])", -10, 10);
+            f1_vtx.setOptStat("11111111111111");
+            f1_vtx.setParameter(np+0, ampU/2);
+            f1_vtx.setParameter(np+1, meanD-meanU);//Constants.TARGETLENGTH);
+            f1_vtx.setParLimits(np+1, Constants.TARGETLENGTH*0.9, Constants.TARGETLENGTH*1.1);
+            f1_vtx.setParameter(np+2, sigma*2);
+            f1_vtx.setParameter(np+3, Constants.WINDOWDIST);
+            f1_vtx.setParLimits(np+3, Constants.WINDOWDIST*0.99, Constants.WINDOWDIST*1.01);
+        }
         f1_vtx.setRange(Math.max(meanU-8*sigma,histo.getDataX(0)),
                         Math.min(meanD+8*sigma,histo.getDataX(nbin-1)));
         histo.setFunction(f1_vtx);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
-        if(!f1_vtx.isFitValid()) {
+        if(!f1_vtx.isFitValid() && ibin1>0) {
             meanU = f1_vtx.getParameter(1)-f1_vtx.getParameter(2);
             meanD = f1_vtx.getParameter(8);
             f1_vtx.setRange(Math.max(meanU-8*sigma,histo.getDataX(0)),
@@ -1824,7 +1824,7 @@ public class Histo {
         double x_val;
         double y_max_temp;
         double y_max = 0;
-        int max_bin_num = histo.getMaximumBin();
+        int max_bin_num = 0;
         for (int i = 0; i < nbin; i++) { 
             x_val_temp = histo.getAxis().getBinCenter(i);
             if (x_val_temp >= min && x_val_temp <= max) {
