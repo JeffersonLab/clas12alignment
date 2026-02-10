@@ -61,9 +61,9 @@ public class Constants {
                                         "r3_x", "r3_y", "r3_z", "r3_cx", "r3_cy", "r3_cz"};
 
     // parameter step size: set to 0 to fix the parameter
-    public static double[]   PARSTEP = {  0.2,  0.0,   0.0,     0,    0.0,       0.0,
-                                          0.2,  0.0,   0.2,     0,    0.0,       0.0,
-                                          0.2,  0.0,   0.2,     0,    0.0,       0.0};
+    public static double[]   PARSTEP = {  0.2,  0.2,   0.2,     0,    0.2,       0.0,
+                                          0.2,  0.2,   0.2,     0,    0.2,       0.0,
+                                          0.2,  0.2,   0.2,     0,    0.2,       0.0};
    
     // parameter max value
     public static double[]   PARMAX  = {  1.5,     1.5,   1.5,        0.5,  0.5,     0.5,
