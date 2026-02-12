@@ -70,7 +70,7 @@ public class Histo {
     private List<String> shiftedFiles = null;
     private SchemaFactory      schema = null;
     
-    private boolean tres  = false;
+    private boolean extra = false;
     private boolean shift = false;
     
     private static final Logger LOGGER = Logger.getLogger(Constants.LOGGERNAME);
@@ -85,13 +85,13 @@ public class Histo {
         this.createHistos(optstats);
     }
     
-    public Histo(String name, List<String> files, Bin[] thetabins, Bin[] phibins, boolean time, double[] vertexrange, String optstats) {
+    public Histo(String name, List<String> files, Bin[] thetabins, Bin[] phibins, boolean extraplots, double[] vertexrange, String optstats) {
         this.name      = name;
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
         this.minVtx    = vertexrange[0];
         this.maxVtx    = vertexrange[1];
-        this.tres      = time;
+        this.extra     = extraplots;
         this.nominalFiles = files;
         this.createHistos(optstats);
     }
@@ -114,12 +114,12 @@ public class Histo {
         this.createHistos(optstats);
     }
     
-    public Histo(String name, boolean shift, Bin[] thetabins, Bin[] phibins, boolean time, double[] vertexrange, String optstats) {
+    public Histo(String name, boolean shift, Bin[] thetabins, Bin[] phibins, boolean extraplots, double[] vertexrange, String optstats) {
         this.name      = name;
         this.thetaBins = thetabins;
         this.phiBins   = phibins;
         this.shift     = shift;
-        this.tres      = time;
+        this.extra     = extraplots;
         this.createHistos(optstats);
     }
     
@@ -129,8 +129,7 @@ public class Histo {
                                                        + (phiBins.length-1)   + " phi bins "
                                                        + "for variation " + name);
         this.residuals = new DataGroup[nSector][thetaBins.length][phiBins.length];
-        this.wires = new DataGroup[2][nSector];
-        if(tres) {
+        if(extra) {
             this.time  = new DataGroup[nSector][thetaBins.length][phiBins.length];
             this.leftright = new DataGroup[nSector][thetaBins.length][phiBins.length];
         }
@@ -157,16 +156,54 @@ public class Histo {
             maxVtx = Constants.VDFMAX;
         }
         
-        this.calib = new DataGroup(nSector, nSLayer);
-        this.alpha = new DataGroup(nSector, nSLayer);
-        this.track = new DataGroup(nSector, nSLayer);
-        this.doca = new DataGroup(nSector, nSLayer);
+        if(extra) {
+            this.calib = new DataGroup(nSector, nSLayer);
+            this.alpha = new DataGroup(nSector, nSLayer);
+            this.track = new DataGroup(nSector, nSLayer);
+            this.doca = new DataGroup(nSector, nSLayer);
+            this.wires = new DataGroup[2][nSector];
+            for(int ires=0; ires<2; ires++) {
+                for(int is=0; is<nSector; is++) {
+                    int sector = is+1;
+                    this.wires[ires][is] = new DataGroup(nSector, nSLayer);
+                    for(int il=0; il<nLayer; il++) {
+                        int layer = il+1;
+                        H2F hi_wire = new H2F("hi-L" + layer + "_S" + sector, "L " + layer + " Sector " + sector, 112, 1, 113, nbinsRes, minRes, maxRes);
+                        hi_wire.setTitleX("Wire");
+                        hi_wire.setTitleY("Residuals (um)");
+                        this.wires[ires][is].addDataSet(hi_wire, il);   
+                    }
+                }
+            }
+            for(int is=0; is<nSector; is++) {
+                int sector = is+1;
+                for(int isl=0; isl<nSLayer; isl++) {
+                    int superlayer = isl+1;
+                    H1F hi_time = new H1F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                    hi_time.setTitleX("Residuals (um)");
+                    hi_time.setTitleY("Counts");
+                    hi_time.setOptStat(optStats);
+                    this.calib.addDataSet(hi_time, is+isl*nSector);
+                    H2F hi_alpha = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, 100, -25, 10, 100, -25, 10);
+                    hi_alpha.setTitleX("#theta-25 (deg)");
+                    hi_alpha.setTitleY("#alpha (deg)");
+                    this.alpha.addDataSet(hi_alpha, is+isl*nSector);   
+                    H2F hi_track = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes, 100, 0, Constants.WPDIST[isl]);
+                    hi_track.setTitleX("Fit Residuals (um)");
+                    hi_track.setTitleY("Doca (cm)");
+                    this.track.addDataSet(hi_track, is+isl*nSector);   
+                    H2F hi_doca = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes, 100, 0, Constants.WPDIST[isl]);
+                    hi_doca.setTitleX("Time Residuals (um)");
+                    hi_doca.setTitleY("Doca (cm)");
+                    this.doca.addDataSet(hi_doca, is+isl*nSector);   
+                }
+            }
+        }
         for(int is=0; is<nSector; is++) {
             int sector = is+1;
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
                     this.residuals[is][it][ip] = new DataGroup(6,6);
-                    if(tres) this.time[is][it][ip] = new DataGroup(6,6);
                     for(int il=0; il<nLayer; il++) {
                         int layer = il+1;
                         H1F hi_residual = new H1F("hi-L" + layer,"Layer " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
@@ -175,69 +212,29 @@ public class Histo {
                         hi_residual.setOptStat(optStats);
                         this.residuals[is][it][ip].addDataSet(hi_residual, il);
                     }
-                }
-            }
-            for(int isl=0; isl<nSLayer; isl++) {
-                int superlayer = isl+1;
-                H1F hi_time = new H1F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes);
-                hi_time.setTitleX("Residuals (um)");
-                hi_time.setTitleY("Counts");
-                hi_time.setOptStat(optStats);
-                this.calib.addDataSet(hi_time, is+isl*nSector);
-                H2F hi_alpha = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, 100, -25, 10, 100, -25, 10);
-                hi_alpha.setTitleX("#theta-25 (deg)");
-                hi_alpha.setTitleY("#alpha (deg)");
-                this.alpha.addDataSet(hi_alpha, is+isl*nSector);   
-                H2F hi_track = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes, 100, 0, Constants.WPDIST[isl]);
-                hi_track.setTitleX("Fit Residuals (um)");
-                hi_track.setTitleY("Doca (cm)");
-                this.track.addDataSet(hi_track, is+isl*nSector);   
-                H2F hi_doca = new H2F("hi-SL" + superlayer + "_S" + sector, "SL " + superlayer + " Sector " + sector, nbinsRes, minRes, maxRes, 100, 0, Constants.WPDIST[isl]);
-                hi_doca.setTitleX("Time Residuals (um)");
-                hi_doca.setTitleY("Doca (cm)");
-                this.doca.addDataSet(hi_doca, is+isl*nSector);   
-            }
-        }
-        for(int ires=0; ires<2; ires++) {
-            for(int is=0; is<nSector; is++) {
-                int sector = is+1;
-                this.wires[ires][is] = new DataGroup(nSector, nSLayer);
-                for(int il=0; il<nLayer; il++) {
-                    int layer = il+1;
-                    H2F hi_wire = new H2F("hi-L" + layer + "_S" + sector, "L " + layer + " Sector " + sector, 112, 1, 113, nbinsRes, minRes, maxRes);
-                    hi_wire.setTitleX("Wire");
-                    hi_wire.setTitleY("Residuals (um)");
-                    this.wires[ires][is].addDataSet(hi_wire, il);   
-                }
-            }
-        }
-        if(tres) {
-            for(int is=0; is<nSector; is++) {
-                int sector = is+1;
-                for(int it=0; it<thetaBins.length; it++) {
-                    for(int ip=0; ip<phiBins.length; ip++) {
-                        this.time[is][it][ip] = new DataGroup(6,6);
-                        this.leftright[is][it][ip] = new DataGroup(6,6);
-                        for(int il=0; il<nLayer; il++) {
-                            int layer = il+1;
-                            H1F hi_time = new H1F("hi-L" + layer,"Layer " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
-                            hi_time.setTitleX("Residuals (um)");
-                            hi_time.setTitleY("Counts");
-                            hi_time.setOptStat(optStats);
-                            this.time[is][it][ip].addDataSet(hi_time, il);      
-                            H1F hi_left = new H1F("hi-lL" + layer, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
-                            hi_left.setTitleX("Residuals (um)");
-                            hi_left.setTitleY("Counts");
-                            hi_left.setOptStat(optStats);
-                            hi_left.setLineColor(3);
-                            H1F hi_right = new H1F("hi-rL" + layer, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
-                            hi_right.setTitleX("Residuals (um)");
-                            hi_right.setTitleY("Counts");
-                            hi_right.setOptStat(optStats);
-                            hi_right.setLineColor(4);
-                            this.leftright[is][it][ip].addDataSet(hi_left, il);
-                            this.leftright[is][it][ip].addDataSet(hi_right, il);
-                        }
+                    if(!extra)
+                        continue;
+                    this.time[is][it][ip] = new DataGroup(6,6);
+                    this.leftright[is][it][ip] = new DataGroup(6,6);
+                    for(int il=0; il<nLayer; il++) {
+                        int layer = il+1;
+                        H1F hi_time = new H1F("hi-L" + layer,"Layer " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                        hi_time.setTitleX("Residuals (um)");
+                        hi_time.setTitleY("Counts");
+                        hi_time.setOptStat(optStats);
+                        this.time[is][it][ip].addDataSet(hi_time, il);      
+                        H1F hi_left = new H1F("hi-lL" + layer, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                        hi_left.setTitleX("Residuals (um)");
+                        hi_left.setTitleY("Counts");
+                        hi_left.setOptStat(optStats);
+                        hi_left.setLineColor(3);
+                        H1F hi_right = new H1F("hi-rL" + layer, "L " + layer + " Sector " + sector, nbinsRes, minRes, maxRes);
+                        hi_right.setTitleX("Residuals (um)");
+                        hi_right.setTitleY("Counts");
+                        hi_right.setOptStat(optStats);
+                        hi_right.setLineColor(4);
+                        this.leftright[is][it][ip].addDataSet(hi_left, il);
+                        this.leftright[is][it][ip].addDataSet(hi_right, il);
                     } 
                 }
             }
@@ -522,15 +519,15 @@ public class Histo {
                         if (phiBins[ip].contains(phi)) {
                             for(Hit hit : hits) {
                                 this.residuals[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.residual);
-                                if(it==0 && ip==0) {
-                                    this.calib.getH1F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
-                                    this.alpha.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(Math.toDegrees(electron.theta())-Constants.THTHILT, hit.alpha);
-                                    this.track.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.residual, hit.doca);
-                                    this.doca.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time, hit.doca);
-                                    this.wires[0][sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.wire, hit.residual);
-                                    this.wires[1][sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.wire, hit.time);
-                                }
-                                if(tres) {
+                                if(extra) {
+                                    if(it==0 && ip==0) {
+                                        this.calib.getH1F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time);
+                                        this.alpha.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(Math.toDegrees(electron.theta())-Constants.THTHILT, hit.alpha);
+                                        this.track.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.residual, hit.doca);
+                                        this.doca.getH2F("hi-SL" + hit.superlayer + "_S" + hit.sector).fill(hit.time, hit.doca);
+                                        this.wires[0][sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.wire, hit.residual);
+                                        this.wires[1][sector-1].getH2F("hi-L" + hit.layer + "_S" + hit.sector).fill(hit.wire, hit.time);
+                                    }
                                     this.time[sector - 1][it][ip].getH1F("hi-L" + hit.layer).fill(hit.time);
                                     if(hit.lr>0)
                                             this.leftright[sector-1][it][ip].getH1F("hi-rL" + hit.layer).fill(hit.time);
@@ -567,7 +564,7 @@ public class Histo {
                     int layer       = hitBank.getInt("layer", i) + 6 * (superlayer - 1);
                     int wire        = hitBank.getInt("wire", i);
                     int status      = hitBank.getInt("status", i);
-                    residual = doca*1E4/Math.cos(Math.toRadians(alpha))-(doca*lr*1E4-residual);
+                    residual = doca*lr*1E4/Math.cos(Math.toRadians(alpha))-(doca*lr*1E4-residual);
                     Hit hit = new Hit(sector, layer, wire, residual, time, doca, alpha, lr, status);
                     if(!allhits.containsKey(superlayer))
                         allhits.put(superlayer, new ArrayList<>());
@@ -633,10 +630,12 @@ public class Histo {
         Histo.fitVertex(vertexFit,electron.getH1F("hi-vtx"));
         for(int is=0; is<nSector; is++) {
             int s = is +1;
-            for(int isl=0; isl<nSLayer; isl++) {
-                int sl = isl+1;
-                H1F hres = calib.getH1F("hi-SL"+sl+"_S"+s);
-                Histo.fitResiduals(1, hres);
+            if(this.calib!=null) {
+                for(int isl=0; isl<nSLayer; isl++) {
+                    int sl = isl+1;
+                    H1F hres = calib.getH1F("hi-SL"+sl+"_S"+s);
+                    Histo.fitResiduals(1, hres);
+                }
             }
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -647,7 +646,7 @@ public class Histo {
                         this.parStatus[is][it][ip][il] = false;
                     }
                     for(int l=1; l<=nLayer; l++) {
-                        if(tres) {
+                        if(extra) {
                             H1F htime = this.time[is][it][ip].getH1F("hi-L" + l);
                             if(Histo.fitResiduals(fit, htime)) {
                                 this.timeValues[is][it][ip][l] = htime.getFunction().getParameter(1); 
@@ -874,30 +873,31 @@ public class Histo {
     }
     
     public EmbeddedCanvasTabbed plotHistos() {
-        EmbeddedCanvasTabbed canvas = new EmbeddedCanvasTabbed("Calibration", "Alpha", "Track", "Doca");
-        canvas.getCanvas("Calibration").draw(calib);
-        canvas.getCanvas("Alpha").draw(alpha);
-        for(EmbeddedPad pad : canvas.getCanvas("Alpha").getCanvasPads())
-            pad.getAxisZ().setLog(true);
-        canvas.getCanvas("Track").draw(track);
-        canvas.getCanvas("Doca").draw(doca);
-        for(int is=0; is<nSector; is++) {
-            int    sector = is+1;
-            String title  = "WSSec" + sector;
-            canvas.addCanvas(title);
-            canvas.getCanvas(title).draw(wires[0][is]);
-            for(EmbeddedPad pad : canvas.getCanvas(title).getCanvasPads())
+        EmbeddedCanvasTabbed canvas = null;
+        if(this.extra) {
+            canvas = new EmbeddedCanvasTabbed("Calibration", "Alpha", "Track", "Doca");
+            canvas.getCanvas("Calibration").draw(calib);
+            canvas.getCanvas("Alpha").draw(alpha);
+            for(EmbeddedPad pad : canvas.getCanvas("Alpha").getCanvasPads())
                 pad.getAxisZ().setLog(true);
-        }
-        for(int is=0; is<nSector; is++) {
-            int    sector = is+1;
-            String title  = "WTSec" + sector;
-            canvas.addCanvas(title);
-            canvas.getCanvas(title).draw(wires[1][is]);
-            for(EmbeddedPad pad : canvas.getCanvas(title).getCanvasPads())
-                pad.getAxisZ().setLog(true);
-        }
-        if(tres) {
+            canvas.getCanvas("Track").draw(track);
+            canvas.getCanvas("Doca").draw(doca);
+            for(int is=0; is<nSector; is++) {
+                int    sector = is+1;
+                String title  = "WSSec" + sector;
+                canvas.addCanvas(title);
+                canvas.getCanvas(title).draw(wires[0][is]);
+                for(EmbeddedPad pad : canvas.getCanvas(title).getCanvasPads())
+                    pad.getAxisZ().setLog(true);
+            }
+            for(int is=0; is<nSector; is++) {
+                int    sector = is+1;
+                String title  = "WTSec" + sector;
+                canvas.addCanvas(title);
+                canvas.getCanvas(title).draw(wires[1][is]);
+                for(EmbeddedPad pad : canvas.getCanvas(title).getCanvasPads())
+                    pad.getAxisZ().setLog(true);
+            }
             for(int is=0; is<nSector; is++) {
                 int    sector = is+1;
                 String title  = "TSec" + sector;
@@ -934,7 +934,10 @@ public class Histo {
         for(int is=0; is<nSector; is++) {
             int    sector = is+1;
             String title  = "Sec" + sector;
-            canvas.addCanvas(title);
+            if(canvas==null)
+                canvas = new EmbeddedCanvasTabbed(title);
+            else
+                canvas.addCanvas(title);
             canvas.getCanvas(title).draw(this.residuals[is][0][0]);
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -1971,10 +1974,6 @@ public class Histo {
         electron = this.readDataGroup(folder + "/electron/electron", dir, electron);
         binning  = this.readDataGroup(folder + "/electron/binning", dir, binning);
         offset   = this.readDataGroup(folder + "/electron/offset", dir, offset);
-        calib    = this.readDataGroup(folder + "/calibration/residuals", dir, calib);
-        alpha    = this.readDataGroup(folder + "/calibration/alpha", dir, alpha);
-        track    = this.readDataGroup(folder + "/calibration/track", dir, track);
-        doca     = this.readDataGroup(folder + "/calibration/doca", dir, doca);
         for(int is=0; is<nSector; is++) {
             for(int it=0; it<thetaBins.length; it++) {
                 for(int ip=0; ip<phiBins.length; ip++) {
@@ -1983,15 +1982,19 @@ public class Histo {
                 }
             }
         }
-        for(int is=0; is<nSector; is++) {
-            String subfolder = folder + "/wires/space/sec" + (is+1);
-            wires[0][is] = this.readDataGroup(subfolder, dir, wires[0][is]);
-        }
-        for(int is=0; is<nSector; is++) {
-            String subfolder = folder + "/wires/time/sec" + (is+1);
-            wires[1][is] = this.readDataGroup(subfolder, dir, wires[1][is]);
-        }
-        if(tres) {
+        if(extra) {
+            calib    = this.readDataGroup(folder + "/calibration/residuals", dir, calib);
+            alpha    = this.readDataGroup(folder + "/calibration/alpha", dir, alpha);
+            track    = this.readDataGroup(folder + "/calibration/track", dir, track);
+            doca     = this.readDataGroup(folder + "/calibration/doca", dir, doca);
+            for(int is=0; is<nSector; is++) {
+                String subfolder = folder + "/wires/space/sec" + (is+1);
+                wires[0][is] = this.readDataGroup(subfolder, dir, wires[0][is]);
+            }
+            for(int is=0; is<nSector; is++) {
+                String subfolder = folder + "/wires/time/sec" + (is+1);
+                wires[1][is] = this.readDataGroup(subfolder, dir, wires[1][is]);
+            }
             for(int is=0; is<nSector; is++) {
                 for(int it=0; it<thetaBins.length; it++) {
                     for(int ip=0; ip<phiBins.length; ip++) {
@@ -2082,37 +2085,47 @@ public class Histo {
             }
         }
         dir.cd("/" + root + "/" + folder);
-        dir.mkdir("calibration");
-        dir.cd("calibration");
-        this.writeDataGroup("residuals", dir,  calib);
-        dir.cd("/" + root + "/" + folder);
-        dir.cd("calibration");
-        this.writeDataGroup("alpha", dir,  alpha);
-        dir.cd("/" + root + "/" + folder);
-        dir.cd("calibration");
-        this.writeDataGroup("track", dir,  track);
-        dir.cd("/" + root + "/" + folder);
-        dir.cd("calibration");
-        this.writeDataGroup("doca", dir,  doca);
-        dir.cd("/" + root + "/" + folder);
-        dir.mkdir("wires");
-        dir.cd("wires");
-        dir.mkdir("space");
-        dir.cd("space");
-        for(int is=0; is<nSector; is++) {
-            String subfolder = "sec" + (is+1);
-            this.writeDataGroup(subfolder, dir,  wires[0][is]);
-            dir.cd("/" + root + "/" + folder + "/wires/space");
-        }
-        dir.cd("/" + root + "/" + folder + "/wires");
-        dir.mkdir("time");
-        dir.cd("time");
-        for(int is=0; is<nSector; is++) {
-            String subfolder = "sec" + (is+1);
-            this.writeDataGroup(subfolder, dir,  wires[1][is]);
-            dir.cd("/" + root + "/" + folder + "/wires/time");
-        }
-        if(tres) {
+        dir.mkdir("vertex");
+        dir.cd("vertex");
+        for(int it=0; it<thetaBins.length; it++) {
+            for(int ip=0; ip<phiBins.length; ip++) {
+                String subfolder = "theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
+                this.writeDataGroup(subfolder, dir, vertex[it][ip]);
+                dir.cd("/" + root + "/" + folder + "/vertex");
+            }
+        } 
+        if(extra) {
+            dir.cd("/" + root + "/" + folder);
+            dir.mkdir("calibration");
+            dir.cd("calibration");
+            this.writeDataGroup("residuals", dir,  calib);
+            dir.cd("/" + root + "/" + folder);
+            dir.cd("calibration");
+            this.writeDataGroup("alpha", dir,  alpha);
+            dir.cd("/" + root + "/" + folder);
+            dir.cd("calibration");
+            this.writeDataGroup("track", dir,  track);
+            dir.cd("/" + root + "/" + folder);
+            dir.cd("calibration");
+            this.writeDataGroup("doca", dir,  doca);
+            dir.cd("/" + root + "/" + folder);
+            dir.mkdir("wires");
+            dir.cd("wires");
+            dir.mkdir("space");
+            dir.cd("space");
+            for(int is=0; is<nSector; is++) {
+                String subfolder = "sec" + (is+1);
+                this.writeDataGroup(subfolder, dir,  wires[0][is]);
+                dir.cd("/" + root + "/" + folder + "/wires/space");
+            }
+            dir.cd("/" + root + "/" + folder + "/wires");
+            dir.mkdir("time");
+            dir.cd("time");
+            for(int is=0; is<nSector; is++) {
+                String subfolder = "sec" + (is+1);
+                this.writeDataGroup(subfolder, dir,  wires[1][is]);
+                dir.cd("/" + root + "/" + folder + "/wires/time");
+            }
             dir.cd("/" + root + "/" + folder);
             dir.mkdir("time");
             dir.cd("time");
@@ -2137,16 +2150,6 @@ public class Histo {
                 }
             }
         }
-        dir.cd("/" + root + "/" + folder);
-        dir.mkdir("vertex");
-        dir.cd("vertex");
-        for(int it=0; it<thetaBins.length; it++) {
-            for(int ip=0; ip<phiBins.length; ip++) {
-                String subfolder = "theta" + thetaBins[it].getRange() + "_phi" + phiBins[ip].getRange();
-                this.writeDataGroup(subfolder, dir, vertex[it][ip]);
-                dir.cd("/" + root + "/" + folder + "/vertex");
-            }
-        } 
         dir.cd();
     }
     
