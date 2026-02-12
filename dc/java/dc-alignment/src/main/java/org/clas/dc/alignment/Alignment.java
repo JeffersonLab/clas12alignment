@@ -1239,7 +1239,7 @@ public class Alignment {
         parser.getOptionParser("-process").addOption("-frame"    , "0",            "translations defined in the CLAS12 tilted sector frame (0) or sector frame (1)");
         parser.getOptionParser("-process").addOption("-global"   , "0",            "r1 translations defined as relative (0) or global (1) translations");
         parser.getOptionParser("-process").addOption("-verbose"  , "0",            "global fit verbosity (1/0 = on/off)");
-        parser.getOptionParser("-process").addOption("-test"     , "nominal",      "geometry variation to be analyze only for fit testing");
+        parser.getOptionParser("-process").addOption("-test"     , "",             "geometry variation to be analyze only for fit testing");
 
         // valid options for histogram-base analysis
         parser.addCommand("-analyze", "analyze histogram files");
