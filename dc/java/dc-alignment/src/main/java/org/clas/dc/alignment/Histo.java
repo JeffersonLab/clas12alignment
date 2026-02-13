@@ -564,7 +564,6 @@ public class Histo {
                     int layer       = hitBank.getInt("layer", i) + 6 * (superlayer - 1);
                     int wire        = hitBank.getInt("wire", i);
                     int status      = hitBank.getInt("status", i);
-                    residual = doca*lr*1E4/Math.cos(Math.toRadians(alpha))-(doca*lr*1E4-residual);
                     Hit hit = new Hit(sector, layer, wire, residual, time, doca, alpha, lr, status);
                     if(!allhits.containsKey(superlayer))
                         allhits.put(superlayer, new ArrayList<>());
