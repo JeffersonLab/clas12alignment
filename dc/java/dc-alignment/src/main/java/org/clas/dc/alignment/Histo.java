@@ -1713,14 +1713,8 @@ public class Histo {
         f1_vtx.setParameter(0, ampD);
         f1_vtx.setParameter(1, meanD);
         f1_vtx.setParameter(2, sigma);
-//        f1_vtx.setParameter(3, ampD/20);
-//        f1_vtx.setParLimits(3, ampD/40,ampD/10);
-//        f1_vtx.setParameter(4, meanD);
-//        f1_vtx.setParLimits(4, meanD-2*sigma,meanD+6*sigma);
-//        f1_vtx.setParameter(5, sigma*2);
-//        f1_vtx.setParLimits(5, sigma, sigma*4);
         if(ibin1>0) {
-            int np = f1_vtx.getParameterEstimate().length;
+            int np = f1_vtx.getNPars();
             f1_vtx = new F1D("f"+histo.getName(), function 
                                                 + "+[ampU]*gaus(x,[exw]-[tl],[sigmaU])"
                                                 + "+[ampU]*gaus(x,[exw]-[tl]-[wd],[sigmaU])", -10, 10);
@@ -1732,6 +1726,11 @@ public class Histo {
             f1_vtx.setParameter(np+3, Constants.WINDOWDIST);
             f1_vtx.setParLimits(np+3, Constants.WINDOWDIST*0.99, Constants.WINDOWDIST*1.01);
         }
+        f1_vtx.setLineColor(2);
+        f1_vtx.setLineWidth(2);
+        f1_vtx.setParameter(0, ampD);
+        f1_vtx.setParameter(1, meanD);
+        f1_vtx.setParameter(2, sigma);
         f1_vtx.setRange(Math.max(meanU-8*sigma,histo.getDataX(0)),
                         Math.min(meanD+8*sigma,histo.getDataX(nbin-1)));
         histo.setFunction(f1_vtx);
