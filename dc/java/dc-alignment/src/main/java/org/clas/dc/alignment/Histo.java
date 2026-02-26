@@ -1704,20 +1704,16 @@ public class Histo {
         double sigma = 0.5;
         double bg = ibin1>0 ? histo.getBinContent((ibin1+ibin2)/2) : histo.getBinContent(0);
         String function = "[ampD]*gaus(x,[exw],[sigmaD])+"
-                        + "[ampD]*0.1*landau(x,[exw],[sigmaD])+"
+                        + "[ampDL]*landau(x,[exw],[sigmaD]*3)+"
                         + "[p0]+[p1]*x+[p2]*x*x";
         F1D f1_vtx   = new F1D("f"+histo.getName(), function, -10, 10);
-        f1_vtx.setLineColor(2);
-        f1_vtx.setLineWidth(2);
         f1_vtx.setOptStat("1111111111");
-        f1_vtx.setParameter(0, ampD);
-        f1_vtx.setParameter(1, meanD);
-        f1_vtx.setParameter(2, sigma);
+        int np = f1_vtx.getNPars();
         if(ibin1>0) {
-            int np = f1_vtx.getNPars();
             f1_vtx = new F1D("f"+histo.getName(), function 
                                                 + "+[ampU]*gaus(x,[exw]-[tl],[sigmaU])"
-                                                + "+[ampU]*gaus(x,[exw]-[tl]-[wd],[sigmaU])", -10, 10);
+                                                + "+[ampU]*gaus(x,[exw]-[tl]-[wd],[sigmaU])"
+                                                + "+[ampUL]*landau(x,[exw]-[tl]-[wd]*0.5,[sigmaU]*3)", -10, 10);
             f1_vtx.setOptStat("11111111111111");
             f1_vtx.setParameter(np+0, ampU/2);
             f1_vtx.setParameter(np+1, meanD-meanU);//Constants.TARGETLENGTH);
@@ -1725,20 +1721,23 @@ public class Histo {
             f1_vtx.setParameter(np+2, sigma*2);
             f1_vtx.setParameter(np+3, Constants.WINDOWDIST);
             f1_vtx.setParLimits(np+3, Constants.WINDOWDIST*0.99, Constants.WINDOWDIST*1.01);
+            f1_vtx.setParameter(np+4, ampU*0.1);
         }
         f1_vtx.setLineColor(2);
         f1_vtx.setLineWidth(2);
         f1_vtx.setParameter(0, ampD);
         f1_vtx.setParameter(1, meanD);
         f1_vtx.setParameter(2, sigma);
-        f1_vtx.setRange(Math.max(meanU-8*sigma,histo.getDataX(0)),
+        f1_vtx.setParameter(3, ampD*0.1);
+        f1_vtx.setRange(Math.max(meanU-12*sigma,histo.getDataX(0)),
                         Math.min(meanD+8*sigma,histo.getDataX(nbin-1)));
         histo.setFunction(f1_vtx);
         DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma
-        if(!f1_vtx.isFitValid() && ibin1>0) {
-            meanU = f1_vtx.getParameter(1)-f1_vtx.getParameter(2);
-            meanD = f1_vtx.getParameter(8);
-            f1_vtx.setRange(Math.max(meanU-8*sigma,histo.getDataX(0)),
+        if((!f1_vtx.isFitValid() ||f1_vtx.getChiSquare()/f1_vtx.getNDF()>Constants.CHI2MAX) && ibin1>0) {
+            meanU = f1_vtx.getParameter(1)-f1_vtx.getParameter(np+1);
+            meanD = f1_vtx.getParameter(1);
+            sigma = f1_vtx.getParameter(np+2);
+            f1_vtx.setRange(Math.max(meanU-6*sigma,histo.getDataX(0)),
                             Math.min(meanD+8*sigma,histo.getDataX(nbin-1)));
             DataFitter.fit(f1_vtx, histo, "Q"); //No options uses error for sigma            
         }
