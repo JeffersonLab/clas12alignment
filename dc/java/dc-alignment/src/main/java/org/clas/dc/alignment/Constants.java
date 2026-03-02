@@ -42,7 +42,7 @@ public class Constants {
     public static int    VDFBINS = 200;
     public static double VDFMIN = -5.0;
     public static double VDFMAX =  5.0;
-    public static double CHI2MAX = 2.5;
+    public static double CHI2MAX = 5;
 
     
     // global fit
@@ -61,9 +61,9 @@ public class Constants {
                                         "r3_x", "r3_y", "r3_z", "r3_cx", "r3_cy", "r3_cz"};
 
     // parameter step size: set to 0 to fix the parameter
-    public static double[]   PARSTEP = {  0.2,  0.2,   0.2,     0,    0.2,       0.0,
-                                          0.2,  0.2,   0.2,     0,    0.2,       0.0,
-                                          0.2,  0.2,   0.2,     0,    0.2,       0.0};
+    public static double[]   PARSTEP = {  0.2,  0.2,   0.2,     0,    0.2,       0.2,
+                                          0.2,  0.2,   0.2,     0,    0.2,       0.2,
+                                          0.2,  0.2,   0.2,     0,    0.2,       0.2};
    
     // parameter max value
     public static double[]   PARMAX  = {  1.5,     1.5,   1.5,        0.5,  0.5,     0.5,
